@@ -1,0 +1,10 @@
+/* resources/css/filament/admin/custom.css */
+
+.fi-badge {
+    /* Colores nuevos */
+    &.badge-amber   { background-color: #f59e0b; color: white; }
+    &.badge-rose    { background-color: #e11da0; color: white; }
+    &.badge-violet  { background-color: #7c3aed; color: white; }
+    &.badge-emerald { background-color: #10b981; color: white; }
+    &.badge-sky     { background-color: #0ea5e9; color: white; }
+}
