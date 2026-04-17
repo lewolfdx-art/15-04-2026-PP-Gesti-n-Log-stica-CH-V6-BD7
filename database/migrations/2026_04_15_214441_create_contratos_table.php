@@ -13,9 +13,11 @@ return new class extends Migration
             
             $table->date('fecha')->default(now()->toDateString())->index();
             
-            $table->string('estructura')->nullable();           // ← cambiado a nullable
+            $table->text('ubicacion_referencia')->nullable();   // ← Este campo faltaba en la BD
+            
+            $table->string('estructura')->nullable();
             $table->text('nombre_cliente')->nullable();
-            $table->string('nombre_vendedor')->nullable();      // ← nullable por ahora
+            $table->string('nombre_vendedor')->nullable();
             $table->string('numero_contrato')->nullable();
             $table->string('tipo_concreto')->nullable();
             
@@ -23,17 +25,23 @@ return new class extends Migration
             $table->string('factura')->nullable();
             
             $table->string('bombeo')->nullable();
+            
+            $table->decimal('bomba', 12, 2)->default(0);
             $table->decimal('bomba_adicional', 12, 2)->default(0);
             
-            $table->decimal('volumen_real', 10, 2)->default(0);
             $table->decimal('volumen_guia', 10, 2)->default(0);
+            $table->decimal('volumen_real', 10, 2)->default(0);
             $table->decimal('volumen_sobrante', 10, 2)->default(0);
             
-            $table->decimal('pu', 12, 2)->nullable();                    // ← nullable
-            $table->decimal('monto_total', 14, 2)->nullable();           // ← nullable
+            $table->decimal('pu', 12, 2)->nullable();
+            $table->decimal('monto_total', 14, 2)->nullable();
             $table->decimal('descuento_guias', 12, 2)->default(0);
-            $table->decimal('venta_neta', 14, 2)->nullable();            // ← nullable
+            $table->decimal('venta_neta', 14, 2)->nullable();
             $table->decimal('pu_real', 12, 2)->nullable();
+            
+            $table->decimal('gastos_alimentos_bomba', 12, 2)->default(0);
+            $table->decimal('descuentos', 12, 2)->default(0);
+            $table->decimal('alimentos_dc', 12, 2)->default(0);
             
             $table->string('estado_pago')->default('PAGADO');
             $table->string('forma_pago')->nullable();
@@ -52,8 +60,8 @@ return new class extends Migration
             $table->boolean('activo')->default(true);
             $table->timestamps();
 
-            $table->index(['fecha', 'nombre_vendedor']);
             $table->index('numero_contrato');
+            $table->index(['fecha', 'nombre_vendedor']);
         });
     }
 
