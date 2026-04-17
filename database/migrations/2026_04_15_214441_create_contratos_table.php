@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('bombeo')->nullable();
             
             $table->decimal('bomba', 12, 2)->default(0);
-            $table->decimal('bomba_adicional', 12, 2)->default(0);
+            $table->decimal('bomba_adicional', 10, 2)->default(0)->nullable(false);
             
             $table->decimal('volumen_guia', 10, 2)->default(0);
             $table->decimal('volumen_real', 10, 2)->default(0);

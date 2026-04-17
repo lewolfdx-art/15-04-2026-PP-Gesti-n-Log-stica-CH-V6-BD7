@@ -11,6 +11,8 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 
 class ContratoResource extends Resource
 {
@@ -60,7 +62,13 @@ class ContratoResource extends Resource
 
                                 Forms\Components\TextInput::make('numero_contrato')
                                     ->label('N° DE CONTRATO')
-                                    ->required(),
+                                    ->prefix('C-')
+                                    ->numeric()
+                                    ->required()
+                                    ->placeholder('296')
+                                    ->maxLength(10)
+                                    ->default('')
+                                    ->dehydrateStateUsing(fn ($state) => $state ? 'C-' . $state : null),
 
                                 Forms\Components\Select::make('tipo_concreto')
                                     ->label('TIPO DE CONCRETO')
@@ -80,7 +88,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('bomba_adicional')
@@ -88,7 +96,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('volumen_guia')
@@ -96,7 +104,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('volumen_real')
@@ -104,14 +112,16 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('volumen_sobrante')
                                     ->label('SOBRANTE')
                                     ->numeric()
                                     ->step(0.01)
-                                    ->default(0),
+                                    ->default(0)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
                             ])
                             ->columns(3),
 
@@ -122,7 +132,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->required()
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('descuento_guias')
@@ -130,13 +140,13 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Toggle::make('aplicar_comision')
                                     ->label('Aplicar Comisión')
                                     ->default(true)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('comision')
@@ -151,7 +161,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('gastos_alimentos_bomba')
@@ -159,7 +169,7 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
                                 Forms\Components\TextInput::make('descuentos')
@@ -167,33 +177,32 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
-                                    ->live()
+                                    ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
-                                // Campos calculados (solo muestran resultado)
                                 Forms\Components\TextInput::make('monto_total')
                                     ->label('MONTO TOTAL')
                                     ->numeric()
                                     ->disabled()
-                                    ->dehydrated(false),
+                                    ->dehydrated(true),
 
                                 Forms\Components\TextInput::make('venta_neta')
                                     ->label('VENTA NETA')
                                     ->numeric()
                                     ->disabled()
-                                    ->dehydrated(false),
+                                    ->dehydrated(true),
 
                                 Forms\Components\TextInput::make('pu_real')
                                     ->label('P. U. REAL')
                                     ->numeric()
                                     ->disabled()
-                                    ->dehydrated(false),
+                                    ->dehydrated(true),
 
                                 Forms\Components\TextInput::make('total_para_empresa')
                                     ->label('TOTAL PARA LA EMPRESA')
                                     ->numeric()
                                     ->disabled()
-                                    ->dehydrated(false),
+                                    ->dehydrated(true),
                             ])
                             ->columns(2),
 
@@ -230,37 +239,31 @@ class ContratoResource extends Resource
             ]);
     }
 
-    // ====================== FUNCIÓN DE CÁLCULOS ======================
     private static function calcularTodo(Get $get, Set $set): void
     {
-        $pu               = (float) $get('pu') ?? 0;
-        $volGuia          = (float) $get('volumen_guia') ?? 0;
-        $volReal          = (float) $get('volumen_real') ?? 0;
-        $bomba            = (float) $get('bomba') ?? 0;
-        $bombaAdicional   = (float) $get('bomba_adicional') ?? 0;
-        $descGuias        = (float) $get('descuento_guias') ?? 0;
-        $descuentos       = (float) $get('descuentos') ?? 0;
-        $gastosAlimentos  = (float) $get('gastos_alimentos_bomba') ?? 0;
-        $comisionIgv      = (float) $get('comision_igv') ?? 0;
-        $aplicarComision  = $get('aplicar_comision') ?? false;
+        $pu               = (float) ($get('pu') ?? 0);
+        $volGuia          = (float) ($get('volumen_guia') ?? 0);
+        $volReal          = (float) ($get('volumen_real') ?? 0);
+        $bomba            = (float) ($get('bomba') ?? 0);
+        $bombaAdicional   = (float) ($get('bomba_adicional') ?? 0);
+        $descGuias        = (float) ($get('descuento_guias') ?? 0);
+        $descuentos       = (float) ($get('descuentos') ?? 0);
+        $gastosAlimentos  = (float) ($get('gastos_alimentos_bomba') ?? 0);
+        $comisionIgv      = (float) ($get('comision_igv') ?? 0);
+        $aplicarComision  = $get('aplicar_comision') ?? true;
 
-        // 1. Monto Total = (guias * pu) + bomba_adicional + bomba - desc_guias
         $montoTotal = ($volGuia * $pu) + $bombaAdicional + $bomba - $descGuias;
         $set('monto_total', round($montoTotal, 2));
 
-        // 2. Comisión = (guias - real) * pu   (si el switch está activado)
         $comision = $aplicarComision ? ($volGuia - $volReal) * $pu : 0;
         $set('comision', round($comision, 2));
 
-        // 3. Venta Neta = monto_total - comision - descuentos - bomba/alimentos - comision_igv
         $ventaNeta = $montoTotal - $comision - $descuentos - $gastosAlimentos - $comisionIgv;
         $set('venta_neta', round($ventaNeta, 2));
 
-        // 4. P.U. Real = (venta_neta - bomba) / real
         $puReal = $volReal > 0 ? ($ventaNeta - $bomba) / $volReal : 0;
         $set('pu_real', round($puReal, 2));
 
-        // 5. Total para la empresa = guias * pu   (usando volumen_guia como "para empresa")
         $totalEmpresa = $volGuia * $pu;
         $set('total_para_empresa', round($totalEmpresa, 2));
     }
@@ -272,13 +275,36 @@ class ContratoResource extends Resource
                 Tables\Columns\TextColumn::make('fecha')->date('d/m/Y')->sortable(),
                 Tables\Columns\TextColumn::make('estructura'),
                 Tables\Columns\TextColumn::make('nombre_vendedor'),
-                Tables\Columns\TextColumn::make('numero_contrato'),
-                Tables\Columns\TextColumn::make('venta_neta')->money('PEN'),
+                Tables\Columns\TextColumn::make('numero_contrato')->label('N° Contrato')->sortable(),
+
+                Tables\Columns\TextColumn::make('monto_total')
+                    ->label('Monto Total')
+                    ->money('PEN')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('comision')
+                    ->label('Comisión')
+                    ->money('PEN')
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => $state > 0 ? number_format($state, 2) : '-'),
+
+                Tables\Columns\TextColumn::make('venta_neta')
+                    ->label('Venta Neta')
+                    ->money('PEN')
+                    ->sortable(),
+
                 Tables\Columns\BadgeColumn::make('estado_pago')
-                    ->colors(['success' => 'PAGADO', 'danger' => 'DEBE']),
+                    ->label('Estado Pago')
+                    ->colors([
+                        'success' => 'PAGADO',
+                        'danger'  => 'DEBE',
+                    ]),
             ])
             ->defaultSort('fecha', 'desc')
-            ->actions([Tables\Actions\EditAction::make()]);
+            ->actions([
+                ViewAction::make()->label('Ver'),
+                EditAction::make()->label('Editar'),
+            ]);
     }
 
     public static function getPages(): array
@@ -287,6 +313,7 @@ class ContratoResource extends Resource
             'index'  => \App\Filament\Resources\ContratoResource\Pages\ListContratos::route('/'),
             'create' => \App\Filament\Resources\ContratoResource\Pages\CreateContrato::route('/create'),
             'edit'   => \App\Filament\Resources\ContratoResource\Pages\EditContrato::route('/{record}/edit'),
+            'view'   => \App\Filament\Resources\ContratoResource\Pages\ViewContrato::route('/{record}'),
         ];
     }
 }
