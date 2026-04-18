@@ -272,35 +272,140 @@ class ContratoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('fecha')->date('d/m/Y')->sortable(),
-                Tables\Columns\TextColumn::make('estructura'),
-                Tables\Columns\TextColumn::make('nombre_vendedor'),
-                Tables\Columns\TextColumn::make('numero_contrato')->label('N° Contrato')->sortable(),
+                Tables\Columns\TextColumn::make('fecha')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('numero_contrato')
+                    ->label('N° Contrato')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('nombre_cliente')
+                    ->label('Cliente')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('nombre_vendedor')
+                    ->label('Vendedor')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('estructura')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('tipo_concreto')
+                    ->label('Tipo Concreto')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('bombeo')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('volumen_guia')
+                    ->label('Vol. Guía')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('volumen_real')
+                    ->label('Vol. Real')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('monto_total')
                     ->label('Monto Total')
                     ->money('PEN')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('comision')
                     ->label('Comisión')
                     ->money('PEN')
                     ->sortable()
-                    ->formatStateUsing(fn ($state) => $state > 0 ? number_format($state, 2) : '-'),
+                    ->formatStateUsing(fn ($state) => $state > 0 ? number_format($state, 2) : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('venta_neta')
                     ->label('Venta Neta')
                     ->money('PEN')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('pu_real')
+                    ->label('P.U. Real')
+                    ->money('PEN')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\BadgeColumn::make('estado_pago')
                     ->label('Estado Pago')
                     ->colors([
                         'success' => 'PAGADO',
                         'danger'  => 'DEBE',
-                    ]),
+                    ])
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('observacion')
+                    ->label('Observación')
+                    ->searchable()
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('observaciones_adicionales')
+                    ->label('Obs. Adicionales')
+                    ->searchable()
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('fecha', 'desc')
+
+            // ==================== BÚSQUEDA GLOBAL ====================
+            ->searchable()   // Activa la barra de búsqueda global
+
+            // ==================== FILTROS ====================
+            ->filters([
+                Tables\Filters\SelectFilter::make('estructura')
+                    ->label('Estructura')
+                    ->options([
+                        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
+                        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
+                        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
+                        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
+                        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
+                        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
+                    ]),
+
+                Tables\Filters\SelectFilter::make('tipo_concreto')
+                    ->label('Tipo de Concreto')
+                    ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280']),
+
+                Tables\Filters\SelectFilter::make('estado_pago')
+                    ->label('Estado de Pago')
+                    ->options(['PAGADO' => 'PAGADO', 'DEBE' => 'DEBE']),
+
+                Tables\Filters\SelectFilter::make('bombeo')
+                    ->label('Bombeo')
+                    ->options(['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA']),
+
+                Tables\Filters\Filter::make('fecha')
+                    ->form([
+                        Forms\Components\DatePicker::make('fecha_desde')->label('Desde'),
+                        Forms\Components\DatePicker::make('fecha_hasta')->label('Hasta'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['fecha_desde'], fn ($q) => $q->whereDate('fecha', '>=', $data['fecha_desde']))
+                            ->when($data['fecha_hasta'], fn ($q) => $q->whereDate('fecha', '<=', $data['fecha_hasta']));
+                    }),
+            ])
+
             ->actions([
                 ViewAction::make()->label('Ver'),
                 EditAction::make()->label('Editar'),
