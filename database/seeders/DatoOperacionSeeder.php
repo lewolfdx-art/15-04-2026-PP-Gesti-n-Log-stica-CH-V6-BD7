@@ -9,10 +9,17 @@ class DatoOperacionSeeder extends Seeder
 {
     public function run()
     {
-        DatoOperacion::truncate(); // Borra datos anteriores
+        // ==================== BORRAR SOLO LOS DATOS GENERALES ====================
+        DatoOperacion::whereIn('tipo', [
+            'modo_pago', 
+            'banco', 
+            'cancelacion', 
+            'estado'
+        ])->delete();
 
-        $datos = [
-            // ==================== MODO PAGO ====================
+        // ==================== INSERTAR / ACTUALIZAR DATOS GENERALES ====================
+        $datosGenerales = [
+            // Modo de Pago
             ['tipo' => 'modo_pago', 'valor' => 'EFECTIVO', 'orden' => 1],
             ['tipo' => 'modo_pago', 'valor' => 'EFECTIVO DEPOSITO', 'orden' => 2],
             ['tipo' => 'modo_pago', 'valor' => 'ADEL CONTRATO', 'orden' => 3],
@@ -24,33 +31,33 @@ class DatoOperacionSeeder extends Seeder
             ['tipo' => 'modo_pago', 'valor' => 'PAGO DE PERSONAL', 'orden' => 9],
             ['tipo' => 'modo_pago', 'valor' => 'IN-OTROS', 'orden' => 10],
 
-            // ==================== BANCO ====================
+            // Banco
             ['tipo' => 'banco', 'valor' => 'BCP', 'orden' => 1],
             ['tipo' => 'banco', 'valor' => 'BBVA', 'orden' => 2],
 
-            // ==================== ASESOR ====================
-
-
-            // ==================== CANCELACION ====================
+            // Cancelación
             ['tipo' => 'cancelacion', 'valor' => 'PAGADO', 'orden' => 1],
             ['tipo' => 'cancelacion', 'valor' => 'PERDIDA', 'orden' => 2],
             ['tipo' => 'cancelacion', 'valor' => 'DEBE', 'orden' => 3],
 
-            // ==================== OTROS (puedes agregar más tipos aquí) ====================
+            // Estado
             ['tipo' => 'estado', 'valor' => 'ACTIVO', 'orden' => 1],
             ['tipo' => 'estado', 'valor' => 'INACTIVO', 'orden' => 2],
         ];
 
-        foreach ($datos as $dato) {
-            DatoOperacion::create([
-                'tipo'        => $dato['tipo'],
-                'valor'       => $dato['valor'],
-                'descripcion' => null,
-                'orden'       => $dato['orden'],
-                'activo'      => true,
-            ]);
+        foreach ($datosGenerales as $dato) {
+            DatoOperacion::updateOrCreate(
+                ['tipo' => $dato['tipo'], 'valor' => $dato['valor']],  // busca por tipo + valor
+                [
+                    'descripcion' => null,
+                    'orden'       => $dato['orden'],
+                    'activo'      => true,
+                    'es_persona'  => false,
+                ]
+            );
         }
 
-        $this->command->info('✅ DatoOperacionSeeder ejecutado correctamente con ' . count($datos) . ' registros.');
+        $this->command->info('✅ Datos generales actualizados correctamente (' . count($datosGenerales) . ' registros).');
+        $this->command->info('Los trabajadores y asesores NO fueron borrados.');
     }
 }
