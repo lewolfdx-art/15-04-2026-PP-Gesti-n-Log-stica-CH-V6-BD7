@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\Contrato;
+use App\Models\DatoOperacion;
 use Filament\Forms;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -56,9 +57,46 @@ class ContratoResource extends Resource
                                     ->label('NOMBRE DEL CLIENTE')
                                     ->rows(2),
 
-                                Forms\Components\TextInput::make('nombre_vendedor')
+                                // ==================== VENDEDOR CON CREACIÓN EN TIEMPO REAL ====================
+                                Forms\Components\Select::make('nombre_vendedor')
                                     ->label('NOMBRE DEL VENDEDOR')
-                                    ->required(),
+                                    ->options(function () {
+                                        return DatoOperacion::where('tipo', 'asesor')
+                                            ->where('activo', true)
+                                            ->orderBy('orden')
+                                            ->pluck('valor', 'valor');
+                                    })
+                                    ->searchable()        // Búsqueda en tiempo real
+                                    ->preload()           // Carga los datos al abrir
+                                    ->required()
+                                    ->live()
+                                    ->createOptionForm([
+                                        Forms\Components\TextInput::make('valor')
+                                            ->label('Nombre Completo del Asesor')
+                                            ->required()
+                                            ->maxLength(255),
+
+                                        Forms\Components\TextInput::make('orden')
+                                            ->label('Orden (posición en la lista)')
+                                            ->numeric()
+                                            ->default(999),
+
+                                        Forms\Components\Textarea::make('descripcion')
+                                            ->label('Descripción / Nota')
+                                            ->rows(2),
+                                    ])
+                                    ->createOptionUsing(function (array $data) {
+                                        $nuevo = DatoOperacion::create([
+                                            'tipo'        => 'asesor',
+                                            'valor'       => strtoupper(trim($data['valor'])),
+                                            'descripcion' => $data['descripcion'] ?? null,
+                                            'orden'       => $data['orden'] ?? 999,
+                                            'activo'      => true,
+                                        ]);
+                                        return $nuevo->valor;
+                                    })
+                                    ->createOptionAction(fn ($action) => $action->label('+ Crear nuevo asesor')),
+                                // ====================================================================
 
                                 Forms\Components\TextInput::make('numero_contrato')
                                     ->label('N° DE CONTRATO')
@@ -309,40 +347,17 @@ class ContratoResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('volumen_guia')
-                    ->label('Vol. Guía')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('volumen_real')
-                    ->label('Vol. Real')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 Tables\Columns\TextColumn::make('monto_total')
                     ->label('Monto Total')
                     ->money('PEN')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('comision')
-                    ->label('Comisión')
-                    ->money('PEN')
-                    ->sortable()
-                    ->formatStateUsing(fn ($state) => $state > 0 ? number_format($state, 2) : '-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
                 Tables\Columns\TextColumn::make('venta_neta')
                     ->label('Venta Neta')
                     ->money('PEN')
                     ->sortable()
                     ->toggleable(),
-
-                Tables\Columns\TextColumn::make('pu_real')
-                    ->label('P.U. Real')
-                    ->money('PEN')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\BadgeColumn::make('estado_pago')
                     ->label('Estado Pago')
@@ -351,25 +366,9 @@ class ContratoResource extends Resource
                         'danger'  => 'DEBE',
                     ])
                     ->toggleable(),
-
-                Tables\Columns\TextColumn::make('observacion')
-                    ->label('Observación')
-                    ->searchable()
-                    ->limit(30)
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('observaciones_adicionales')
-                    ->label('Obs. Adicionales')
-                    ->searchable()
-                    ->limit(30)
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('fecha', 'desc')
-
-            // ==================== BÚSQUEDA GLOBAL ====================
-            ->searchable()   // Activa la barra de búsqueda global
-
-            // ==================== FILTROS ====================
+            ->searchable()
             ->filters([
                 Tables\Filters\SelectFilter::make('estructura')
                     ->label('Estructura')
@@ -405,7 +404,6 @@ class ContratoResource extends Resource
                             ->when($data['fecha_hasta'], fn ($q) => $q->whereDate('fecha', '<=', $data['fecha_hasta']));
                     }),
             ])
-
             ->actions([
                 ViewAction::make()->label('Ver'),
                 EditAction::make()->label('Editar'),

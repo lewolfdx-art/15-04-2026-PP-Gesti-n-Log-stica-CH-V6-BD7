@@ -29,19 +29,7 @@ class DatoOperacionSeeder extends Seeder
             ['tipo' => 'banco', 'valor' => 'BBVA', 'orden' => 2],
 
             // ==================== ASESOR ====================
-            ['tipo' => 'asesor', 'valor' => 'ANA HUAMAN', 'orden' => 1],
-            ['tipo' => 'asesor', 'valor' => 'GINA PILAR', 'orden' => 2],
-            ['tipo' => 'asesor', 'valor' => 'NICOLAS ASESOR', 'orden' => 3],
-            ['tipo' => 'asesor', 'valor' => 'MIGUEL ALBERTO', 'orden' => 4],
-            ['tipo' => 'asesor', 'valor' => 'JUAN VELIZ', 'orden' => 5],
-            ['tipo' => 'asesor', 'valor' => 'FRANK LIDER MIX', 'orden' => 6],
-            ['tipo' => 'asesor', 'valor' => 'RODRIGO VEGA', 'orden' => 7],
-            ['tipo' => 'asesor', 'valor' => 'PAGEL ORIHUELA', 'orden' => 8],
-            ['tipo' => 'asesor', 'valor' => 'NICK', 'orden' => 9],
-            ['tipo' => 'asesor', 'valor' => 'FRANZ ALBERTO', 'orden' => 10],
-            ['tipo' => 'asesor', 'valor' => 'DANI GUILLERMO', 'orden' => 11],
-            ['tipo' => 'asesor', 'valor' => 'YEMI CEMIXCON', 'orden' => 12],
-            ['tipo' => 'asesor', 'valor' => 'FSTEFANY CEMIXCON', 'orden' => 13],
+
 
             // ==================== CANCELACION ====================
             ['tipo' => 'cancelacion', 'valor' => 'PAGADO', 'orden' => 1],

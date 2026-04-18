@@ -59,11 +59,11 @@ class DatoOperacionResource extends Resource
                 Tables\Columns\TextColumn::make('tipo')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'modo_pago'     => 'info',      // Azul
-                        'banco'         => 'success',   // Verde
-                        'asesor'        => 'warning',   // Amarillo/Naranja
-                        'cancelacion'   => 'danger',    // Rojo
-                        'estado'        => 'gray',      // Gris
+                        'modo_pago'     => 'info',
+                        'banco'         => 'success',
+                        'asesor'        => 'warning',
+                        'cancelacion'   => 'danger',
+                        'estado'        => 'gray',
                         default         => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
@@ -74,35 +74,58 @@ class DatoOperacionResource extends Resource
                         'estado'        => 'Estado',
                         default         => ucfirst($state),
                     })
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('valor')
+                    ->label('Valor')
                     ->searchable()
                     ->sortable()
-                    ->weight('medium'),
+                    ->weight('medium')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('descripcion')
-                    ->limit(50)
+                    ->label('Descripción')
+                    ->limit(60)
+                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('orden')
                     ->sortable()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable(),
 
-                Tables\Columns\ToggleColumn::make('activo'),
+                Tables\Columns\ToggleColumn::make('activo')
+                    ->label('Activo')
+                    ->toggleable(),
             ])
-            ->defaultSort('tipo')
+            ->defaultSort('tipo', 'asc')
             ->defaultSort('orden', 'asc')
+
+            // ==================== BÚSQUEDA GLOBAL ====================
+            ->searchable()   // Barra de búsqueda global potente
+
+            // ==================== FILTROS MEJORADOS ====================
             ->filters([
                 Tables\Filters\SelectFilter::make('tipo')
+                    ->label('Tipo')
                     ->options([
-                        'modo_pago'   => 'Modo de Pago',
-                        'banco'       => 'Banco',
-                        'asesor'      => 'Asesor',
-                        'cancelacion' => 'Cancelación',
-                        'estado'      => 'Estado',
-                    ]),
+                        'modo_pago'     => 'Modo de Pago',
+                        'banco'         => 'Banco',
+                        'asesor'        => 'Asesor',
+                        'cancelacion'   => 'Cancelación',
+                        'estado'        => 'Estado',
+                    ])
+                    ->multiple()
+                    ->preload(),
+
+                Tables\Filters\TernaryFilter::make('activo')
+                    ->label('Estado Activo')
+                    ->trueLabel('Solo Activos')
+                    ->falseLabel('Solo Inactivos')
+                    ->placeholder('Todos'),
             ])
+
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
