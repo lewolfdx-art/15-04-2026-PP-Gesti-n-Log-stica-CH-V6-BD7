@@ -76,10 +76,12 @@ class DatoOperacionResource extends Resource
                     ->visible(fn (Forms\Get $get) => $get('es_persona'))
                     ->maxLength(20),
 
-                Forms\Components\DatePicker::make('fecha_nacimiento')
+                    Forms\Components\DatePicker::make('fecha_nacimiento')
                     ->label('Fecha de Nacimiento')
                     ->visible(fn (Forms\Get $get) => $get('es_persona'))
-                    ->native(false),
+                    ->native(true)                    // ←←← Cambia a true (o elimínalo)
+                    ->displayFormat('d/m/Y')          // Formato que se muestra en el input (opcional)
+                    ->format('Y-m-d'),
 
                 Forms\Components\Textarea::make('descripcion')
                     ->label('Descripción / Observación')

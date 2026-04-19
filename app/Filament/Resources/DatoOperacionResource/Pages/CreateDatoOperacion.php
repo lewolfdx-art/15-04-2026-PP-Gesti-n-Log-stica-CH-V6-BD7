@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateDatoOperacion extends CreateRecord
 {
     protected static string $resource = DatoOperacionResource::class;
+
+protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
