@@ -12,11 +12,7 @@ class Dashboard extends BaseDashboard
 
     public function getColumns(): int | array
     {
-        return [
-            'sm' => 1,
-            'md' => 2,
-            'lg' => 3,
-        ];
+        return 1;   // Una sola columna → todos apilados y a todo el ancho
     }
 
     public function getWidgets(): array
