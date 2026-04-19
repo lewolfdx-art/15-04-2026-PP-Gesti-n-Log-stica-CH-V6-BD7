@@ -405,9 +405,27 @@ class ContratoResource extends Resource
                     }),
             ])
             ->actions([
-                ViewAction::make()->label('Ver'),
-                EditAction::make()->label('Editar'),
+                Tables\Actions\ViewAction::make()->label('Ver'),
+                Tables\Actions\EditAction::make()->label('Editar'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('Eliminar')
+                    ->color('danger')
+                    ->icon('heroicon-o-trash')
+                    ->requiresConfirmation(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar seleccionados'),
+            
+                    Tables\Actions\ExportBulkAction::make()
+                        ->label('Exportar a Excel')
+                        ->exporter(\App\Filament\Exports\ContratoExporter::class)
+                        ->color('success')
+                        ->icon('heroicon-o-arrow-down-tray'),
+                ]),
             ]);
+            
     }
 
     public static function getPages(): array
