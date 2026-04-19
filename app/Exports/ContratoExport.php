@@ -15,37 +15,29 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
-use Illuminate\Support\Collection;
 
 class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithTitle, ShouldAutoSize, WithEvents, WithStyles
 {
-    protected $records;
-
-    public function __construct(Collection $records)
-    {
-        $this->records = $records;
-    }
-
     public function collection()
     {
-        return $this->records;
+        return Contrato::all();
     }
 
     public function map($contrato): array
     {
         return [
             $contrato->fecha?->format('d/m/Y') ?? '',
-            $contrato->numero_contrato ?? '',
-            $contrato->nombre_cliente ?? '',
-            $contrato->nombre_vendedor ?? '',
-            $contrato->estructura ?? '',
-            $contrato->tipo_concreto ?? '',
-            number_format($contrato->volumen_real ?? 0, 2),
-            number_format($contrato->pu ?? 0, 2),
-            number_format($contrato->monto_total ?? 0, 2),
-            number_format($contrato->venta_neta ?? 0, 2),
-            $contrato->estado_pago ?? '',
-            $contrato->bombeo ?? '',
+            $contrato->numero_contrato,
+            $contrato->nombre_cliente,
+            $contrato->nombre_vendedor,
+            $contrato->estructura,
+            $contrato->tipo_concreto,
+            number_format($contrato->volumen_real, 2),
+            number_format($contrato->pu, 2),
+            number_format($contrato->monto_total, 2),
+            number_format($contrato->venta_neta, 2),
+            $contrato->estado_pago,
+            $contrato->bombeo,
             $contrato->created_at?->format('d/m/Y H:i:s') ?? '',
         ];
     }
@@ -77,18 +69,19 @@ class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithT
     public function styles(Worksheet $sheet)
     {
         return [
-            // Título grande
+            // Título grande (fila 1)
             1 => [
-                'font' => ['bold' => true, 'size' => 16],
-                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '00A1C9']],
+                'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '00A1C9']], // Cyan
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
-            // Encabezados
+
+            // Encabezados (fila 3)
             3 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '00A1C9']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '00A1C9']], // Cyan
                 'borders' => [
-                    'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '000000']],
+                    'allBorders' => ['borderStyle' => Border::BORDER_THIN],
                 ],
             ],
         ];
@@ -100,14 +93,14 @@ class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithT
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                // Insertar título grande
+                // Insertar filas para título
                 $sheet->insertNewRowBefore(1, 2);
                 $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA HUANCAYO');
-                $sheet->mergeCells('A1:M1');
+                $sheet->mergeCells('A1:M1');   // Merge según tus 13 columnas
 
-                // Estilo título
+                // Estilo adicional para título
                 $sheet->getStyle('A1')->applyFromArray([
-                    'font' => ['bold' => true, 'size' => 18, 'color' => ['rgb' => 'FFFFFF']],
+                    'font' => ['bold' => true, 'size' => 18],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '00A1C9']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);

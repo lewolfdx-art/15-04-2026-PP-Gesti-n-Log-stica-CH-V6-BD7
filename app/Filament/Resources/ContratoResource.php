@@ -14,7 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
-
+use Maatwebsite\Excel\Facades\Excel;
 class ContratoResource extends Resource
 {
     protected static ?string $model = Contrato::class;
@@ -418,12 +418,20 @@ class ContratoResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Eliminar seleccionados'),
             
-                    Tables\Actions\ExportBulkAction::make()
+                    // Export con Maatwebsite - Versión corregida
+                    Tables\Actions\BulkAction::make('export_excel')
                         ->label('Exportar a Excel')
-                        ->exporter(\App\Filament\Exports\ContratoExporter::class)
                         ->color('success')
-                        ->icon('heroicon-o-arrow-down-tray'),
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->action(function (\Illuminate\Support\Collection $records) {
+                            return Excel::download(
+                                new \App\Exports\ContratoExport($records),
+                                'contratos_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
+           
             ]);
             
     }
