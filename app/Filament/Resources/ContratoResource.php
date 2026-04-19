@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Maatwebsite\Excel\Facades\Excel;
+use Filament\Notifications\Notification;
 class ContratoResource extends Resource
 {
     protected static ?string $model = Contrato::class;
@@ -418,20 +419,40 @@ class ContratoResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Eliminar seleccionados'),
             
-                    // Export con Maatwebsite - Versión corregida
+                    // Exportación con Maatwebsite + Notificación
                     Tables\Actions\BulkAction::make('export_excel')
                         ->label('Exportar a Excel')
                         ->color('success')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function (\Illuminate\Support\Collection $records) {
-                            return Excel::download(
-                                new \App\Exports\ContratoExport($records),
-                                'contratos_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                            
+                            if ($records->isEmpty()) {
+                                \Filament\Notifications\Notification::make()
+                                    ->warning()
+                                    ->title('Sin registros')
+                                    ->body('Por favor selecciona al menos un contrato para exportar.')
+                                    ->send();
+                                return;
+                            }
+            
+                            $filename = 'contratos_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+            
+                            // Notificación de éxito
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Exportación completada ✅')
+                                ->body('Se han exportado ' . $records->count() . ' registros. El archivo se está descargando...')
+                                ->send();
+            
+                            // Descargar el archivo
+                            return \Maatwebsite\Excel\Facades\Excel::download(
+                                new \App\Exports\ContratoExport($records), 
+                                $filename
                             );
                         })
                         ->deselectRecordsAfterCompletion(),
                 ]),
-           
+            
             ]);
             
     }
