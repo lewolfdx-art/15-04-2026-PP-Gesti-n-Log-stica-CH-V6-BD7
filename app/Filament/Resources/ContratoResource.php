@@ -16,6 +16,8 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Collection;
+
 class ContratoResource extends Resource
 {
     protected static ?string $model = Contrato::class;
@@ -67,8 +69,8 @@ class ContratoResource extends Resource
                                             ->orderBy('orden')
                                             ->pluck('valor', 'valor');
                                     })
-                                    ->searchable()        // Búsqueda en tiempo real
-                                    ->preload()           // Carga los datos al abrir
+                                    ->searchable()
+                                    ->preload()
                                     ->required()
                                     ->live()
                                     ->createOptionForm([
@@ -419,15 +421,56 @@ class ContratoResource extends Resource
                     Tables\Actions\DeleteBulkAction::make()
                         ->label('Eliminar seleccionados'),
             
-                    // Exportación con Maatwebsite + Notificación
+                    // Exportación con selección de columnas
                     Tables\Actions\BulkAction::make('export_excel')
                         ->label('Exportar a Excel')
                         ->color('success')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->action(function (\Illuminate\Support\Collection $records) {
+                        ->form([
+                            Forms\Components\CheckboxList::make('columns')
+                                ->label('Selecciona las columnas que deseas exportar')
+                                ->options([
+                                    'fecha'                     => 'Fecha',
+                                    'numero_contrato'           => 'N° Contrato',
+                                    'nombre_cliente'            => 'Cliente',
+                                    'nombre_vendedor'           => 'Vendedor',
+                                    'estructura'                => 'Estructura',
+                                    'tipo_concreto'             => 'Tipo Concreto',
+                                    'ubicacion_referencia'      => 'Ubicación / Referencia',
+                                    'bombeo'                    => 'Bombeo',
+                                    'volumen_guia'              => 'Vol. Guía (m³)',
+                                    'volumen_real'              => 'Vol. Real (m³)',
+                                    'volumen_sobrante'          => 'Vol. Sobrante (m³)',
+                                    'bomba'                     => 'Bomba (S/)',
+                                    'bomba_adicional'           => 'Bomba Adicional (S/)',
+                                    'pu'                        => 'P.U. (S/)',
+                                    'pu_real'                   => 'P.U. Real (S/)',
+                                    'monto_total'               => 'Monto Total (S/)',
+                                    'venta_neta'                => 'Venta Neta (S/)',
+                                    'total_para_empresa'        => 'Total Empresa (S/)',
+                                    'descuento_guias'           => 'Desc. Guías (S/)',
+                                    'descuentos'                => 'Descuentos (S/)',
+                                    'gastos_alimentos_bomba'    => 'Gastos Bomba (S/)',
+                                    'comision'                  => 'Comisión (S/)',
+                                    'comision_igv'              => 'Com. IGV (S/)',
+                                    'estado_pago'               => 'Estado Pago',
+                                    'forma_pago'                => 'Forma Pago',
+                                    'observacion'               => 'Observación',
+                                    'observaciones_adicionales' => 'Observaciones Adicionales',
+                                    'created_at'                => 'Fecha Registro',
+                                ])
+                                ->default([
+                                    'fecha', 'numero_contrato', 'nombre_cliente', 'nombre_vendedor',
+                                    'estructura', 'tipo_concreto', 'bombeo', 'monto_total', 
+                                    'venta_neta', 'estado_pago'
+                                ])
+                                ->columns(2)
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
                             
                             if ($records->isEmpty()) {
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->warning()
                                     ->title('Sin registros')
                                     ->body('Por favor selecciona al menos un contrato para exportar.')
@@ -437,16 +480,14 @@ class ContratoResource extends Resource
             
                             $filename = 'contratos_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
             
-                            // Notificación de éxito
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->success()
                                 ->title('Exportación completada ✅')
                                 ->body('Se han exportado ' . $records->count() . ' registros. El archivo se está descargando...')
                                 ->send();
             
-                            // Descargar el archivo
-                            return \Maatwebsite\Excel\Facades\Excel::download(
-                                new \App\Exports\ContratoExport($records), 
+                            return Excel::download(
+                                new \App\Exports\ContratoExport($records, $data['columns'] ?? []), 
                                 $filename
                             );
                         })
