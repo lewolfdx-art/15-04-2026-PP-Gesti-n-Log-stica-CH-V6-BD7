@@ -6,5 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class DatoOperacion extends Model
 {
-    protected $fillable = ['tipo', 'valor', 'descripcion', 'orden', 'activo', 'documento', 'fecha_nacimiento', 'es_persona'];
+    protected $fillable = [
+        'tipo', 
+        'valor', 
+        'descripcion', 
+        'orden', 
+        'activo'
+    ];
+
+    protected $casts = [
+        'activo' => 'boolean',
+        'orden'  => 'integer',
+    ];
 }

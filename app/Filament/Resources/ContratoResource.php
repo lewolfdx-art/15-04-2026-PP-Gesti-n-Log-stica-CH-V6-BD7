@@ -62,43 +62,67 @@ class ContratoResource extends Resource
 
                                 // ==================== VENDEDOR CON CREACIÓN EN TIEMPO REAL ====================
                                 Forms\Components\Select::make('nombre_vendedor')
-                                    ->label('NOMBRE DEL VENDEDOR')
-                                    ->options(function () {
-                                        return DatoOperacion::where('tipo', 'asesor')
-                                            ->where('activo', true)
-                                            ->orderBy('orden')
-                                            ->pluck('valor', 'valor');
-                                    })
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->live()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('valor')
-                                            ->label('Nombre Completo del Asesor')
-                                            ->required()
-                                            ->maxLength(255),
-
-                                        Forms\Components\TextInput::make('orden')
-                                            ->label('Orden (posición en la lista)')
-                                            ->numeric()
-                                            ->default(999),
-
-                                        Forms\Components\Textarea::make('descripcion')
-                                            ->label('Descripción / Nota')
-                                            ->rows(2),
-                                    ])
-                                    ->createOptionUsing(function (array $data) {
-                                        $nuevo = DatoOperacion::create([
-                                            'tipo'        => 'asesor',
-                                            'valor'       => strtoupper(trim($data['valor'])),
-                                            'descripcion' => $data['descripcion'] ?? null,
-                                            'orden'       => $data['orden'] ?? 999,
-                                            'activo'      => true,
-                                        ]);
-                                        return $nuevo->valor;
-                                    })
-                                    ->createOptionAction(fn ($action) => $action->label('+ Crear nuevo asesor')),
+                                ->label('NOMBRE DEL VENDEDOR')
+                                ->options(function () {
+                                    return \App\Models\Trabajador::where('tipo_cargo', 'asesor_ventas')
+                                        ->where('activo', true)
+                                        ->orderBy('orden')
+                                        ->pluck('nombre_completo', 'nombre_completo');
+                                })
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->live()
+                                ->createOptionForm([
+                                    Forms\Components\Select::make('tipo_cargo')
+                                        ->label('Cargo / Tipo')
+                                        ->options([
+                                            'asesor_ventas' => '💼 Asesor de Ventas',
+                                        ])
+                                        ->default('asesor_ventas')
+                                        ->required()
+                                        ->disabled(), // Para que siempre se cree como asesor
+                            
+                                    Forms\Components\TextInput::make('nombre_completo')
+                                        ->label('Nombre Completo del Asesor')
+                                        ->required()
+                                        ->maxLength(255),
+                            
+                                    Forms\Components\TextInput::make('dni')
+                                        ->label('DNI')
+                                        ->required()
+                                        ->mask('99999999')
+                                        ->rule('digits:8')
+                                        ->unique('trabajadores', 'dni'),
+                            
+                                    Forms\Components\DatePicker::make('fecha_nacimiento')
+                                        ->label('Fecha de Nacimiento')
+                                        ->default(now()->subYears(25))
+                                        ->required(),
+                            
+                                    Forms\Components\TextInput::make('orden')
+                                        ->label('Orden (posición en la lista)')
+                                        ->numeric()
+                                        ->default(999),
+                            
+                                    Forms\Components\Textarea::make('descripcion')
+                                        ->label('Descripción / Nota')
+                                        ->rows(2),
+                                ])
+                                ->createOptionUsing(function (array $data) {
+                                    $nuevoTrabajador = \App\Models\Trabajador::create([
+                                        'tipo_cargo'       => 'asesor_ventas',
+                                        'nombre_completo'  => strtoupper(trim($data['nombre_completo'])),
+                                        'dni'              => $data['dni'] ?? null,
+                                        'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+                                        'descripcion'      => $data['descripcion'] ?? null,
+                                        'orden'            => $data['orden'] ?? 999,
+                                        'activo'           => true,
+                                    ]);
+                            
+                                    return $nuevoTrabajador->nombre_completo;
+                                })
+                                ->createOptionAction(fn ($action) => $action->label('+ Crear nuevo asesor')),
                                 // ====================================================================
 
                                 Forms\Components\TextInput::make('numero_contrato')

@@ -9,16 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('gastos', function (Blueprint $table) {
-            // Solo agregamos 'grupo' porque 'subcategoria' ya existe
+            // Solo agregamos 'grupo' (subcategoria ya existe)
             if (!Schema::hasColumn('gastos', 'grupo')) {
                 $table->string('grupo')->nullable()->after('fecha');
             }
 
-            // Aseguramos que gasto_categoria_id sea nullable (por si acaso)
+            // Hacemos nullable el gasto_categoria_id para evitar conflictos
             if (Schema::hasColumn('gastos', 'gasto_categoria_id')) {
-                $table->foreignId('gasto_categoria_id')
-                      ->nullable()
-                      ->change();
+                $table->foreignId('gasto_categoria_id')->nullable()->change();
             }
         });
     }

@@ -51,27 +51,52 @@ class IngresoResource extends Resource
                                     ->prefix('C-')
                                     ->placeholder('S/C1857'),
 
-                                // Asesor con creación en tiempo real
                                 Forms\Components\Select::make('asesor')
                                     ->label('Asesor')
                                     ->options(function () {
-                                        return DatoOperacion::where('tipo', 'asesor')
+                                        return \App\Models\Trabajador::where('tipo_cargo', 'asesor_ventas')
                                             ->where('activo', true)
                                             ->orderBy('orden')
-                                            ->pluck('valor', 'valor');
+                                            ->pluck('nombre_completo', 'nombre_completo');
                                     })
                                     ->searchable()
                                     ->preload()
                                     ->required()
                                     ->live()
                                     ->createOptionForm([
-                                        Forms\Components\TextInput::make('valor')
+                                        Forms\Components\Select::make('tipo_cargo')
+                                            ->label('Cargo / Tipo')
+                                            ->options([
+                                                'asesor_ventas' => '💼 Asesor de Ventas',
+                                            ])
+                                            ->default('asesor_ventas')
+                                            ->required()
+                                            ->disabled(),
+
+                                        Forms\Components\TextInput::make('nombre_completo')
                                             ->label('Nombre Completo del Asesor')
                                             ->required()
                                             ->maxLength(255),
 
+                                        Forms\Components\TextInput::make('dni')
+                                            ->label('DNI')
+                                            ->required()
+                                            ->mask('99999999')
+                                            ->placeholder('12345678')
+                                            ->rule('digits:8')
+                                            ->unique('trabajadores', 'dni'),
+
+                                        Forms\Components\DatePicker::make('fecha_nacimiento')
+                                            ->label('Fecha de Nacimiento')
+                                            ->default(now()->subYears(25))
+                                            ->required()
+                                            ->native(false)
+                                            ->displayFormat('d/m/Y')
+                                            ->format('Y-m-d')
+                                            ->maxDate(now()),
+
                                         Forms\Components\TextInput::make('orden')
-                                            ->label('Orden')
+                                            ->label('Orden (posición en la lista)')
                                             ->numeric()
                                             ->default(999),
 
@@ -80,14 +105,17 @@ class IngresoResource extends Resource
                                             ->rows(2),
                                     ])
                                     ->createOptionUsing(function (array $data) {
-                                        $nuevo = DatoOperacion::create([
-                                            'tipo'        => 'asesor',
-                                            'valor'       => strtoupper(trim($data['valor'])),
-                                            'descripcion' => $data['descripcion'] ?? null,
-                                            'orden'       => $data['orden'] ?? 999,
-                                            'activo'      => true,
+                                        $nuevoTrabajador = \App\Models\Trabajador::create([
+                                            'tipo_cargo'       => 'asesor_ventas',
+                                            'nombre_completo'  => strtoupper(trim($data['nombre_completo'])),
+                                            'dni'              => $data['dni'] ?? null,
+                                            'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+                                            'descripcion'      => $data['descripcion'] ?? null,
+                                            'orden'            => $data['orden'] ?? 999,
+                                            'activo'           => true,
                                         ]);
-                                        return $nuevo->valor;
+
+                                        return $nuevoTrabajador->nombre_completo;
                                     })
                                     ->createOptionAction(fn ($action) => $action->label('+ Crear nuevo asesor')),
                             ])
@@ -138,52 +166,113 @@ class IngresoResource extends Resource
             ->columns([
                 TextColumn::make('fecha')
                     ->date('d/m/Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('modo_pago')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'CAN-CONTRATO' => 'success',
+                        'CAN-CONTRATO'  => 'success',
                         'ADEL-CONTRATO' => 'warning',
-                        'IN-OTROS' => 'info',
-                    }),
+                        'IN-OTROS'      => 'info',
+                    })
+                    ->toggleable(),
 
                 TextColumn::make('numero_contrato')
-                    ->label('N° Contrato'),
+                    ->label('N° Contrato')
+                    ->toggleable(),
 
                 TextColumn::make('asesor')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('detalle')
                     ->wrap()
-                    ->limit(60),
+                    ->limit(60)
+                    ->toggleable(),
 
                 TextColumn::make('monto')
                     ->money('PEN')
                     ->alignEnd()
+                    ->toggleable()
                     ->summarize(Sum::make()->label('TOTAL')),
 
-                TextColumn::make('banco'),
-                TextColumn::make('obs')->label('OBS.'),
+                TextColumn::make('banco')
+                    ->toggleable(),
+
+                TextColumn::make('obs')
+                    ->label('OBS.')
+                    ->toggleable(),
             ])
             ->defaultSort('fecha', 'desc')
             ->filters([
                 Filter::make('fecha')
                     ->form([
-                        Forms\Components\DatePicker::make('desde'),
-                        Forms\Components\DatePicker::make('hasta'),
+                        Forms\Components\DatePicker::make('desde')->label('Desde'),
+                        Forms\Components\DatePicker::make('hasta')->label('Hasta'),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['desde'], fn($q) => $q->where('fecha', '>=', $data['desde']))
-                            ->when($data['hasta'], fn($q) => $q->where('fecha', '<=', $data['hasta']));
+                            ->when($data['desde'], fn($q) => $q->whereDate('fecha', '>=', $data['desde']))
+                            ->when($data['hasta'], fn($q) => $q->whereDate('fecha', '<=', $data['hasta']));
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['desde'] ?? null) $indicators[] = 'Desde: ' . $data['desde'];
+                        if ($data['hasta'] ?? null) $indicators[] = 'Hasta: ' . $data['hasta'];
+                        return $indicators;
                     }),
 
-                SelectFilter::make('modo_pago'),
-                SelectFilter::make('asesor'),
-                SelectFilter::make('banco'),
-                SelectFilter::make('obs'),
+                SelectFilter::make('modo_pago')
+                    ->label('Modo de Pago')
+                    ->options([
+                        'CAN-CONTRATO'  => 'CAN-CONTRATO',
+                        'ADEL-CONTRATO' => 'ADEL-CONTRATO',
+                        'IN-OTROS'      => 'IN-OTROS',
+                    ])
+                    ->multiple()
+                    ->searchable(),
+
+                SelectFilter::make('asesor')
+                    ->label('Asesor')
+                    ->options(fn () => \App\Models\Trabajador::where('tipo_cargo', 'asesor_ventas')
+                        ->where('activo', true)
+                        ->orderBy('orden')
+                        ->pluck('nombre_completo', 'nombre_completo')
+                    )
+                    ->multiple()
+                    ->searchable(),
+
+                SelectFilter::make('banco')
+                    ->label('Banco')
+                    ->options([
+                        'EFECTIVO' => 'EFECTIVO',
+                        'CTA.CTE'  => 'CTA.CTE',
+                    ])
+                    ->multiple(),
+
+                SelectFilter::make('obs')
+                    ->label('OBS.')
+                    ->options([
+                        'EFECTIVO' => 'EFECTIVO',
+                        'CTA.CTE'  => 'CTA.CTE',
+                    ])
+                    ->multiple(),
+
+                Tables\Filters\TernaryFilter::make('tiene_contrato')
+                    ->label('Con N° Contrato')
+                    ->nullable()
+                    ->placeholder('Todos')
+                    ->trueLabel('Con contrato')
+                    ->falseLabel('Sin contrato')
+                    ->queries(
+                        true:  fn ($query) => $query->whereNotNull('numero_contrato')->where('numero_contrato', '!=', ''),
+                        false: fn ($query) => $query->where(fn($q) => $q->whereNull('numero_contrato')->orWhere('numero_contrato', '')),
+                        blank: fn ($query) => $query,
+                    ),
             ])
+            ->filtersFormColumns(1)
+            ->filtersFormMaxHeight('400px')
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
@@ -193,9 +282,9 @@ class IngresoResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListIngresos::route('/'),
+            'index'  => Pages\ListIngresos::route('/'),
             'create' => Pages\CreateIngreso::route('/create'),
-            'edit' => Pages\EditIngreso::route('/{record}/edit'),
+            'edit'   => Pages\EditIngreso::route('/{record}/edit'),
         ];
     }
 }

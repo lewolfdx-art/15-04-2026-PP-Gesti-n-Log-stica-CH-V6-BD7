@@ -27,61 +27,20 @@ class DatoOperacionResource extends Resource
                 Forms\Components\Select::make('tipo')
                     ->label('Tipo')
                     ->options([
-                        // ==================== TIPOS GENERALES ====================
-                        'modo_pago'     => '🔸 Modo de Pago',
-                        'banco'         => '🏦 Banco',
-                        'asesor'        => '👤 Asesor',
-                        'cancelacion'   => '✅ Cancelación',
-                        'estado'        => '📊 Estado',
-
-                        // ==================== CARGOS / PERSONAL ====================
-                        'operador_planta'              => '👷 OPERADOR DE PLANTA',
-                        'operador_retroexcavadora'     => '👷 OPERADOR DE RETROEXCAVADORA',
-                        'ayudante_planta'              => '👷 AYUDANTE DE PLANTA',
-                        'operador_bomba_telescopica'   => '👷 OPERADOR DE BOMBA TELESCOPICA',
-                        'ayudante_manguerero_bt'       => '👷 AYUDANTE DE MANGUERERO DE B.T',
-                        'ayudante_vibrador_bt'         => '👷 AYUDANTE VIBRADOR DE BOMBA TELESCOPICA',
-                        'jefe_mantenimiento'           => '🛠️ JEFE DE MANTENIMIENTO',
-                        'operador_mixer'               => '👷 OPERADOR DE MIXER',
-                        'operador_trayler'             => '👷 OPERADOR DE TRAYLER',
-                        'ayudante_bomba'               => '👷 AYUDANTE DE BOMBA',
-                        'asesor_ventas'                => '👷 ASESOR DE VENTAS',
-                        'asistente_calidad'            => '👷 ASISTENTE DE CALIDAD',
-                        'administracion'               => '📈 ADMINISTRACIÓN',
-                        'asistente_administrativo'     => '📝 ASISTENTE ADMINISTRATIVO',
-                        'planeamiento'                 => '👷 PLANEAMIENTO',
-                        'seguridad_noche'              => '💂 SEGURIDAD DE NOCHE',
-                        'contador'                     => '🧑‍⚖️ CONTADOR',
-                        'personal_curado'              => '👷 PERSONAL DE CURADO',
+                        'modo_pago'   => '🔸 Modo de Pago',
+                        'banco'       => '🏦 Banco',
+                        'cancelacion' => '✅ Cancelación',
+                        'estado'      => '📊 Estado',
                     ])
                     ->required()
                     ->native(false)
                     ->searchable()
                     ->live(),
 
-                Forms\Components\Toggle::make('es_persona')
-                    ->label('Es Persona (Activar DNI y Fecha de Nacimiento)')
-                    ->default(false)
-                    ->live()
-                    ->columnSpanFull(),
-
                 Forms\Components\TextInput::make('valor')
-                    ->label('Nombre Completo')
+                    ->label('Valor / Nombre')
                     ->required()
                     ->maxLength(255),
-
-                // === Campos que aparecen solo si el toggle está activado ===
-                Forms\Components\TextInput::make('documento')
-                    ->label('Documento de Identidad (DNI)')
-                    ->visible(fn (Forms\Get $get) => $get('es_persona'))
-                    ->maxLength(20),
-
-                    Forms\Components\DatePicker::make('fecha_nacimiento')
-                    ->label('Fecha de Nacimiento')
-                    ->visible(fn (Forms\Get $get) => $get('es_persona'))
-                    ->native(true)                    // ←←← Cambia a true (o elimínalo)
-                    ->displayFormat('d/m/Y')          // Formato que se muestra en el input (opcional)
-                    ->format('Y-m-d'),
 
                 Forms\Components\Textarea::make('descripcion')
                     ->label('Descripción / Observación')
@@ -104,73 +63,38 @@ class DatoOperacionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('tipo')
-                ->label('Tipo')
-                ->badge()
-                ->formatStateUsing(fn (string $state): string => 
-                    match($state) {
-                        'modo_pago'     => 'Modo de Pago',
-                        'banco'         => 'Banco',
-                        'asesor'        => 'Asesor',
-                        'cancelacion'   => 'Cancelación',
-                        'estado'        => 'Estado',
-            
-                        // Cargos / Personal (puedes mantener los emojis si quieres)
-                        'operador_planta'              => '👷 Operador de Planta',
-                        'operador_retroexcavadora'     => '🚜 Operador de Retroexcavadora',
-                        'ayudante_planta'              => '👷 Ayudante de Planta',
-                        'operador_bomba_telescopica'   => '🚧 Operador de Bomba Telescópica',
-                        'ayudante_manguerero_bt'       => '👷 Ayudante Manguerero B.T',
-                        'ayudante_vibrador_bt'         => '👷 Ayudante Vibrador B.T',
-                        'jefe_mantenimiento'           => '🛠️ Jefe de Mantenimiento',
-                        'operador_mixer'               => '🚛 Operador de Mixer',
-                        'operador_trayler'             => '🚛 Operador de Trayler',
-                        'ayudante_bomba'               => '👷 Ayudante de Bomba',
-                        'asesor_ventas'                => '💼 Asesor de Ventas',
-                        'asistente_calidad'            => '📋 Asistente de Calidad',
-                        'administracion'               => '🏢 Administración',
-                        'asistente_administrativo'     => '📑 Asistente Administrativo',
-                        'planeamiento'                 => '📊 Planeamiento',
-                        'seguridad_noche'              => '🌙 Seguridad de Noche',
-                        'contador'                     => '💰 Contador',
-                        'personal_curado'              => '👷 Personal de Curado',
-            
-                        default => str_replace('_', ' ', ucwords($state)),
-                    }
-                )
-                ->color(fn (string $state): string => 
-                    match($state) {
-                        'estado'      => 'success',     // Verde
-                        'banco'       => 'info',        // Azul
-                        'modo_pago'   => 'danger',      // Rojo
-                        'cancelacion' => 'gray',        // Gris
-                        'asesor'      => 'warning',     // Amarillo / Naranja (opcional)
-                        default       => 'primary',     // Azul por defecto para los cargos
-                    }
-                )
-                ->sortable()
-                ->toggleable(),
+                    ->label('Tipo')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => 
+                        match($state) {
+                            'modo_pago'   => 'Modo de Pago',
+                            'banco'       => 'Banco',
+                            'cancelacion' => 'Cancelación',
+                            'estado'      => 'Estado',
+                            default       => str_replace('_', ' ', ucwords($state)),
+                        }
+                    )
+                    ->color(fn (string $state): string => 
+                        match($state) {
+                            'estado'      => 'success',
+                            'banco'       => 'info',
+                            'modo_pago'   => 'danger',
+                            'cancelacion' => 'gray',
+                            default       => 'primary',
+                        }
+                    )
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('valor')
                     ->label('Valor / Nombre')
                     ->searchable()
                     ->sortable()
-                    ->weight('medium')
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('documento')
-                    ->label('DNI')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('fecha_nacimiento')
-                    ->label('Fecha Nac.')
-                    ->date('d/m/Y')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->weight('medium'),
 
                 Tables\Columns\TextColumn::make('descripcion')
                     ->label('Descripción')
-                    ->limit(60)
-                    ->searchable()
+                    ->limit(80)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('orden')
@@ -179,8 +103,7 @@ class DatoOperacionResource extends Resource
                     ->toggleable(),
 
                 Tables\Columns\ToggleColumn::make('activo')
-                    ->label('Activo')
-                    ->toggleable(),
+                    ->label('Activo'),
             ])
             ->defaultSort('orden', 'asc')
             ->searchable()
@@ -188,45 +111,15 @@ class DatoOperacionResource extends Resource
                 Tables\Filters\SelectFilter::make('tipo')
                     ->label('Tipo')
                     ->options([
-
-                        // OTROS TIPOS
-                        'modo_pago'     => 'Modo de Pago',
-                        'banco'         => 'Banco',
-                        'asesor'        => 'Asesor',
-                        'cancelacion'   => 'Cancelación',
-                        'estado'        => 'Estado',                        
-
-                        // CARGOS
-                        'operador_planta'              => '👷 OPERADOR DE PLANTA',
-                        'operador_retroexcavadora'     => '🚜 OPERADOR DE RETROEXCAVADORA',
-                        'ayudante_planta'              => '👷 AYUDANTE DE PLANTA',
-                        'operador_bomba_telescopica'   => '🚧 OPERADOR DE BOMBA TELESCOPICA',
-                        'ayudante_manguerero_bt'       => '👷 AYUDANTE DE MANGUERERO DE B.T',
-                        'ayudante_vibrador_bt'         => '👷 AYUDANTE VIBRADOR DE BOMBA TELESCOPICA',
-                        'jefe_mantenimiento'           => '🛠️ JEFE DE MANTENIMIENTO',
-                        'operador_mixer'               => '🚛 OPERADOR DE MIXER',
-                        'operador_trayler'             => '🚛 OPERADOR DE TRAYLER',
-                        'ayudante_bomba'               => '👷 AYUDANTE DE BOMBA',
-                        'asesor_ventas'                => '💼 ASESOR DE VENTAS',
-                        'asistente_calidad'            => '📋 ASISTENTE DE CALIDAD',
-                        'administracion'               => '🏢 ADMINISTRACIÓN',
-                        'asistente_administrativo'     => '📑 ASISTENTE ADMINISTRATIVO',
-                        'planeamiento'                 => '📊 PLANEAMIENTO',
-                        'seguridad_noche'              => '🌙 SEGURIDAD DE NOCHE',
-                        'contador'                     => '💰 CONTADOR',
-                        'personal_curado'              => '👷 PERSONAL DE CURADO',
-
-
+                        'modo_pago'   => 'Modo de Pago',
+                        'banco'       => 'Banco',
+                        'cancelacion' => 'Cancelación',
+                        'estado'      => 'Estado',
                     ])
                     ->multiple()
-                    ->preload()
                     ->searchable(),
 
-                Tables\Filters\TernaryFilter::make('activo')
-                    ->label('Activo')
-                    ->trueLabel('Solo Activos')
-                    ->falseLabel('Solo Inactivos')
-                    ->placeholder('Todos'),
+                Tables\Filters\TernaryFilter::make('activo'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
