@@ -146,7 +146,9 @@ class CuentaPorPagarResource extends Resource
                     ->money('PEN')
                     ->alignEnd()
                     ->summarize(
-                        Sum::make()->label('TOTAL GENERAL')
+                        Sum::make()
+                            ->label('TOTAL POR PAGAR')
+                            ->query(fn ($query) => $query->where('pagado', false))
                     )
                     ->toggleable(),
 
