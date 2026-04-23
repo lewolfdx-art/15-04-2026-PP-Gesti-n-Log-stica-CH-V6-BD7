@@ -65,10 +65,10 @@ class Gasto extends Model
         return $query->whereDate('fecha', $fecha);
     }
 
-    public function scopeDelMes($query, $mes, $anio = null)
+    public function scopeDelMes($query, $mes, $año = null)
     {
-        $anio = $anio ?? now()->year;
-        return $query->whereYear('fecha', $anio)
+        $año = $año ?? now()->year;
+        return $query->whereYear('fecha', $año)
                      ->whereMonth('fecha', $mes);
     }
 

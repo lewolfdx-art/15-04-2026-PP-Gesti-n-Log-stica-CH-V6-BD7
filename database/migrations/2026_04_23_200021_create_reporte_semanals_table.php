@@ -22,7 +22,7 @@ return new class extends Migration
             // Campos para quincena
             $table->enum('quincena', ['PRIMERA', 'SEGUNDA'])->nullable();
             $table->integer('mes')->nullable();
-            $table->integer('anio')->nullable();
+            $table->integer('año')->nullable();
             $table->date('fecha_desde_quincena')->nullable();
             $table->date('fecha_hasta_quincena')->nullable();
             

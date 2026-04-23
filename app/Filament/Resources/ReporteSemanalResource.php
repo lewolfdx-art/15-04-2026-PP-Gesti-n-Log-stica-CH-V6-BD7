@@ -15,8 +15,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Builder;
 
 class ReporteSemanalResource extends Resource
@@ -92,10 +90,10 @@ class ReporteSemanalResource extends Resource
                     ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                        if ($state && $get('mes') && $get('anio')) {
+                        if ($state && $get('mes') && $get('año')) {
                             $mes = $get('mes');
-                            $anio = $get('anio');
-                            $fecha = \Carbon\Carbon::createFromDate($anio, $mes, 1);
+                            $año = $get('año');
+                            $fecha = \Carbon\Carbon::createFromDate($año, $mes, 1);
                             
                             if ($state === 'PRIMERA') {
                                 $set('fecha_desde_quincena', $fecha->format('Y-m-d'));
@@ -108,17 +106,29 @@ class ReporteSemanalResource extends Resource
                         }
                     }),
 
-                TextInput::make('mes')
+                Select::make('mes')
                     ->label('Mes')
-                    ->numeric()
-                    ->minValue(1)
-                    ->maxValue(12)
+                    ->options([
+                        1 => 'Enero',
+                        2 => 'Febrero',
+                        3 => 'Marzo',
+                        4 => 'Abril',
+                        5 => 'Mayo',
+                        6 => 'Junio',
+                        7 => 'Julio',
+                        8 => 'Agosto',
+                        9 => 'Septiembre',
+                        10 => 'Octubre',
+                        11 => 'Noviembre',
+                        12 => 'Diciembre',
+                    ])
                     ->visible(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
                     ->required(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
-                    ->live(),
+                    ->live()
+                    ->native(false),
 
-                TextInput::make('anio')
-                    ->label('Anio')
+                TextInput::make('año')
+                    ->label('Año')
                     ->numeric()
                     ->minValue(2020)
                     ->maxValue(2030)
@@ -198,35 +208,52 @@ class ReporteSemanalResource extends Resource
                         'semanal' => 'Semanal',
                         'quincena' => 'Quincena',
                         'fin_mes' => 'Fin de Mes',
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('semana')
                     ->label('Semana')
                     ->formatStateUsing(fn ($state) => $state ? "Semana {$state}" : '-')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('quincena')
                     ->label('Quincena')
-                    ->formatStateUsing(fn ($state) => $state === 'PRIMERA' ? '1ra Quincena' : ($state === 'SEGUNDA' ? '2da Quincena' : '-')),
+                    ->formatStateUsing(fn ($state) => $state === 'PRIMERA' ? '1ra Quincena' : ($state === 'SEGUNDA' ? '2da Quincena' : '-'))
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('mes')
-                    ->label('Mes/Anio')
-                    ->formatStateUsing(fn ($record) => $record->mes && $record->anio ? "{$record->mes}/{$record->anio}" : '-'),
+                    ->label('Mes/Año')
+                    ->formatStateUsing(function ($record) {
+                        if ($record->mes && $record->año) {
+                            $meses = [
+                                1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                                5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                                9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                            ];
+                            return $meses[$record->mes] . ' ' . $record->año;
+                        }
+                        return '-';
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('proveedor')
                     ->label('Proveedor')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('detalle')
                     ->label('Detalle')
                     ->limit(30)
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 TextColumn::make('monto')
                     ->label('Monto')
                     ->money('PEN')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
     
                 BadgeColumn::make('estado')
                     ->label('Estado')
@@ -235,11 +262,26 @@ class ReporteSemanalResource extends Resource
                         'danger' => 'DEBE',
                         'warning' => 'ADELANTO',
                     ])
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->header(function () {
-                $totales = self::getTotalesAgrupados();
-                return view('filament.components.resumen-totales', ['totales' => $totales]);
+                $tableFilters = request()->get('tableFilters', []);
+                
+                $filtros = [];
+                if (isset($tableFilters['tipo_periodo']['value'])) {
+                    $filtros['tipo_periodo'] = $tableFilters['tipo_periodo']['value'];
+                }
+                if (isset($tableFilters['estado']['value'])) {
+                    $filtros['estado'] = $tableFilters['estado']['value'];
+                }
+                
+                $data = self::getTotalesAgrupados($filtros);
+                
+                return view('filament.components.resumen-totales', [
+                    'totales' => $data['pendientes'],
+                    'historial' => $data['historial']
+                ]);
             })
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -281,21 +323,20 @@ class ReporteSemanalResource extends Resource
         ];
     }
 
-    // Método auxiliar para calcular totales agrupados
-    public static function getTotalesAgrupados(): array
+    // Método auxiliar para calcular totales agrupados con historial
+    public static function getTotalesAgrupados(array $filtros = []): array
     {
+        // ========== PARTE 1: REGISTROS PENDIENTES (DEBE y ADELANTO) ==========
         $query = ReporteSemanal::query();
         
-        // Aplicar los mismos filtros que tiene la tabla
-        if (request()->has('tableFilters')) {
-            $filters = request()->input('tableFilters');
-            
-            if (isset($filters['tipo_periodo']['value'])) {
-                $query->where('tipo_periodo', $filters['tipo_periodo']['value']);
+        // Aplicar filtros
+        if (!empty($filtros)) {
+            if (isset($filtros['tipo_periodo'])) {
+                $query->where('tipo_periodo', $filtros['tipo_periodo']);
             }
             
-            if (isset($filters['estado']['value'])) {
-                $query->where('estado', $filters['estado']['value']);
+            if (isset($filtros['estado'])) {
+                $query->where('estado', $filtros['estado']);
             }
         }
         
@@ -312,20 +353,25 @@ class ReporteSemanalResource extends Resource
         
         foreach ($registros as $registro) {
             if ($registro->tipo_periodo === 'semanal') {
-                $key = "Semana {$registro->semana} ({$registro->fecha_desde} - {$registro->fecha_hasta})";
+                $key = "Semana {$registro->semana}";
+                if ($registro->fecha_desde && $registro->fecha_hasta) {
+                    $key .= " (" . \Carbon\Carbon::parse($registro->fecha_desde)->format('d/m') . 
+                    " - " . \Carbon\Carbon::parse($registro->fecha_hasta)->format('d/m') . 
+                    "/" . \Carbon\Carbon::parse($registro->fecha_desde)->format('Y') . ")";
+                }
                 if (!isset($totales['semanal'][$key])) {
                     $totales['semanal'][$key] = 0;
                 }
                 $totales['semanal'][$key] += $registro->monto;
             } elseif ($registro->tipo_periodo === 'quincena') {
                 $key = $registro->quincena === 'PRIMERA' ? 'Primera Quincena' : 'Segunda Quincena';
-                $key .= " ({$registro->mes}/{$registro->anio})";
+                $key .= " ({$registro->mes}/{$registro->año})";
                 if (!isset($totales['quincenal'][$key])) {
                     $totales['quincenal'][$key] = 0;
                 }
                 $totales['quincenal'][$key] += $registro->monto;
             } elseif ($registro->tipo_periodo === 'fin_mes') {
-                $key = "Fin de Mes - {$registro->mes}/{$registro->anio}";
+                $key = "Fin de Mes - {$registro->mes}/{$registro->año}";
                 if (!isset($totales['fin_mes'][$key])) {
                     $totales['fin_mes'][$key] = 0;
                 }
@@ -333,6 +379,24 @@ class ReporteSemanalResource extends Resource
             }
         }
         
-        return $totales;
+        // ========== PARTE 2: HISTORIAL DE REGISTROS PAGADOS (CANCELADO) ==========
+        $queryHistorial = ReporteSemanal::query();
+        
+        // Aplicar mismos filtros de tipo_periodo al historial (pero NO filtro de estado)
+        if (!empty($filtros) && isset($filtros['tipo_periodo'])) {
+            $queryHistorial->where('tipo_periodo', $filtros['tipo_periodo']);
+        }
+        
+        // Solo traer los CANCELADOS para el historial
+        $queryHistorial->where('estado', 'CANCELADO');
+        $queryHistorial->orderBy('created_at', 'desc');
+        
+        $historial = $queryHistorial->get();
+        
+        // ========== PARTE 3: RETORNAR AMBOS ==========
+        return [
+            'pendientes' => $totales,
+            'historial' => $historial,
+        ];
     }
 }

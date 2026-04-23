@@ -15,8 +15,8 @@ return new class extends Migration
             // Campos para quincena
             $table->enum('quincena', ['PRIMERA', 'SEGUNDA'])->nullable()->after('fecha_hasta');
             $table->integer('mes')->nullable()->after('quincena');
-            $table->integer('anio')->nullable()->after('mes');
-            $table->date('fecha_desde_quincena')->nullable()->after('anio');
+            $table->integer('año')->nullable()->after('mes');
+            $table->date('fecha_desde_quincena')->nullable()->after('año');
             $table->date('fecha_hasta_quincena')->nullable()->after('fecha_desde_quincena');
             
             // Campos para fin de mes
@@ -31,7 +31,7 @@ return new class extends Migration
                 'tipo_periodo',
                 'quincena',
                 'mes',
-                'anio',
+                'año',
                 'fecha_desde_quincena',
                 'fecha_hasta_quincena',
                 'fecha_fin_mes'

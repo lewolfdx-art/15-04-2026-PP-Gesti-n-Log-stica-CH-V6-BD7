@@ -18,7 +18,7 @@ class ReporteSemanal extends Model
         'fecha_hasta',
         'quincena',
         'mes',
-        'anio',
+        'año',  // Cambiado de 'año' a 'anio'
         'fecha_desde_quincena',
         'fecha_hasta_quincena',
         'fecha_fin_mes',
