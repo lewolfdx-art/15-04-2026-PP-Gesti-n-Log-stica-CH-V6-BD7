@@ -11,7 +11,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\DeleteAction;
 
 class GastoResource extends Resource
@@ -164,10 +163,10 @@ class GastoResource extends Resource
                     }),
             ])
             ->actions([
-                ViewAction::make()->label('Ver'),
                 EditAction::make()->label('Editar'),
                 DeleteAction::make()->label('Eliminar')->color('danger'),
             ])
+            
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
