@@ -15,7 +15,7 @@ class DatoOperacionResource extends Resource
     protected static ?string $model = DatoOperacion::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Gestión de Gastos';
+    protected static ?string $navigationGroup = 'Gestión de Operaciones';
     protected static ?string $pluralLabel = 'Datos de Operación';
     protected static ?string $singularLabel = 'Dato de Operación';
     protected static ?string $recordTitleAttribute = 'valor';

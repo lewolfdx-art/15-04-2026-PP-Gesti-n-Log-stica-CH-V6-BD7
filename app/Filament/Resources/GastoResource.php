@@ -21,7 +21,7 @@ class GastoResource extends Resource
     protected static ?string $navigationLabel = 'Gastos';
     protected static ?string $pluralLabel = 'Gastos';
     protected static ?string $modelLabel = 'Gasto';
-    protected static ?string $navigationGroup = 'Reportes Financieros';
+    protected static ?string $navigationGroup = 'Finanzas';
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form

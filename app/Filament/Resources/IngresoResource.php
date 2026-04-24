@@ -20,7 +20,7 @@ class IngresoResource extends Resource
     protected static ?string $model = Ingreso::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationGroup = 'Reportes Financieros';
+    protected static ?string $navigationGroup = 'Finanzas';
     protected static ?string $navigationLabel = 'Control de Ingresos';
     protected static ?int $navigationSort = 1;
 

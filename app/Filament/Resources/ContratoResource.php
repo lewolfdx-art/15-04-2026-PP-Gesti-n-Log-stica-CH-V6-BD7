@@ -26,7 +26,7 @@ class ContratoResource extends Resource
     protected static ?string $navigationLabel = 'Contratos / Ventas';
     protected static ?string $pluralLabel = 'Contratos';
     protected static ?string $modelLabel = 'Contrato';
-
+    protected static ?string $navigationGroup = 'Comercial';
     public static function form(Form $form): Form
     {
         return $form

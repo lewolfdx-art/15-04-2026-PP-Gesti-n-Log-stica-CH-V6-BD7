@@ -26,7 +26,7 @@ class CuentaPorPagarResource extends Resource
     protected static ?string $navigationLabel = 'Cuentas por Pagar';
     protected static ?string $modelLabel = 'Cuenta por Pagar';
     protected static ?string $pluralModelLabel = 'Cuentas por Pagar';
-
+    protected static ?string $navigationGroup = 'Finanzas';
     public static function form(Form $form): Form
     {
         return $form->schema([

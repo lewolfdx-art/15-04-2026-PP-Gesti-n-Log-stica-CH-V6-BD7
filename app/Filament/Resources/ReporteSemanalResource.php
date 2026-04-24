@@ -23,7 +23,7 @@ class ReporteSemanalResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Reporte Semanal';
     protected static ?string $pluralLabel = 'Reportes Semanales';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static ?string $navigationGroup = 'Gestión de Operaciones';
 
     public static function form(Form $form): Form
     {
