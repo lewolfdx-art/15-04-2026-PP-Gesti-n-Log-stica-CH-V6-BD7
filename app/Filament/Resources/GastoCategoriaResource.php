@@ -14,7 +14,7 @@ class GastoCategoriaResource extends Resource
 {
     protected static ?string $model = GastoCategoria::class;
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationGroup = 'Finanzas'; 
+    protected static ?string $navigationGroup = 'Gestión de Operaciones'; 
     protected static ?string $pluralLabel = 'Categorías de Gastos';
     protected static ?string $singularLabel = 'Categoría de Gasto';
 

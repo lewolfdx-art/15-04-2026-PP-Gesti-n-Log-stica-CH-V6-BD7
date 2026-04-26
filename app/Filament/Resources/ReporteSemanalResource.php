@@ -23,7 +23,7 @@ class ReporteSemanalResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Reporte Semanal';
     protected static ?string $pluralLabel = 'Reportes Semanales';
-    protected static ?string $navigationGroup = 'Gestión de Operaciones';
+    protected static ?string $navigationGroup = 'Finanzas';
 
     public static function form(Form $form): Form
     {
@@ -54,13 +54,14 @@ class ReporteSemanalResource extends Resource
                     ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live(),
 
-                DatePicker::make('fecha_desde')
+                    DatePicker::make('fecha_desde')
                     ->label('Fecha Desde')
                     ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
+                    ->closeOnDateSelection() // 👈 mejora UX
                     ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
@@ -70,7 +71,7 @@ class ReporteSemanalResource extends Resource
                             $set('fecha_hasta', $fechaHasta->format('Y-m-d'));
                         }
                     }),
-
+                
                 DatePicker::make('fecha_hasta')
                     ->label('Fecha Hasta')
                     ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
@@ -78,6 +79,7 @@ class ReporteSemanalResource extends Resource
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
+                    ->closeOnDateSelection()
                     ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal'),
 
                 Select::make('quincena')
