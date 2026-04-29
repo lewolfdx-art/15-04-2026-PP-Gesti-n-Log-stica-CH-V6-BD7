@@ -9,7 +9,7 @@ class GastoCategoriaSeeder extends Seeder
 {
     public function run()
     {
-        GastoCategoria::truncate();
+        //GastoCategoria::truncate();
 
         $categorias = [
             // MATERIA PRIMA

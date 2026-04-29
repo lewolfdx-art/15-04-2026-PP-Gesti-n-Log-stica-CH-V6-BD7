@@ -52,7 +52,7 @@ class DatoOperacionSeeder extends Seeder
                     'descripcion' => null,
                     'orden'       => $dato['orden'],
                     'activo'      => true,
-                    'es_persona'  => false,
+                    //'es_persona'  => false,
                 ]
             );
         }
