@@ -16,7 +16,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
-use Filament\Tables\Columns\Summarizers\Sum;
 
 class CuentaPorPagarResource extends Resource
 {
@@ -27,6 +26,7 @@ class CuentaPorPagarResource extends Resource
     protected static ?string $modelLabel = 'Cuenta por Pagar';
     protected static ?string $pluralModelLabel = 'Cuentas por Pagar';
     protected static ?string $navigationGroup = 'Finanzas';
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -73,7 +73,6 @@ class CuentaPorPagarResource extends Resource
                 ->label('Año')
                 ->options(function () {
                     $currentYear = now()->year;
-
                     return collect(range($currentYear - 2, $currentYear + 3))
                         ->mapWithKeys(fn ($y) => [$y => $y])
                         ->toArray();
@@ -145,11 +144,7 @@ class CuentaPorPagarResource extends Resource
                     ->label('Total')
                     ->money('PEN')
                     ->alignEnd()
-                    ->summarize(
-                        Sum::make()
-                            ->label('TOTAL POR PAGAR')
-                            ->query(fn ($query) => $query->where('pagado', false))
-                    )
+                    ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('pagado')
@@ -163,6 +158,27 @@ class CuentaPorPagarResource extends Resource
                     ->label('Pagar')
                     ->toggleable(),
             ])
+            ->header(function () {
+                $tableFilters = request()->get('tableFilters', []);
+
+                $filtros = [];
+                if (isset($tableFilters['tipo']['value'])) {
+                    $filtros['tipo'] = $tableFilters['tipo']['value'];
+                }
+                if (isset($tableFilters['mes']['value'])) {
+                    $filtros['mes'] = $tableFilters['mes']['value'];
+                }
+                if (isset($tableFilters['año']['value'])) {
+                    $filtros['año'] = $tableFilters['año']['value'];
+                }
+
+                $data = self::getTotalesYHistorial($filtros);
+
+                return view('filament.components.resumen-cuentas-por-pagar', [
+                    'total_por_pagar' => $data['total_por_pagar'],
+                    'historial'       => $data['historial'],
+                ]);
+            })
             ->defaultSort('created_at', 'desc')
             ->searchable()
             ->filters([
@@ -196,7 +212,6 @@ class CuentaPorPagarResource extends Resource
                     ->label('Año')
                     ->options(function () {
                         $currentYear = now()->year;
-
                         return collect(range($currentYear - 2, $currentYear + 3))
                             ->mapWithKeys(fn ($y) => [$y => $y])
                             ->toArray();
@@ -215,7 +230,57 @@ class CuentaPorPagarResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->striped(); // Esto mantiene las filas sin efecto hover, solo con rayas alternadas
+    }
+
+    /**
+     * Calcula el total por pagar y el historial de pagos
+     */
+    public static function getTotalesYHistorial(array $filtros = []): array
+    {
+        // ==================== TOTAL POR PAGAR ====================
+        $queryPendientes = CuentaPorPagar::query()->where('pagado', false);
+
+        if (!empty($filtros)) {
+            if (isset($filtros['tipo'])) {
+                $queryPendientes->where('tipo', $filtros['tipo']);
+            }
+            if (isset($filtros['mes'])) {
+                $queryPendientes->where('mes', $filtros['mes']);
+            }
+            if (isset($filtros['año'])) {
+                $queryPendientes->where('año', $filtros['año']);
+            }
+        }
+
+        $total_por_pagar = $queryPendientes->sum('total') ?? 0;
+
+        // ==================== HISTORIAL DE PAGOS REALIZADOS ====================
+        $queryHistorial = CuentaPorPagar::query()
+            ->where('pagado', true)
+            ->orderBy('updated_at', 'desc')
+            ->limit(15);
+
+        // Aplicar los mismos filtros al historial (excepto el de pagado)
+        if (!empty($filtros)) {
+            if (isset($filtros['tipo'])) {
+                $queryHistorial->where('tipo', $filtros['tipo']);
+            }
+            if (isset($filtros['mes'])) {
+                $queryHistorial->where('mes', $filtros['mes']);
+            }
+            if (isset($filtros['año'])) {
+                $queryHistorial->where('año', $filtros['año']);
+            }
+        }
+
+        $historial = $queryHistorial->get();
+
+        return [
+            'total_por_pagar' => $total_por_pagar,
+            'historial'       => $historial,
+        ];
     }
 
     public static function getPages(): array
