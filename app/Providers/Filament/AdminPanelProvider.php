@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('favicon.ico'))
             ->colors([
-                'primary' => Color::Cyan,
+                'primary' => Color::Orange,
             ])
 
             // 👇 ORDEN DE LOS GRUPOS
