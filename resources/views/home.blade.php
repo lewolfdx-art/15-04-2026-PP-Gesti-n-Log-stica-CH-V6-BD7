@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Inicio - Concretera Huancayo')
+@section('title', 'Inicio - Concretera Mantaro')
 
 @section('content')
     @php
@@ -14,8 +14,8 @@
             if ($inicio->beneficios) {
                 $beneficios = is_array($inicio->beneficios) ? $inicio->beneficios : json_decode($inicio->beneficios, true);
             }
-            if ($inicio->proyectos_destacados) {
-                $proyectos = is_array($inicio->proyectos_destacados) ? $inicio->proyectos_destacados : json_decode($inicio->proyectos_destacados, true);
+            if ($inicio->proyectos_recientes) {
+                $proyectos = is_array($inicio->proyectos_recientes) ? $inicio->proyectos_recientes : json_decode($inicio->proyectos_recientes, true);
             }
             if ($inicio->nuestras_operaciones) {
                 $operaciones = is_array($inicio->nuestras_operaciones) ? $inicio->nuestras_operaciones : json_decode($inicio->nuestras_operaciones, true);
@@ -24,13 +24,25 @@
     @endphp
 
     <style>
+        /* Nuevos colores corporativos */
+        :root {
+            --color-primary: #f5811e;      /* Naranja principal */
+            --color-primary-dark: #e06e0a;
+            --color-dark: #16222e;         /* Azul oscuro profundo */
+            --color-gold: #ddb31f;         /* Amarillo dorado */
+            --color-terracota: #da914f;    /* Ocre / Terracota */
+            --color-gray-mid: #808185;     /* Gris medio */
+            --color-white: #fcfcfc;
+        }
+
         .hero-custom {
-            background: linear-gradient(135deg, #002366 0%, #001a4d 100%);
+            background: linear-gradient(135deg, var(--color-dark) 0%, #0f1a24 100%);
             border-radius: 1rem;
             padding: 3rem 2rem;
             margin-bottom: 3rem;
             text-align: center;
-            color: white;
+            color: var(--color-white);
+            border-bottom: 3px solid var(--color-primary);
         }
         .hero-custom h1 {
             font-size: 2.5rem;
@@ -38,14 +50,18 @@
             text-transform: uppercase;
             margin-bottom: 1rem;
         }
+        .hero-custom h1 span {
+            color: var(--color-primary);
+        }
         .hero-custom p {
             font-size: 1.2rem;
             max-width: 800px;
             margin: 0 auto 1.5rem auto;
+            color: #e2e2e2;
         }
         .btn-cotizar {
-            background-color: #b40000;
-            color: white;
+            background-color: var(--color-primary);
+            color: var(--color-white);
             padding: 0.75rem 2rem;
             border-radius: 0.5rem;
             font-weight: bold;
@@ -54,8 +70,9 @@
             transition: all 0.3s ease;
         }
         .btn-cotizar:hover {
-            background-color: #8d0000;
+            background-color: var(--color-primary-dark);
             transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(245, 129, 30, 0.4);
         }
         .beneficios-grid {
             display: grid;
@@ -70,6 +87,7 @@
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            border-top: 4px solid var(--color-primary);
         }
         .beneficio-card-custom:hover {
             transform: translateY(-5px);
@@ -79,7 +97,7 @@
             width: 80px;
             height: 80px;
             margin: 0 auto 1rem auto;
-            background-color: #fee2e2;
+            background: linear-gradient(135deg, #fff5eb, #ffe8d6);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -87,20 +105,35 @@
         }
         .beneficio-icon i {
             font-size: 2.5rem;
-            color: #b40000;
+            color: var(--color-primary);
         }
         .beneficio-card-custom h3 {
             font-size: 1.25rem;
             font-weight: bold;
-            color: #002366;
+            color: var(--color-dark);
             margin-bottom: 0.75rem;
+        }
+        .beneficio-card-custom p {
+            color: #4b5563;
         }
         .section-title {
             font-size: 2rem;
             font-weight: bold;
             text-align: center;
-            color: #002366;
             margin-bottom: 2rem;
+            position: relative;
+        }
+        .section-title span {
+            color: var(--color-primary);
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: var(--color-primary);
+            margin: 0.5rem auto 0;
+            border-radius: 2px;
         }
         .operaciones-grid {
             display: grid;
@@ -114,6 +147,7 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
+            border-bottom: 3px solid var(--color-gold);
         }
         .operacion-card:hover {
             transform: translateY(-5px);
@@ -130,7 +164,7 @@
         .operacion-card h3 {
             font-size: 1.2rem;
             font-weight: bold;
-            color: #b40000;
+            color: var(--color-primary);
             margin-bottom: 0.5rem;
         }
         .operacion-card p {
@@ -138,7 +172,7 @@
             font-size: 0.9rem;
         }
         .proyectos-section {
-            background-color: #f9fafb;
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef2f5 100%);
             border-radius: 1rem;
             padding: 2rem 1.5rem;
             margin-bottom: 3rem;
@@ -150,15 +184,23 @@
         }
         .proyecto-card {
             background: white;
-            border-left: 8px solid #b40000;
+            border-left: 8px solid var(--color-primary);
             padding: 1.5rem;
             border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .proyecto-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .proyecto-card h3 {
             font-size: 1.2rem;
             font-weight: bold;
-            color: #b40000;
+            color: var(--color-primary);
             margin-bottom: 0.5rem;
+        }
+        .proyecto-card p {
+            color: #4b5563;
         }
         /* WhatsApp Float Button */
         .whatsapp-float {
@@ -195,14 +237,15 @@
                 bottom: 20px;
                 right: 20px;
             }
+            .section-title { font-size: 1.5rem; }
         }
     </style>
 
     @if($inicio)
         <!-- Hero principal -->
         <div class="hero-custom">
-            <h1>{{ $inicio->hero_title ?? 'Concreto Premezclado de Alta Calidad' }}</h1>
-            <p>{{ $inicio->hero_description ?? '' }}</p>
+            <h1>{{ $inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad' }}</h1>
+            <p>{{ $inicio->hero_description ?? 'Para obras y proyectos en Huancayo y toda la región' }}</p>
             @if($inicio->cta_text && $inicio->cta_url)
                 <a href="{{ $inicio->cta_url }}" class="btn-cotizar">
                     {{ $inicio->cta_text }}
@@ -210,10 +253,34 @@
             @endif
         </div>
 
+        <!-- Proyectos Recientes -->
+        @if(!empty($proyectos) && count($proyectos) > 0)
+        <div class="proyectos-section">
+            <h2 class="section-title">Proyectos <span>Recientes</span></h2>
+            <div class="proyectos-grid">
+                @foreach($proyectos as $proyecto)
+                    <div class="proyecto-card">
+                        @if(!empty($proyecto['image']))
+                            <img src="{{ Storage::url($proyecto['image']) }}" 
+                                 alt="{{ $proyecto['title'] }}"
+                                 class="w-full h-48 object-cover rounded-lg mb-3">
+                        @else
+                            <img src="{{ asset('img/placeholder.jpg') }}" 
+                                 alt="Sin imagen"
+                                 class="w-full h-48 object-cover rounded-lg mb-3">
+                        @endif
+                        <h3>{{ $proyecto['title'] }}</h3>
+                        <p>{{ $proyecto['description'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <!-- Beneficios -->
         @if(!empty($beneficios) && count($beneficios) > 0)
             <section>
-                <h2 class="section-title">Nuestros Beneficios</h2>
+                <h2 class="section-title">Nuestros <span>Beneficios</span></h2>
                 <div class="beneficios-grid">
                     @foreach($beneficios as $beneficio)
                         <div class="beneficio-card-custom">
@@ -231,7 +298,7 @@
         <!-- Nuestras Operaciones -->
         @if(!empty($operaciones) && count($operaciones) > 0)
             <section>
-                <h2 class="section-title">Nuestras Operaciones</h2>
+                <h2 class="section-title">Nuestras <span>Operaciones</span></h2>
                 <div class="operaciones-grid">
                     @foreach($operaciones as $operacion)
                         <div class="operacion-card">
@@ -250,21 +317,6 @@
             </section>
         @endif
 
-        <!-- Proyectos Destacados -->
-        @if(!empty($proyectos) && count($proyectos) > 0)
-            <div class="proyectos-section">
-                <h2 class="section-title">Proyectos Recientes</h2>
-                <div class="proyectos-grid">
-                    @foreach($proyectos as $proyecto)
-                        <div class="proyecto-card">
-                            <h3>{{ $proyecto['title'] }}</h3>
-                            <p>{{ $proyecto['description'] }}</p>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
         <!-- Botón WhatsApp Flotante -->
         @if($inicio->whatsapp_number)
             <a href="https://wa.me/{{ $inicio->whatsapp_number }}" 
@@ -280,7 +332,7 @@
             <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
             <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
             <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar el contenido de inicio.</p>
-            <a href="{{ url('/admin/inicios/create') }}" class="btn-cotizar" style="background-color: #2563eb;">Ir al Panel</a>
+            <a href="{{ url('/admin/inicios/create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
     @endif
 @endsection

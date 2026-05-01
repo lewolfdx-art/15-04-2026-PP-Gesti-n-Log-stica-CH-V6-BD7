@@ -28,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Concretera Huancayo')
+            ->brandName('Concretera Mantaro')
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('favicon.ico'))

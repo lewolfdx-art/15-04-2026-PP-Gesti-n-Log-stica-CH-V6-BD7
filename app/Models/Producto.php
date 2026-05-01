@@ -12,21 +12,23 @@ class Producto extends Model
     protected $table = 'productos';
     
     protected $fillable = [
-        'name', 'slug', 'description', 'technical_specs',
-        'image', 'price', 'stock', 'category', 'is_active'
+        'page_title', 'page_description',
+        'tipos_concreto', 'servicios_complementarios',
+        'is_active'
     ];
     
     protected $casts = [
-        'technical_specs' => 'array',
-        'price' => 'decimal:2',
+        'tipos_concreto' => 'array',
+        'servicios_complementarios' => 'array',
         'is_active' => 'boolean',
     ];
     
-    public function getRouteKeyName()
+    public static function getActiveContent()
     {
-        return 'slug';
+        return self::where('is_active', true)->first();
     }
     
+    // 🔧 Agregar este método
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

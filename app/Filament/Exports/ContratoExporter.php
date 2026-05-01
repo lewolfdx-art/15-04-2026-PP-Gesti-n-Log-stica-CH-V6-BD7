@@ -102,7 +102,7 @@ class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithT
 
                 // Insertar título grande
                 $sheet->insertNewRowBefore(1, 2);
-                $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA HUANCAYO');
+                $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA MANTARO');
                 $sheet->mergeCells('A1:M1');
 
                 // Estilo título

@@ -13,71 +13,104 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-    <!-- AOS (Animate On Scroll) -->
+    <!-- AOS -->
     <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
+        /* Variables de color corporativas */
+        :root {
+            --color-primary: #f5811e;
+            --color-primary-dark: #e06e0a;
+            --color-white: #fcfcfc;
+            --color-dark: #16222e;
+            --color-gold: #ddb31f;
+        }
+
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
         }
+
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #111;
+            background-color: var(--color-white);
+            color: var(--color-dark);
         }
 
         main {
             flex: 1;
             width: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: white;
         }
 
-        .btn-rojo {
-            background-color: #b40000;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* ========== EFECTOS NEÓN ========== */
+        
+        .neon-glow-orange {
+            text-shadow: 0 0 10px rgba(245, 129, 30, 0.9),
+                         0 0 20px rgba(245, 129, 30, 0.7),
+                         0 0 30px rgba(245, 129, 30, 0.5);
         }
 
-        .btn-rojo:hover {
-            background-color: #8d0000;
-            transform: scale(1.02);
+        .neon-box-strong {
+            box-shadow: 0 0 20px rgba(245, 129, 30, 0.8),
+                        0 0 40px rgba(245, 129, 30, 0.6),
+                        0 0 60px rgba(245, 129, 30, 0.4);
         }
 
-        .btn-azul {
-            background-color: #002366;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.3s ease, transform 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* === NUEVOS EFECTOS NEÓN (Concretera azul - Mantaro naranja) === */
+        .neon-blue {
+            color: #67e8f9;
+            text-shadow: 
+                0 0 10px #67e8f9,
+                0 0 20px #67e8f9,
+                0 0 40px #22d3ee,
+                0 0 60px #06b6d4;
+            transition: all 0.3s ease;
         }
 
-        .btn-azul:hover {
-            background-color: #001a4d;
-            transform: scale(1.02);
+        .neon-orange {
+            color: #fb923c;
+            text-shadow: 
+                0 0 10px #fb923c,
+                0 0 20px #fb923c,
+                0 0 40px #f97316,
+                0 0 60px #ea580c;
+            transition: all 0.3s ease;
         }
 
+        /* Hover en el logo */
+        .group:hover .neon-blue,
+        .group:hover .neon-orange {
+            filter: brightness(1.2);
+        }
+
+        /* Animación de pulso en el header */
+        @keyframes pulse-neon {
+            0%, 100% { 
+                box-shadow: 0 0 8px rgba(245, 129, 30, 0.3),
+                           0 4px 20px rgba(0, 0, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(245, 129, 30, 0.7),
+                           0 4px 25px rgba(0, 0, 0, 0.4);
+            }
+        }
+        
+        .animate-pulse-neon {
+            animation: pulse-neon 3s infinite ease-in-out;
+        }
+
+        /* Navegación */
         .nav-link {
-            color: #ffffff;
+            color: var(--color-white);
             margin: 0 0.8rem;
             font-weight: 500;
             transition: all 0.3s ease;
@@ -86,12 +119,64 @@
         }
 
         .nav-link:hover {
-            color: #ffcccc;
-            text-decoration: underline;
+            color: var(--color-gold);
+            text-shadow: 0 0 8px rgba(221, 179, 31, 0.7);
+        }
+
+        .hover-neon-glow:hover {
+            text-shadow: 0 0 15px rgba(245, 129, 30, 1),
+                         0 0 30px rgba(221, 179, 31, 0.8);
+        }
+
+        /* Botón primario */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: var(--color-white);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 8px rgba(245, 129, 30, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 18px rgba(245, 129, 30, 0.8);
+        }
+
+        /* Dropdown */
+        .dropdown-neon {
+            background-color: #1a2632;
+            border: 1px solid var(--color-gold);
+            border-radius: 0.75rem;
+            backdrop-filter: blur(4px);
+        }
+        
+        .dropdown-neon a:hover {
+            background-color: #2a3a4a;
+            color: var(--color-gold);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--color-dark);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-primary);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--color-gold);
         }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script>
         AOS.init();
@@ -101,65 +186,67 @@
 </head>
 <body>
 
-<!-- Header -->
-<header style="background-color: #002366;" class="py-6 shadow-lg">
-    <div class="flex flex-col md:flex-row items-center justify-between px-4">
-
-        <a href="{{ url('/') }}" class="flex items-center gap-3">
+<!-- HEADER CON EFECTO NEÓN -->
+<header style="background-color: #16222e;" class="fixed w-full top-0 z-50 py-4 shadow-2xl animate-pulse-neon border-b border-[#f5811e]/30">
+    <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        
+        <!-- Logo + marca con neón azul y naranja -->
+        <a href="{{ url('/') }}" class="flex items-center gap-3 group">
             @if($config && $config->logo_image)
-                <img src="{{ Storage::url($config->logo_image) }}" alt="Logo" class="w-16 h-16 object-contain">
+                <img src="{{ Storage::url($config->logo_image) }}" alt="Logo" class="w-14 h-14 object-contain rounded-lg">
             @else
-                <img src="{{ asset('img/logo1.jpg') }}" alt="Logo" class="w-16 h-16 object-contain">
+                <div class="bg-gradient-to-br from-[#f5811e] to-[#e06e0a] rounded-xl p-2 neon-box-strong">
+                    <i class="fas fa-hard-hat text-2xl text-white"></i>
+                </div>
             @endif
-            <div class="text-3xl font-extrabold uppercase tracking-wide logo-title">
-                @if($config && $config->logo_text)
+            
+            <div class="text-4xl md:text-5xl font-extrabold tracking-tighter">
+                @if($config && $config->logo_text && trim($config->logo_text) != '')
                     @php
-                        $logoText = $config->logo_text;
-                        $firstWord = explode(' ', $logoText)[0];
-                        $restWords = substr($logoText, strlen($firstWord));
+                        $logoText = trim($config->logo_text);
+                        $parts = explode(' ', $logoText, 2);
+                        $firstWord = $parts[0] ?? 'Concretera';
+                        $secondWord = $parts[1] ?? 'Mantaro';
                     @endphp
-                    <span style="color: {{ $config->logo_span_color ?? '#b40000' }};">{{ $firstWord }}</span>
-                    <span style="color: {{ $config->logo_text_color ?? '#ffffff' }};">{{ $restWords }}</span>
+                    <span class="neon-blue">{{ $firstWord }}</span>
+                    <span class="neon-orange">{{ $secondWord }}</span>
                 @else
-                    <span style="color: #b40000;">Concretera</span>
-                    <span style="color: #ffffff;">Huancayo</span>
+                    <span class="neon-blue">Concretera</span>
+                    <span class="neon-orange">Mantaro</span>
                 @endif
             </div>
         </a>
 
         <!-- Navegación -->
-        <nav class="mt-4 md:mt-0 text-center md:text-right text-sm flex flex-wrap justify-center md:justify-end items-center gap-3 md:gap-4">
-            <a href="{{ url('/') }}" class="nav-link inline-block">Inicio</a>
-            <a href="{{ url('/nosotros') }}" class="nav-link inline-block">Nosotros</a>
-            <a href="{{ url('/productos') }}" class="nav-link inline-block">Productos</a>
+        <nav class="flex flex-wrap justify-center items-center gap-2 md:gap-4">
+            <a href="{{ url('/') }}" class="nav-link text-base hover-neon-glow">Inicio</a>
+            <a href="{{ url('/nosotros') }}" class="nav-link text-base hover-neon-glow">Nosotros</a>
+            <a href="{{ url('/productos') }}" class="nav-link text-base hover-neon-glow">Productos</a>
 
-            <!-- Sostenibilidad desplegable -->
             <div x-data="{ open: false }" class="relative" @mouseleave="open = false">
-                <button @mouseenter="open = true" class="nav-link inline-block">Sostenibilidad</button>
-                <div x-show="open" x-transition
-                    class="absolute mt-2 bg-white border border-gray-200 rounded-lg shadow-lg text-left z-50 w-48"
-                    @mouseenter="open = true" @mouseleave="open = false">
-                    <a href="{{ url('/sostenibilidad') }}"
-                       class="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-red-700 transition">Políticas</a>
-                    <a href="{{ url('/experiencia') }}"
-                       class="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-red-700 transition">Experiencia</a>
-                    <a href="{{ url('/concretips') }}"
-                       class="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-red-700 transition">Tips</a>
+                <button @mouseenter="open = true" class="nav-link text-base hover-neon-glow flex items-center gap-1">
+                    Sostenibilidad <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                <div x-show="open" x-transition.opacity.duration.200ms
+                     class="absolute left-0 mt-2 w-48 dropdown-neon shadow-xl z-50 py-2"
+                     @mouseenter="open = true" @mouseleave="open = false">
+                    <a href="{{ url('/sostenibilidad') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">🌱 Políticas</a>
+                    <a href="{{ url('/experiencia') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">🏭 Experiencia</a>
+                    <a href="{{ url('/concretips') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">💡 Tips</a>
                 </div>
             </div>
 
-            <a href="{{ url('/contacto') }}" class="nav-link inline-block">Contacto</a>
-            <a href="{{ url('/libro-reclamaciones') }}" class="nav-link inline-block">Libro de Reclamaciones</a>
+            <a href="{{ url('/contacto') }}" class="nav-link text-base hover-neon-glow">Contacto</a>
+            <a href="{{ url('/libro-reclamaciones') }}" class="nav-link text-base hover-neon-glow"> Reclamaciones</a>
 
-            <!-- Botón Login/Logout -->
             @guest
-                <a href="{{ url('/admin/login') }}" class="btn-rojo inline-block text-sm">
+                <a href="{{ url('/admin/login') }}" class="btn-primary text-sm ml-2">
                     <i class="bi bi-box-arrow-in-right"></i> Login
                 </a>
             @else
-                <form method="POST" action="{{ route('logout') }}" class="inline-block">
+                <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
-                    <button type="submit" class="btn-rojo inline-block text-sm">
+                    <button type="submit" class="btn-primary text-sm ml-2">
                         <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
                     </button>
                 </form>
@@ -168,6 +255,9 @@
     </div>
 </header>
 
+<!-- Espacio para header fijo -->
+<div class="pt-28"></div>
+
 <!-- Contenido principal -->
 <main class="w-full px-0 py-10">
     <div class="container mx-auto px-4">
@@ -175,56 +265,57 @@
     </div>
 </main>
 
-<!-- Footer dinámico -->
-<footer class="bg-gray-900 text-white pt-10 pb-6 px-6 mt-10 text-sm">
+<!-- Footer -->
+<footer style="background-color: #16222e;" class="text-white pt-10 pb-6 px-6 mt-10 text-sm">
     <div class="grid md:grid-cols-3 gap-6">
-        <!-- Oficina Administrativa -->
         <div>
-            <h4 class="text-lg font-bold mb-2 text-yellow-400">{{ $config->oficina_titulo ?? 'Oficina Administrativa' }}</h4>
+            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->oficina_titulo ?? 'Oficina Administrativa' }}</h4>
             <p><strong>Ubicación de oficina:</strong> 
-                <a href="{{ $config->oficina_maps_url ?? '#' }}" target="_blank" class="underline text-blue-300">
-                    Ver en Google Maps
-                </a>
+                <a href="{{ $config->oficina_maps_url ?? '#' }}" target="_blank" class="underline" style="color: #da914f;">Ver en Google Maps</a>
             </p>
             <p><strong>Dirección:</strong> {{ $config->oficina_direccion ?? 'Pasaje Miraflores, 12003 – Huancayo' }}</p>
             <p><strong>Teléfono:</strong> {{ $config->oficina_telefono ?? '064 762805' }}</p>
             <p><strong>Celular:</strong> {{ $config->oficina_celular ?? '925 091 695' }}</p>
-            <p><strong>Email:</strong> <a href="mailto:{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}" class="underline">{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}</a></p>
+            <p><strong>Email:</strong> <a href="mailto:{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}" class="underline" style="color: #da914f;">{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}</a></p>
         </div>
 
-        <!-- Planta de Producción -->
         <div>
-            <h4 class="text-lg font-bold mb-2 text-yellow-400">{{ $config->planta_titulo ?? 'Planta de Producción' }}</h4>
+            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->planta_titulo ?? 'Planta de Producción' }}</h4>
             <p><strong>Ubicación de planta:</strong> 
-                <a href="{{ $config->planta_maps_url ?? '#' }}" target="_blank" class="underline text-blue-300">
-                    Ver en Google Maps
-                </a>
+                <a href="{{ $config->planta_maps_url ?? '#' }}" target="_blank" class="underline" style="color: #da914f;">Ver en Google Maps</a>
             </p>
             <p><strong>WhatsApp:</strong> {{ $config->planta_whatsapp ?? '+51 982 337 770' }}</p>
         </div>
 
-        <!-- Atención al Cliente -->
         <div>
-            <h4 class="text-lg font-bold mb-2 text-yellow-400">{{ $config->atencion_titulo ?? 'Atención al Cliente' }}</h4>
+            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->atencion_titulo ?? 'Atención al Cliente' }}</h4>
             <p>Lunes a Sábado: {{ $config->atencion_horario_lunes_sabado ?? '8:00 a.m. – 6:00 p.m.' }}</p>
             <p>Domingos: {{ $config->atencion_horario_domingo ?? 'Atención previa coordinación' }}</p>
             <p><strong>Asesora Comercial:</strong> {{ $config->atencion_asesora_comercial ?? '982 337 770' }}</p>
         </div>
     </div>
 
-    <!-- Redes Sociales -->
     @if($config && $config->social_networks)
     <div class="flex justify-center gap-6 mt-6">
         @foreach($config->social_networks as $social)
-            <a href="{{ $social['url'] }}" target="_blank" class="text-gray-400 hover:text-yellow-400 transition">
+            <a href="{{ $social['url'] }}" target="_blank" class="transition hover:scale-110" 
+               style="color: #808185;" 
+               onmouseover="this.style.color='#ddb31f'" 
+               onmouseout="this.style.color='#808185'">
                 <i class="{{ $social['icon'] }} text-2xl"></i>
             </a>
         @endforeach
     </div>
     @endif
 
-    <div class="text-center mt-8 border-t pt-4 border-gray-700">
-        © {{ date('Y') }} Concretera Mantaro. Todos los derechos reservados.
+    <div class="text-center mt-8 border-t pt-4" style="border-color: #80818530;">
+        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Mantaro</span> — 
+           <span style="color: #ddb31f;">Construyendo futuro con concreto de alta calidad</span></p>
+        <p class="text-xs mt-2 flex items-center justify-center gap-2" style="color: #808185;">
+            <i class="fas fa-shield-alt" style="color: #f5811e;"></i> 
+            "TU PROYECTO, NUESTRO LEGADO"
+            <i class="fas fa-hard-hat" style="color: #f5811e;"></i>
+        </p>
     </div>
 </footer>
 

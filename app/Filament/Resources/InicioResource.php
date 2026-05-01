@@ -182,7 +182,7 @@ class InicioResource extends Resource
                                         Forms\Components\TextInput::make('logo_text')
                                             ->label('Texto del Logo')
                                             ->maxLength(255)
-                                            ->placeholder('Ej: Concretera Huancayo'),
+                                            ->placeholder('Ej: Concretera Mantaro'),
                                         
                                         Forms\Components\TextInput::make('logo_text_color')
                                             ->label('Color del Texto Principal')
