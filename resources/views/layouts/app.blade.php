@@ -175,6 +175,124 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--color-gold);
         }
+
+        /* ========== EFECTO PRELOADER (CHASQUIDO DE THANOS) ========== */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes thanosSnap {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0px);
+            }
+            40% {
+                opacity: 0.8;
+                transform: scale(0.98);
+                filter: blur(2px);
+            }
+            70% {
+                opacity: 0.4;
+                transform: scale(0.95);
+                filter: blur(5px);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.9);
+                filter: blur(10px);
+                visibility: hidden;
+                display: none;
+            }
+        }
+
+        .thanos-fade-out {
+            animation: thanosSnap 0.9s ease-out forwards;
+        }
+
+        .preloader-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .preloader-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(22, 34, 46, 0.5);
+        }
+
+        .preloader-logo {
+            width: 200px;
+            max-width: 60vw;
+            height: auto;
+            margin-bottom: 1.5rem;
+            animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 5px rgba(245, 129, 30, 0.5));
+            }
+            50% {
+                transform: scale(1.03);
+                filter: drop-shadow(0 0 20px rgba(245, 129, 30, 0.8));
+            }
+        }
+
+        .preloader-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .preloader-title span:first-child {
+            color: #67e8f9;
+            text-shadow: 0 0 10px #67e8f9, 0 0 20px #22d3ee;
+        }
+
+        .preloader-title span:last-child {
+            color: #fb923c;
+            text-shadow: 0 0 10px #fb923c, 0 0 20px #f97316;
+        }
+
+        .preloader-subtitle {
+            color: #e5e7eb;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .preloader-title { 
+                font-size: 1.5rem; 
+            }
+            .preloader-subtitle { 
+                font-size: 0.75rem; 
+            }
+            .preloader-logo {
+                width: 120px;
+            }
+        }
     </style>
 
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
@@ -185,6 +303,26 @@
     @yield('styles')
 </head>
 <body>
+
+<!-- PANTALLA DE CARGA - EFECTO CHASQUIDO DE THANOS -->
+<div id="preloader">
+    <!-- Imagen de fondo - se ve completa -->
+    <img src="{{ asset('img/preloader-logo.png') }}" 
+         alt="Fondo Concretera Mantaro" 
+         class="preloader-background"
+         onerror="this.style.display='none'">
+    
+    <!-- Texto sobre la imagen -->
+    <div class="preloader-content">
+        <div class="preloader-title">
+            <span>Concretera</span>
+            <span> Mantaro</span>
+        </div>
+        <div class="preloader-subtitle">
+            <i class="fas fa-hard-hat"></i> Construyendo futuro con concreto de alta calidad
+        </div>
+    </div>
+</div>
 
 <!-- HEADER CON EFECTO NEÓN -->
 <header style="background-color: #16222e;" class="fixed w-full top-0 z-50 py-4 shadow-2xl animate-pulse-neon border-b border-[#f5811e]/30">
@@ -318,6 +456,23 @@
         </p>
     </div>
 </footer>
+
+<script>
+    // EFECTO CHASQUIDO DE THANOS
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.classList.add('thanos-fade-out');
+                setTimeout(function() {
+                    if (preloader && preloader.parentNode) {
+                        preloader.style.display = 'none';
+                    }
+                }, 900);
+            }
+        }, 2000);
+    });
+</script>
 
 @yield('scripts')
 </body>
