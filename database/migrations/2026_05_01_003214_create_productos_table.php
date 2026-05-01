@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('productos', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->text('technical_specs')->nullable(); // JSON
+            $table->string('image')->nullable();
+            $table->decimal('price', 10, 2)->nullable();
+            $table->integer('stock')->default(0);
+            $table->string('category')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

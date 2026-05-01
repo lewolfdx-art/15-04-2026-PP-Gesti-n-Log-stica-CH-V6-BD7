@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('sostenibilidad', function (Blueprint $table) {
             $table->id();
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
+            $table->text('policies')->nullable(); // JSON
+            $table->text('environmental_impact')->nullable();
+            $table->json('certifications')->nullable();
+            $table->string('image')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('inicios', function (Blueprint $table) {
             $table->id();
+            $table->string('hero_title')->nullable();
+            $table->text('hero_description')->nullable();
+            $table->string('hero_image')->nullable();
+            $table->text('beneficios')->nullable(); // JSON
+            $table->text('proyectos_destacados')->nullable(); // JSON
+            $table->string('cta_text')->nullable();
+            $table->string('cta_url')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
