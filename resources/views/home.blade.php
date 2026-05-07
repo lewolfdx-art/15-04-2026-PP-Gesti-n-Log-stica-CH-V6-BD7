@@ -26,12 +26,12 @@
     <style>
         /* Nuevos colores corporativos */
         :root {
-            --color-primary: #f5811e;      /* Naranja principal */
+            --color-primary: #f5811e;
             --color-primary-dark: #e06e0a;
-            --color-dark: #16222e;         /* Azul oscuro profundo */
-            --color-gold: #ddb31f;         /* Amarillo dorado */
-            --color-terracota: #da914f;    /* Ocre / Terracota */
-            --color-gray-mid: #808185;     /* Gris medio */
+            --color-dark: #16222e;
+            --color-gold: #ddb31f;
+            --color-terracota: #da914f;
+            --color-gray-mid: #808185;
             --color-white: #fcfcfc;
         }
 
@@ -225,6 +225,59 @@
             transform: scale(1.1);
             background-color: #128C7E;
         }
+
+        /* ========== CARRUSEL INFINITO DE EQUIPOS ========== */
+        .carousel-equipos {
+            width: 100%;
+            overflow-x: hidden;
+            background: transparent;
+            padding: 30px 0;
+            margin: 0 0 40px 0;
+            border-top: 2px solid rgba(245, 129, 30, 0.3);
+            border-bottom: 2px solid rgba(245, 129, 30, 0.3);
+        }
+
+        .carousel-equipos__contenedor {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .carousel-equipos__grupo {
+            display: flex;
+            align-items: center;
+            gap: 100px;
+            width: fit-content;
+            animation: desplazarEquipos 8s infinite linear;
+        }
+
+        .carousel-equipos__img {
+            height: 90px;
+            width: auto;
+            transition: all 0.3s ease;
+            filter: brightness(0.9) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+        }
+
+        .carousel-equipos__img:hover {
+            transform: scale(1.15);
+            filter: brightness(1) drop-shadow(0 0 15px rgba(245, 129, 30, 0.5));
+        }
+
+        @keyframes desplazarEquipos {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Efecto de desvanecimiento en los bordes */
+        .carousel-equipos__contenedor {
+            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        }
+
         @media (max-width: 768px) {
             .hero-custom h1 { font-size: 1.8rem; }
             .operaciones-grid { grid-template-columns: 1fr; }
@@ -238,13 +291,25 @@
                 right: 20px;
             }
             .section-title { font-size: 1.5rem; }
+            .carousel-equipos__grupo {
+                gap: 50px;
+            }
+            .carousel-equipos__img {
+                height: 55px;
+            }
+            .carousel-equipos {
+                padding: 20px 0;
+            }
+            .carousel-equipos__grupo {
+                animation: desplazarEquipos 5s infinite linear;
+            }
         }
     </style>
 
     @if($inicio)
         <!-- Hero principal -->
         <div class="hero-custom">
-            <h1>{{ $inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad' }}</h1>
+            <h1>{!! $inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad' !!}</h1>
             <p>{{ $inicio->hero_description ?? 'Para obras y proyectos en Huancayo y toda la región' }}</p>
             @if($inicio->cta_text && $inicio->cta_url)
                 <a href="{{ $inicio->cta_url }}" class="btn-cotizar">
@@ -316,6 +381,22 @@
                 </div>
             </section>
         @endif
+
+        <!-- ========== CARRUSEL INFINITO DE EQUIPOS (DEBAJO DE OPERACIONES) ========== -->
+        <div class="carousel-equipos">
+            <div class="carousel-equipos__contenedor">
+                <div class="carousel-equipos__grupo" id="carruselEquipos">
+                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
+                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
+                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
+                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
+                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
+                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
+                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
+                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
+                </div>
+            </div>
+        </div>
 
         <!-- Botón WhatsApp Flotante -->
         @if($inicio->whatsapp_number)

@@ -1,5 +1,6 @@
 @php
     $config = App\Models\Inicio::getActiveContent();
+    $isHomePage = request()->path() === '/';
 @endphp
 
 <!DOCTYPE html>
@@ -305,6 +306,8 @@
 <body>
 
 <!-- PANTALLA DE CARGA - EFECTO CHASQUIDO DE THANOS -->
+{{-- SOLO SE MUESTRA EN LA PÁGINA DE INICIO --}}
+@if($isHomePage)
 <div id="preloader">
     <!-- Imagen de fondo - se ve completa -->
     <img src="{{ asset('img/preloader-logo.png') }}" 
@@ -323,6 +326,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- HEADER CON EFECTO NEÓN -->
 <header style="background-color: #16222e;" class="fixed w-full top-0 z-50 py-4 shadow-2xl animate-pulse-neon border-b border-[#f5811e]/30">
@@ -458,7 +462,8 @@
 </footer>
 
 <script>
-    // EFECTO CHASQUIDO DE THANOS
+    // EFECTO CHASQUIDO DE THANOS - SOLO EN PÁGINA DE INICIO
+    @if($isHomePage)
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
             var preloader = document.getElementById('preloader');
@@ -472,6 +477,7 @@
             }
         }, 2000);
     });
+    @endif
 </script>
 
 @yield('scripts')
