@@ -10,9 +10,13 @@ class Dashboard extends BaseDashboard
     protected static ?string $title = 'Dashboard - Concretera Mantaro';
     protected static ?string $navigationLabel = 'Escritorio';
 
-    public function getColumns(): int | array
+    
+    protected function getHeaderWidgets(): array
     {
-        return 1;   // Una sola columna → todos apilados y a todo el ancho
+        return [
+            \App\Filament\Widgets\TotalGeneralPagarWidget::class,
+            
+        ];
     }
 
     public function getWidgets(): array
@@ -21,6 +25,13 @@ class Dashboard extends BaseDashboard
             \App\Filament\Widgets\VentasPorMesChart::class,
             \App\Filament\Widgets\ContratosPorVendedorChart::class,
             \App\Filament\Widgets\TiposEstructuraChart::class,
+            
+
         ];
+    }
+
+    public function getColumns(): int | string | array
+    {
+        return 2;
     }
 }

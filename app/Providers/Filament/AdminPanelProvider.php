@@ -11,7 +11,8 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
-use Filament\Navigation\NavigationGroup; // 👈 agregado
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -35,28 +36,27 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Orange,
             ])
-
-            // 👇 ORDEN DE LOS GRUPOS
             ->navigationGroups([
                 NavigationGroup::make()->label('Gestión de Operaciones'),
                 NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Comercial'),
                 NavigationGroup::make()->label('Finanzas'),
             ])
-
+            ->navigationItems([
+                NavigationItem::make('Notificaciones')
+                    ->url('/admin/notifications')
+                    ->icon('heroicon-o-bell')
+                    ->group('Sistema')
+                    ->sort(1),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                // Comentamos el Dashboard por defecto de Filament
-                // Pages\Dashboard::class,
-
-                // Usamos nuestro Dashboard personalizado
                 \App\Filament\Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\TotalGeneralPagarWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -73,6 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             //->databaseNotifications()
-            ->databaseNotificationsPolling('5s');
+            ->databaseNotificationsPolling('5s')
+            ->topbar(true);
     }
 }

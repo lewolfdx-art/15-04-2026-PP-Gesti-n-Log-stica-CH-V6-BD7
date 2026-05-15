@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CuentaPorPagarResource\Pages;
 use App\Models\CuentaPorPagar;
+use App\Models\User;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -16,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Notifications\Notification;
 
 class CuentaPorPagarResource extends Resource
 {
@@ -93,7 +95,19 @@ class CuentaPorPagarResource extends Resource
 
             Toggle::make('pagado')
                 ->label('Pagado')
-                ->default(false),
+                ->default(false)
+                ->afterStateUpdated(function ($state, $record) {
+                    if ($state == true) {
+                        // Notificar que se pagó
+                        $totalPendiente = CuentaPorPagar::where('pagado', false)->sum('total');
+                        $user = User::find(2);
+                        Notification::make()
+                            ->title('✅ Cuenta Pagada')
+                            ->body("Se pagó: {$record->detalle} - Total pendiente: S/ " . number_format($totalPendiente, 2))
+                            ->success()
+                            ->sendToDatabase($user);
+                    }
+                }),
         ]);
     }
 
@@ -231,7 +245,7 @@ class CuentaPorPagarResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->striped(); // Esto mantiene las filas sin efecto hover, solo con rayas alternadas
+            ->striped();
     }
 
     /**
@@ -262,7 +276,6 @@ class CuentaPorPagarResource extends Resource
             ->orderBy('updated_at', 'desc')
             ->limit(15);
 
-        // Aplicar los mismos filtros al historial (excepto el de pagado)
         if (!empty($filtros)) {
             if (isset($filtros['tipo'])) {
                 $queryHistorial->where('tipo', $filtros['tipo']);
