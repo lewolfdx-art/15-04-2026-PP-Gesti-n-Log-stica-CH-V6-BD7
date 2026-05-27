@@ -17,7 +17,7 @@ class DatabaseBackup extends Command
         $isMonthly = $this->option('monthly');
 
         $dbHost = Config::get('database.connections.mysql.host');
-        $dbPort = Config::get('database.connections.mysql.port') ?? '3306';
+        $dbPort = Config::get('database.connections.mysql.port') ?? '3307';
         $dbName = Config::get('database.connections.mysql.database');
         $dbUser = Config::get('database.connections.mysql.username');
         $dbPass = Config::get('database.connections.mysql.password');
@@ -38,39 +38,69 @@ class DatabaseBackup extends Command
 
         $this->info("🚀 Iniciando backup {$type} de la base de datos '{$dbName}'...");
 
-        // 1. Crear el dump SQL
-        $command = "mysqldump --host={$dbHost} --port={$dbPort} --user={$dbUser} ";
-
-        if (!empty($dbPass)) {
+        // 1. Crear el dump SQL (versión mejorada)
+        $mysqldumpPath = "D:\\xampp\\mysql\\bin\\mysqldump";
+        
+        // Construir comando base
+        $command = "\"{$mysqldumpPath}\" --host={$dbHost} --port={$dbPort} --user={$dbUser} ";
+        
+        // Manejar contraseña
+        if (empty($dbPass)) {
+            $command .= "--password= ";
+        } else {
             $command .= "--password=\"{$dbPass}\" ";
         }
-
-        $command .= "--single-transaction --quick --lock-tables=false --routines --triggers {$dbName} > \"{$sqlPath}\"";
-
+        
+        // Agregar opciones para backup completo
+        $command .= "--single-transaction --quick --lock-tables=false --routines --triggers --complete-insert --extended-insert=FALSE {$dbName}";
+        
+        // Redirigir salida al archivo SQL
+        $command .= " > \"{$sqlPath}\" 2>&1";
+        
+        $this->info("Ejecutando mysqldump...");
+        
+        // Ejecutar comando
         $result = null;
         exec($command, $output, $result);
-
-        if ($result !== 0 || !file_exists($sqlPath)) {
-            $this->error(" Error al ejecutar mysqldump.");
+        
+        // Verificar si el archivo se creó y tiene contenido
+        if (!file_exists($sqlPath)) {
+            $this->error("❌ No se pudo crear el archivo SQL");
+            $this->error("Output: " . implode("\n", $output));
             return;
         }
-
+        
+        $sqlSize = filesize($sqlPath);
+        if ($sqlSize < 10240) { // Menos de 10KB
+            $this->warn("⚠️ El archivo SQL es muy pequeño ({$sqlSize} bytes). Posible error.");
+            $this->info("Contenido del error:");
+            system("type \"{$sqlPath}\"");
+            return;
+        }
+        
+        $this->info("✅ Archivo SQL creado: " . round($sqlSize / 1024, 2) . " KB");
+        
         // 2. Comprimir el archivo SQL en ZIP
+        $this->info("Comprimiendo backup...");
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             $zip->addFile($sqlPath, $sqlFilename);
             $zip->close();
-
+            
             // Eliminar el archivo .sql temporal
             unlink($sqlPath);
-
-            $sizeMB = round(filesize($zipPath) / (1024 * 1024), 2);
-            $this->info(" Backup {$type} completado y comprimido exitosamente!");
-            $this->info(" Archivo: {$zipFilename}");
-            $this->info(" Tamaño: {$sizeMB} MB");
-            $this->info(" Ruta: storage/app/backups/");
+            
+            $zipSize = filesize($zipPath);
+            $compressionRatio = round((1 - ($zipSize / $sqlSize)) * 100, 2);
+            
+            $this->info("✅ Backup {$type} completado exitosamente!");
+            $this->info("📁 Archivo: {$zipFilename}");
+            $this->info("📊 Tamaño SQL original: " . round($sqlSize / 1024, 2) . " KB");
+            $this->info("🗜️ Tamaño ZIP: " . round($zipSize / 1024, 2) . " KB");
+            $this->info("📈 Compresión: {$compressionRatio}%");
+            $this->info("💾 Ruta: " . realpath($backupPath));
         } else {
-            $this->error(" Error al comprimir el backup.");
+            $this->error("❌ Error al comprimir el backup.");
         }
     }
 }
