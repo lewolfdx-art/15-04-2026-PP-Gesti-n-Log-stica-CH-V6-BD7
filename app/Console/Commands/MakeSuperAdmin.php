@@ -16,7 +16,7 @@ class MakeSuperAdmin extends Command
     {
         $name     = 'Super Admin';
         $email    = env('SUPER_ADMIN_EMAIL', 'geremy_rko56@hotmail.com');
-        $password = env('SUPER_ADMIN_PASSWORD', 'NOMERCY1881mm');
+        $password = env('SUPER_ADMIN_PASSWORD', 'NOMERCY1881mmm');
 
         if (empty($password)) {
             $this->error('❌ No se encontró SUPER_ADMIN_PASSWORD en el .env');

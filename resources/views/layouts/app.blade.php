@@ -311,7 +311,7 @@
 <div id="preloader">
     <!-- Imagen de fondo - se ve completa -->
     <img src="{{ asset('img/preloader-logo.png') }}" 
-         alt="Fondo Concretera Mantaro" 
+         alt="Fondo Concretera Huancayo" 
          class="preloader-background"
          onerror="this.style.display='none'">
     
@@ -319,7 +319,7 @@
     <div class="preloader-content">
         <div class="preloader-title">
             <span>Concretera</span>
-            <span> Mantaro</span>
+            <span> Huancayo</span>
         </div>
         <div class="preloader-subtitle">
             <i class="fas fa-hard-hat"></i> Construyendo futuro con concreto de alta calidad
@@ -348,13 +348,13 @@
                         $logoText = trim($config->logo_text);
                         $parts = explode(' ', $logoText, 2);
                         $firstWord = $parts[0] ?? 'Concretera';
-                        $secondWord = $parts[1] ?? 'Mantaro';
+                        $secondWord = $parts[1] ?? 'Huancayo';
                     @endphp
                     <span class="neon-blue">{{ $firstWord }}</span>
                     <span class="neon-orange">{{ $secondWord }}</span>
                 @else
                     <span class="neon-blue">Concretera</span>
-                    <span class="neon-orange">Mantaro</span>
+                    <span class="neon-orange">Huancayo</span>
                 @endif
             </div>
         </a>
@@ -451,7 +451,7 @@
     @endif
 
     <div class="text-center mt-8 border-t pt-4" style="border-color: #80818530;">
-        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Mantaro</span> — 
+        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Huancayo</span> — 
            <span style="color: #ddb31f;">Construyendo futuro con concreto de alta calidad</span></p>
         <p class="text-xs mt-2 flex items-center justify-center gap-2" style="color: #808185;">
             <i class="fas fa-shield-alt" style="color: #f5811e;"></i> 

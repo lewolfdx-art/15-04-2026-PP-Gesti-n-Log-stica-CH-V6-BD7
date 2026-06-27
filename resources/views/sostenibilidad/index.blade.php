@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Sostenibilidad - Concretera Mantaro')
+@section('title', 'Sostenibilidad - Concretera Huancayo')
 
 @section('content')
     @php
