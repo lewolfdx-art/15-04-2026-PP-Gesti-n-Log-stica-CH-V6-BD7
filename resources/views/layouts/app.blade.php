@@ -8,7 +8,22 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@yield('title', 'Concretera Huancayo')</title>
+    <title>@yield('title', 'Concretera Mantaro')</title>
+
+    <!-- ========== FAVICON ========== -->
+    @if($config && $config->favicon)
+        <link rel="icon" type="image/png" href="{{ Storage::url($config->favicon) }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ Storage::url($config->favicon) }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ Storage::url($config->favicon) }}">
+        <link rel="apple-touch-icon" href="{{ Storage::url($config->favicon) }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+    @endif
+    <meta name="msapplication-TileColor" content="#16222e">
+    <meta name="theme-color" content="#16222e">
 
     <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -311,7 +326,7 @@
 <div id="preloader">
     <!-- Imagen de fondo - se ve completa -->
     <img src="{{ asset('img/preloader-logo.png') }}" 
-         alt="Fondo Concretera Huancayo" 
+         alt="Fondo Concretera Mantaro" 
          class="preloader-background"
          onerror="this.style.display='none'">
     
@@ -319,7 +334,7 @@
     <div class="preloader-content">
         <div class="preloader-title">
             <span>Concretera</span>
-            <span> Huancayo</span>
+            <span> Mantaro</span>
         </div>
         <div class="preloader-subtitle">
             <i class="fas fa-hard-hat"></i> Construyendo futuro con concreto de alta calidad
@@ -348,13 +363,13 @@
                         $logoText = trim($config->logo_text);
                         $parts = explode(' ', $logoText, 2);
                         $firstWord = $parts[0] ?? 'Concretera';
-                        $secondWord = $parts[1] ?? 'Huancayo';
+                        $secondWord = $parts[1] ?? 'Mantaro';
                     @endphp
                     <span class="neon-blue">{{ $firstWord }}</span>
                     <span class="neon-orange">{{ $secondWord }}</span>
                 @else
                     <span class="neon-blue">Concretera</span>
-                    <span class="neon-orange">Huancayo</span>
+                    <span class="neon-orange">Mantaro</span>
                 @endif
             </div>
         </a>
@@ -451,7 +466,7 @@
     @endif
 
     <div class="text-center mt-8 border-t pt-4" style="border-color: #80818530;">
-        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Huancayo</span> — 
+        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Mantaro</span> — 
            <span style="color: #ddb31f;">Construyendo futuro con concreto de alta calidad</span></p>
         <p class="text-xs mt-2 flex items-center justify-center gap-2" style="color: #808185;">
             <i class="fas fa-shield-alt" style="color: #f5811e;"></i> 

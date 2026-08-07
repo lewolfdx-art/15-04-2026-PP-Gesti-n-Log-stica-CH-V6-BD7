@@ -166,6 +166,8 @@ class InicioResource extends Resource
                                     ->helperText('Formato: código de país + número sin símbolos. Ej: 51982337770')
                                     ->default('51982337770'),
                             ]),
+                        
+                        // ===================== LOGO Y MARCA + FAVICON =====================
                         Tabs\Tab::make('Logo y Marca')
                             ->schema([
                                 Forms\Components\FileUpload::make('logo_image')
@@ -182,7 +184,7 @@ class InicioResource extends Resource
                                         Forms\Components\TextInput::make('logo_text')
                                             ->label('Texto del Logo')
                                             ->maxLength(255)
-                                            ->placeholder('Ej: Concretera Huancayo'),
+                                            ->placeholder('Ej: Concretera Mantaro'),
                                         
                                         Forms\Components\TextInput::make('logo_text_color')
                                             ->label('Color del Texto Principal')
@@ -191,6 +193,23 @@ class InicioResource extends Resource
                                         Forms\Components\TextInput::make('logo_span_color')
                                             ->label('Color del Span (Primera palabra)')
                                             ->type('color'),
+                                    ]),
+                                
+                                // ========== FAVICON ==========
+                                Forms\Components\Section::make('Favicon (Icono de la página)')
+                                    ->schema([
+                                        Forms\Components\FileUpload::make('favicon')
+                                            ->label('Icono de la página (favicon)')
+                                            ->image()
+                                            ->directory('favicon')
+                                            ->imageResizeMode('cover')
+                                            ->imageCropAspectRatio('1:1')
+                                            ->imageResizeTargetWidth('64')
+                                            ->imageResizeTargetHeight('64')
+                                            ->helperText('Sube un icono PNG o ICO de 64x64 píxeles. Aparecerá en la pestaña del navegador.')
+                                            ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'])
+                                            ->maxSize(100)
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
 

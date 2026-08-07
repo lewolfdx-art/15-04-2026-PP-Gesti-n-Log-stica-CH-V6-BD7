@@ -128,7 +128,7 @@ class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithT
                 $sheet = $event->sheet->getDelegate();
 
                 $sheet->insertNewRowBefore(1, 2);
-                $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA Huancayo');
+                $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA Mantaro');
 
                 $colCount = count($this->headings());
                 $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colCount);
