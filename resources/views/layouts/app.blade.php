@@ -81,14 +81,14 @@
                         0 0 60px rgba(245, 129, 30, 0.4);
         }
 
-        /* === NUEVOS EFECTOS NEÓN (Concretera azul - Mantaro naranja) === */
-        .neon-blue {
-            color: #67e8f9;
+        /* === NUEVOS EFECTOS NEÓN (Concretera gris - Mantaro naranja) === */
+        .neon-gray {
+            color: #d1d5db;
             text-shadow: 
-                0 0 10px #67e8f9,
-                0 0 20px #67e8f9,
-                0 0 40px #22d3ee,
-                0 0 60px #06b6d4;
+                0 0 10px #d1d5db,
+                0 0 20px #d1d5db,
+                0 0 40px #9ca3af,
+                0 0 60px #6b7280;
             transition: all 0.3s ease;
         }
 
@@ -103,7 +103,7 @@
         }
 
         /* Hover en el logo */
-        .group:hover .neon-blue,
+        .group:hover .neon-gray,
         .group:hover .neon-orange {
             filter: brightness(1.2);
         }
@@ -282,8 +282,8 @@
         }
 
         .preloader-title span:first-child {
-            color: #67e8f9;
-            text-shadow: 0 0 10px #67e8f9, 0 0 20px #22d3ee;
+            color: #d1d5db;
+            text-shadow: 0 0 10px #d1d5db, 0 0 20px #9ca3af;
         }
 
         .preloader-title span:last-child {
@@ -347,7 +347,7 @@
 <header style="background-color: #16222e;" class="fixed w-full top-0 z-50 py-4 shadow-2xl animate-pulse-neon border-b border-[#f5811e]/30">
     <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
         
-        <!-- Logo + marca con neón azul y naranja -->
+        <!-- Logo + marca con neón gris y naranja -->
         <a href="{{ url('/') }}" class="flex items-center gap-3 group">
             @if($config && $config->logo_image)
                 <img src="{{ Storage::url($config->logo_image) }}" alt="Logo" class="w-14 h-14 object-contain rounded-lg">
@@ -365,10 +365,10 @@
                         $firstWord = $parts[0] ?? 'Concretera';
                         $secondWord = $parts[1] ?? 'Mantaro';
                     @endphp
-                    <span class="neon-blue">{{ $firstWord }}</span>
+                    <span class="neon-gray">{{ $firstWord }}</span>
                     <span class="neon-orange">{{ $secondWord }}</span>
                 @else
-                    <span class="neon-blue">Concretera</span>
+                    <span class="neon-gray">Concretera</span>
                     <span class="neon-orange">Mantaro</span>
                 @endif
             </div>
@@ -394,7 +394,6 @@
             </div>
 
             <a href="{{ url('/contacto') }}" class="nav-link text-base hover-neon-glow">Contacto</a>
-            <a href="{{ url('/libro-reclamaciones') }}" class="nav-link text-base hover-neon-glow"> Reclamaciones</a>
 
             @guest
                 <a href="{{ url('/admin/login') }}" class="btn-primary text-sm ml-2">

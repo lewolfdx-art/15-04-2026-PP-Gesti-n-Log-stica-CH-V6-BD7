@@ -44,6 +44,7 @@ class ProductoResource extends Resource
                                     ->helperText('Solo un registro puede estar activo a la vez'),
                             ]),
                         
+                        // ===================== CATEGORÍA 1: TIPOS DE CONCRETO =====================
                         Tabs\Tab::make('Tipos de Concreto')
                             ->schema([
                                 Repeater::make('tipos_concreto')
@@ -81,6 +82,7 @@ class ProductoResource extends Resource
                                     ]),
                             ]),
                         
+                        // ===================== CATEGORÍA 2: SERVICIOS COMPLEMENTARIOS =====================
                         Tabs\Tab::make('Servicios Complementarios')
                             ->schema([
                                 Repeater::make('servicios_complementarios')
@@ -111,7 +113,103 @@ class ProductoResource extends Resource
                                     ->default([
                                         ['name' => 'Venta de Concreto Premezclado', 'description' => 'Concretos de diferentes resistencias y características, controlados en laboratorio.'],
                                         ['name' => 'Alquiler de Mixer', 'description' => 'Mixers modernos de 8 a 12 m³, disponibles para entrega en cualquier punto de la región.'],
-                                        ['name' => 'Bomba de Concreto', 'description' => 'Servicio de bombeo con pluma y estacionaria, para vaciados en zonas de difícil acceso.'],
+                                        ['name' => 'Servicio de Bombeo', 'description' => 'Servicio de bombeo con pluma y estacionaria, para vaciados en zonas de difícil acceso.'],
+                                    ]),
+                            ]),
+                        
+                        // ===================== CATEGORÍA 3: PAVIMENTOS =====================
+                        Tabs\Tab::make('Pavimentos')
+                            ->schema([
+                                Repeater::make('pavimentos')
+                                    ->label('Pavimentos')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Nombre')
+                                            ->required()
+                                            ->placeholder('Ej: Pavimento Rígido'),
+                                        Forms\Components\RichEditor::make('description')
+                                            ->label('Descripción')
+                                            ->required()
+                                            ->placeholder('Describe este tipo de pavimento...'),
+                                        Forms\Components\FileUpload::make('image')
+                                            ->label('Imagen')
+                                            ->image()
+                                            ->directory('productos')
+                                            ->imageResizeMode('cover')
+                                            ->imageCropAspectRatio('16:9'),
+                                    ])
+                                    ->columns(1)
+                                    ->collapsible()
+                                    ->default([
+                                        ['name' => 'Pavimento Rígido', 'description' => 'Losas de concreto hidráulico para vías urbanas, carreteras y áreas industriales.'],
+                                        ['name' => 'Pavimento Flexible', 'description' => 'Estructura asfáltica con base de concreto para mayor durabilidad.'],
+                                    ]),
+                            ]),
+                        
+                        // ===================== APLICACIONES CONSTRUCTIVAS =====================
+                        Tabs\Tab::make('Aplicaciones Constructivas')
+                            ->schema([
+                                Forms\Components\Section::make('Aplicaciones para Estructuras')
+                                    ->schema([
+                                        Repeater::make('aplicaciones')
+                                            ->label('Aplicaciones Constructivas')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('name')
+                                                    ->label('Nombre')
+                                                    ->required()
+                                                    ->placeholder('Ej: Zapatas y Cimientos'),
+                                                Forms\Components\RichEditor::make('description')
+                                                    ->label('Descripción')
+                                                    ->required()
+                                                    ->placeholder('Describe esta aplicación...'),
+                                                Forms\Components\FileUpload::make('image')
+                                                    ->label('Imagen')
+                                                    ->image()
+                                                    ->directory('productos/aplicaciones')
+                                                    ->imageResizeMode('cover')
+                                                    ->imageCropAspectRatio('16:9'),
+                                            ])
+                                            ->columns(1)
+                                            ->collapsible()
+                                            ->default([
+                                                ['name' => 'Zapatas y Cimientos', 'description' => 'Elementos estructurales que transmiten las cargas de la edificación al suelo.'],
+                                                ['name' => 'Columnas', 'description' => 'Elementos verticales de concreto armado que soportan cargas de compresión.'],
+                                                ['name' => 'Losas', 'description' => 'Elementos horizontales que conforman los pisos y techos de las edificaciones.'],
+                                            ]),
+                                    ]),
+                            ]),
+                        
+                        // ===================== SECCIÓN DE MÉTRICAS =====================
+                        Tabs\Tab::make('Métricas')
+                            ->schema([
+                                Forms\Components\Section::make('Estadísticas de la Empresa')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('metric_proyectos')
+                                                    ->label('Proyectos realizados')
+                                                    ->numeric()
+                                                    ->default(35)
+                                                    ->suffix('+'),
+                                                
+                                                Forms\Components\TextInput::make('metric_concreto')
+                                                    ->label('m³ de concreto')
+                                                    ->numeric()
+                                                    ->default(47)
+                                                    ->suffix('K+'),
+                                                
+                                                Forms\Components\TextInput::make('metric_mixers')
+                                                    ->label('Mixers modernos')
+                                                    ->numeric()
+                                                    ->default(15)
+                                                    ->suffix('+'),
+                                                
+                                                Forms\Components\TextInput::make('metric_experiencia')
+                                                    ->label('Años de experiencia')
+                                                    ->numeric()
+                                                    ->default(10)
+                                                    ->suffix('+'),
+                                            ]),
                                     ]),
                             ]),
                     ])
