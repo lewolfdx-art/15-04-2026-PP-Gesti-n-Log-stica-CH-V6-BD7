@@ -396,17 +396,24 @@
             <a href="{{ url('/contacto') }}" class="nav-link text-base hover-neon-glow">Contacto</a>
 
             @guest
-                <a href="{{ url('/admin/login') }}" class="btn-primary text-sm ml-2">
-                    <i class="bi bi-box-arrow-in-right"></i> Login
+            <a href="{{ url('/admin/login') }}" class="btn-primary text-sm ml-2">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+            </a>
+        @else
+            <!-- Botón Dashboard (solo para super_admin) -->
+            @if(auth()->user()->hasRole('super_admin'))
+                <a href="{{ url('/admin') }}" class="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 px-4 py-2 rounded-lg text-sm font-bold text-white shadow-md transition hover:scale-105 ml-2">
+                    <i class="bi bi-speedometer2"></i> Dashboard
                 </a>
-            @else
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="btn-primary text-sm ml-2">
-                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                    </button>
-                </form>
-            @endguest
+            @endif
+            
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="btn-primary text-sm ml-2">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </button>
+            </form>
+        @endguest
         </nav>
     </div>
 </header>

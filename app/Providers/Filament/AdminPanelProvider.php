@@ -19,6 +19,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Widgets\DatabaseBackupWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -36,11 +37,26 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Orange,
             ])
+            
+            // ========== GRUPOS DE NAVEGACIÓN CON ORDEN ==========
             ->navigationGroups([
+                NavigationGroup::make()->label('Escritorio')->collapsible(false),
+                NavigationGroup::make()->label('Navegación')->collapsible(false),
+                NavigationGroup::make()->label('Gestión de Contenido'),
+                NavigationGroup::make()->label('Usuarios'), // 👈 USUARIOS AQUÍ
                 NavigationGroup::make()->label('Gestión de Operaciones'),
                 NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Comercial'),
                 NavigationGroup::make()->label('Finanzas'),
+            ])
+            
+            // ========== BOTÓN "IR A LA WEB" ==========
+            ->navigationItems([
+                NavigationItem::make('Ir a la web')
+                    ->url(url('/'))
+                    ->icon('heroicon-o-globe-alt')
+                    ->group('Navegación')
+                    ->sort(-100),
             ])
             
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -50,7 +66,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                DatabaseBackupWidget::class,
                 \App\Filament\Widgets\TotalGeneralPagarWidget::class,
+                \App\Filament\Widgets\VentasPorMesChart::class,
+                \App\Filament\Widgets\ContratosPorVendedorChart::class,
+                \App\Filament\Widgets\TiposEstructuraChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
