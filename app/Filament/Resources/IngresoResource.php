@@ -86,14 +86,31 @@ class IngresoResource extends Resource
                                             ->rule('digits:8')
                                             ->unique('trabajadores', 'dni'),
 
+                                        // ======= SWITCH PARA FECHA DE NACIMIENTO OPCIONAL =======
+                                        Forms\Components\Toggle::make('tiene_fecha_nacimiento')
+                                            ->label('¿Tiene fecha de nacimiento?')
+                                            ->default(true)
+                                            ->live()
+                                            ->columnSpanFull(),
+
                                         Forms\Components\DatePicker::make('fecha_nacimiento')
                                             ->label('Fecha de Nacimiento')
                                             ->default(now()->subYears(25))
-                                            ->required()
                                             ->native(false)
                                             ->displayFormat('d/m/Y')
                                             ->format('Y-m-d')
-                                            ->maxDate(now()),
+                                            ->maxDate(now())
+                                            ->closeOnDateSelection(true)
+                                            ->placeholder('dd/mm/yyyy')
+                                            ->required(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
+                                            ->disabled(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === false)
+                                            ->dehydrated(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
+                                            ->rules(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true ? ['required', 'date'] : ['nullable', 'date'])
+                                            ->afterStateHydrated(function ($state, callable $set) {
+                                                if (empty($state)) {
+                                                    $set('tiene_fecha_nacimiento', false);
+                                                }
+                                            }),
 
                                         Forms\Components\TextInput::make('orden')
                                             ->label('Orden (posición en la lista)')
@@ -109,7 +126,7 @@ class IngresoResource extends Resource
                                             'tipo_cargo'       => 'asesor_ventas',
                                             'nombre_completo'  => strtoupper(trim($data['nombre_completo'])),
                                             'dni'              => $data['dni'] ?? null,
-                                            'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+                                            'fecha_nacimiento' => $data['tiene_fecha_nacimiento'] ? ($data['fecha_nacimiento'] ?? null) : null,
                                             'descripcion'      => $data['descripcion'] ?? null,
                                             'orden'            => $data['orden'] ?? 999,
                                             'activo'           => true,
