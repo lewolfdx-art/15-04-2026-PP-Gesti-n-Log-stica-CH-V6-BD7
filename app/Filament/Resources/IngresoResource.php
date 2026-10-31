@@ -72,7 +72,7 @@ class IngresoResource extends Resource
                                 Select::make('asesor')
                                     ->label('Asesor')
                                     ->options(function () {
-                                        return Trabajador::where('tipo_cargo', 'asesor_ventas')
+                                        return Trabajador::asesores()
                                             ->where('activo', true)
                                             ->orderBy('orden')
                                             ->pluck('nombre_completo', 'nombre_completo');
@@ -270,7 +270,7 @@ class IngresoResource extends Resource
 
                 SelectFilter::make('asesor')
                     ->label('Asesor')
-                    ->options(fn () => Trabajador::where('tipo_cargo', 'asesor_ventas')
+                    ->options(fn () => Trabajador::asesores()
                         ->where('activo', true)
                         ->orderBy('orden')
                         ->pluck('nombre_completo', 'nombre_completo')

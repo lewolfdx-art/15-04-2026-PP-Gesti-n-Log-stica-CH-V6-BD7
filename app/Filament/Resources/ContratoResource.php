@@ -87,7 +87,7 @@ class ContratoResource extends Resource
                                 Select::make('nombre_vendedor')
                                 ->label('NOMBRE DEL VENDEDOR')
                                 ->options(function () {
-                                    return Trabajador::where('tipo_cargo', 'asesor_ventas')
+                                    return Trabajador::asesores()
                                         ->where('activo', true)
                                         ->orderBy('orden')
                                         ->pluck('nombre_completo', 'nombre_completo');

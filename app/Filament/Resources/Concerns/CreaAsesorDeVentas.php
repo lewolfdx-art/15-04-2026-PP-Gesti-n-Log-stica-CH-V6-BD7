@@ -17,7 +17,7 @@ trait CreaAsesorDeVentas
      */
     protected static function opcionesAsesoresVentas(): array
     {
-        return Trabajador::where('tipo_cargo', 'asesor_ventas')
+        return Trabajador::asesores()
             ->where('activo', true)
             ->orderBy('orden')
             ->pluck('nombre_completo', 'nombre_completo')
@@ -49,7 +49,7 @@ trait CreaAsesorDeVentas
                 ->required()
                 ->mask('99999999')
                 ->rule('digits:8')
-                ->unique('trabajadores', 'dni'),
+                ->unique('trabajadores', 'dni', ignoreRecord: true),
 
             Toggle::make('tiene_fecha_nacimiento')
                 ->label('¿Tiene fecha de nacimiento?')

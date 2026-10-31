@@ -26,6 +26,7 @@ use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TrabajadoresResource extends Resource
 {
@@ -33,14 +34,21 @@ class TrabajadoresResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
-    protected static ?string $navigationLabel = 'Trabajadores y asesores';
+    protected static ?string $navigationLabel = 'Trabajadores';
     protected static ?string $modelLabel = 'Trabajador';
-    protected static ?string $pluralModelLabel = 'Trabajadores y asesores';
+    protected static ?string $pluralModelLabel = 'Trabajadores';
     protected static ?int $navigationSort = 1;
     protected static ?string $slug = 'trabajadores';
 
-    protected static ?string $singularLabel = 'Trabajador';
     protected static ?string $recordTitleAttribute = 'nombre_completo';
+
+    /**
+     * Solo personal: los asesores de ventas se gestionan en AsesorVentasResource
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->personal();
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -48,26 +56,7 @@ class TrabajadoresResource extends Resource
             ->components([
                 Select::make('tipo_cargo')
                     ->label('Cargo / Tipo')
-                    ->options([
-                        'asesor_ventas'                => '💼 Asesor de Ventas',
-                        'operador_planta'              => '👷 Operador de Planta',
-                        'operador_retroexcavadora'     => '🚜 Operador de Retroexcavadora',
-                        'ayudante_planta'              => '👷 Ayudante de Planta',
-                        'operador_bomba_telescopica'   => '🚧 Operador de Bomba Telescópica',
-                        'ayudante_manguerero_bt'       => '👷 Ayudante Manguerero B.T',
-                        'ayudante_vibrador_bt'         => '👷 Ayudante Vibrador B.T',
-                        'jefe_mantenimiento'           => '🛠️ Jefe de Mantenimiento',
-                        'operador_mixer'               => '🚛 Operador de Mixer',
-                        'operador_trayler'             => '🚛 Operador de Trayler',
-                        'ayudante_bomba'               => '👷 Ayudante de Bomba',
-                        'asistente_calidad'            => '📋 Asistente de Calidad',
-                        'administracion'               => '🏢 Administración',
-                        'asistente_administrativo'     => '📑 Asistente Administrativo',
-                        'planeamiento'                 => '📊 Planeamiento',
-                        'seguridad_noche'              => '🌙 Seguridad de Noche',
-                        'contador'                     => '💰 Contador',
-                        'personal_curado'              => '👷 Personal de Curado',
-                    ])
+                    ->options(Trabajador::CARGOS_PERSONAL)
                     ->required()
                     ->native(false)
                     ->searchable()
@@ -135,27 +124,7 @@ class TrabajadoresResource extends Resource
                 TextColumn::make('tipo_cargo')
                     ->label('Cargo')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => match($state) {
-                        'asesor_ventas'                => '💼 Asesor de Ventas',
-                        'operador_planta'              => '👷 Operador de Planta',
-                        'operador_retroexcavadora'     => '🚜 Operador de Retroexcavadora',
-                        'ayudante_planta'              => '👷 Ayudante de Planta',
-                        'operador_bomba_telescopica'   => '🚧 Operador Bomba Telescópica',
-                        'ayudante_manguerero_bt'       => '👷 Ayudante Manguerero',
-                        'ayudante_vibrador_bt'         => '👷 Ayudante Vibrador',
-                        'jefe_mantenimiento'           => '🛠️ Jefe de Mantenimiento',
-                        'operador_mixer'               => '🚛 Operador de Mixer',
-                        'operador_trayler'             => '🚛 Operador de Trayler',
-                        'ayudante_bomba'               => '👷 Ayudante de Bomba',
-                        'asistente_calidad'            => '📋 Asistente de Calidad',
-                        'administracion'               => '🏢 Administración',
-                        'asistente_administrativo'     => '📑 Asistente Administrativo',
-                        'planeamiento'                 => '📊 Planeamiento',
-                        'seguridad_noche'              => '🌙 Seguridad Noche',
-                        'contador'                     => '💰 Contador',
-                        'personal_curado'              => '👷 Personal de Curado',
-                        default => str_replace('_', ' ', ucwords($state)),
-                    })
+                    ->formatStateUsing(fn (?string $state) => Trabajador::cargoTexto($state))
                     ->color('primary')
                     ->sortable(),
 
@@ -188,11 +157,7 @@ class TrabajadoresResource extends Resource
             ->filters([
                 SelectFilter::make('tipo_cargo')
                     ->label('Cargo')
-                    ->options([
-                        'asesor_ventas' => '💼 Asesor de Ventas',
-                        'operador_planta' => '👷 Operador de Planta',
-                        // puedes agregar más aquí si quieres
-                    ])
+                    ->options(Trabajador::CARGOS_PERSONAL)
                     ->multiple()
                     ->searchable(),
 
