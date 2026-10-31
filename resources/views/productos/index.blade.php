@@ -72,6 +72,14 @@
             gap: 2rem;
             margin-bottom: 3rem;
         }
+        /* Enlace directo a un producto (/productos/lanzado → /productos#lanzado) */
+        .producto-card[id] {
+            scroll-margin-top: 110px;
+        }
+        .producto-card:target {
+            box-shadow: 0 0 0 3px var(--color-primary), 0 10px 25px rgba(0,0,0,0.12);
+        }
+
         .producto-card {
             background: white;
             border-radius: 1rem;
@@ -122,7 +130,7 @@
             <h2 class="section-title">Tipos de <span>Concreto</span></h2>
             <div class="productos-grid">
                 @foreach($tiposConcreto as $producto)
-                    <div class="producto-card">
+                    <div class="producto-card" id="{{ Str::slug($producto['name'] ?? '') }}">
                         @if(!empty($producto['image']))
                             <img src="{{ Storage::url($producto['image']) }}" alt="{{ $producto['name'] }}">
                         @else
@@ -145,7 +153,7 @@
             <h2 class="section-title">Servicios <span>Complementarios</span></h2>
             <div class="productos-grid">
                 @foreach($servicios as $servicio)
-                    <div class="producto-card">
+                    <div class="producto-card" id="{{ Str::slug($servicio['name'] ?? '') }}">
                         @if(!empty($servicio['image']))
                             <img src="{{ Storage::url($servicio['image']) }}" alt="{{ $servicio['name'] }}">
                         @else

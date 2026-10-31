@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Filament\Operador\Resources\MisObrasResource;
 use App\Filament\Resources\CuentaPorPagarResource;
+use App\Filament\Resources\LibroReclamacionResource;
 use App\Filament\Resources\ReporteSemanalResource;
 use App\Models\Contrato;
 use App\Models\CuentaPorPagar;
+use App\Models\LibroReclamacion;
 use App\Models\ReporteSemanal;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -178,6 +180,26 @@ class NotificationService
         }
 
         return $enviadas;
+    }
+
+    /**
+     * Aviso a los administradores de una nueva hoja del Libro de Reclamaciones
+     */
+    public static function notificarNuevaReclamacion(LibroReclamacion $hoja): void
+    {
+        $notificacion = Notification::make()
+            ->title("📕 Nuevo {$hoja->tipo} en el Libro de Reclamaciones")
+            ->body("{$hoja->codigo} · {$hoja->claimant_name}\nResponder a más tardar el " . $hoja->fecha_limite->format('d/m/Y'))
+            ->icon('heroicon-o-book-open')
+            ->iconColor('danger')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver y responder')
+                    ->url(LibroReclamacionResource::getUrl('view', ['record' => $hoja], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
     }
 
     /**

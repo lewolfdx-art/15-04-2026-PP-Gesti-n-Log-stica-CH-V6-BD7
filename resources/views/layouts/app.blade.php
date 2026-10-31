@@ -479,6 +479,13 @@
             "TU PROYECTO, NUESTRO LEGADO"
             <i class="fas fa-hard-hat" style="color: #f5811e;"></i>
         </p>
+        {{-- Aviso obligatorio del Libro de Reclamaciones (Ley 29571) --}}
+        <a href="{{ route('reclamaciones.index') }}"
+           class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg border transition hover:scale-105"
+           style="border-color: #f5811e; color: #ffffff;">
+            <i class="fas fa-book-open" style="color: #f5811e;"></i>
+            <span><strong>Libro de Reclamaciones</strong></span>
+        </a>
     </div>
 </footer>
 
