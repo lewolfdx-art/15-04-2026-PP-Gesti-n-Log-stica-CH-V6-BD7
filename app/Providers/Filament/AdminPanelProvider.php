@@ -35,7 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName('Concretera Mantaro')
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('3rem')
@@ -92,7 +92,8 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                // Igual que Authenticate de Filament, pero manda a los operadores a /operador
+                \App\Http\Middleware\RedirigirOperadoresAlPanel::class,
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
