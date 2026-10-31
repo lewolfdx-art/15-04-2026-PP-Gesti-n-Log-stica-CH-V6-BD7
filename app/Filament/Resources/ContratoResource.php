@@ -30,11 +30,8 @@ use App\Filament\Resources\ContratoResource\Pages\CreateContrato;
 use App\Filament\Resources\ContratoResource\Pages\EditContrato;
 use App\Filament\Resources\ContratoResource\Pages\ViewContrato;
 use App\Models\Contrato;
-use App\Models\DatoOperacion;
-use Filament\Forms;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Notifications\Notification;
@@ -230,9 +227,9 @@ class ContratoResource extends Resource
                                     ->reorderable()
                                     ->maxFiles(8)
                                     ->maxSize(5120)
-                                    ->imageResizeMode('contain')
-                                    ->imageResizeTargetWidth('1600')
-                                    ->imageResizeTargetHeight('1600')
+                                    ->automaticallyResizeImagesMode('contain')
+                                    ->automaticallyResizeImagesToWidth('1600')
+                                    ->automaticallyResizeImagesToHeight('1600')
                                     ->directory('contratos/lugar')
                                     ->panelLayout('grid')
                                     ->columnSpanFull(),
