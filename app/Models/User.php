@@ -59,7 +59,7 @@ class User extends Authenticatable implements FilamentUser
             ? $this->hasAnyRole(['operador', 'super_admin', 'admin'])
             : $this->hasAnyRole(['super_admin', 'admin']);
 
-        Log::info("Acceso Filament - Email: {$this->email} | Activo: {$this->is_active} | Roles: {$roles->join(', ')} | Acceso: " . ($tieneAcceso ? 'SI' : 'NO'));
+        Log::info("Acceso Filament - Panel: /{$panel->getPath()} | Email: {$this->email} | Activo: {$this->is_active} | Roles: {$roles->join(', ')} | Acceso: " . ($tieneAcceso ? 'SI' : 'NO'));
 
         return $tieneAcceso;
     }
