@@ -115,7 +115,7 @@
                     @endif
                     <div class="content">
                         <h3>{{ $recomendacion['title'] }}</h3>
-                        <div class="description">{!! $recomendacion['description'] !!}</div>
+                        <div class="description">{!! str($recomendacion['description'])->sanitizeHtml() !!}</div>
                     </div>
                 </div>
             @endforeach

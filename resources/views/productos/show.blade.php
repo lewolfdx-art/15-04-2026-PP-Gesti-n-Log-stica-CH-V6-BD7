@@ -28,7 +28,7 @@
 
                 <div class="prose max-w-none mb-6">
                     <h3 class="text-lg font-semibold text-[#16222e] mb-2">Descripción</h3>
-                    <div class="text-gray-600">{!! $producto->description !!}</div>
+                    <div class="text-gray-600">{!! str($producto->description)->sanitizeHtml() !!}</div>
                 </div>
 
                 @if($producto->technical_specs && count($producto->technical_specs) > 0)

@@ -114,7 +114,7 @@
         <!-- Hero -->
         <div class="hero-products">
             <h1>{{ $productos->page_title ?? 'Nuestros <span>Productos y Servicios</span>' }}</h1>
-            <p>{!! $productos->page_description ?? 'Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.' !!}</p>
+            <p>{!! str($productos->page_description ?? 'Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.')->sanitizeHtml() !!}</p>
         </div>
 
         <!-- ===================== TIPOS DE CONCRETO ===================== -->
@@ -130,7 +130,7 @@
                         @endif
                         <div class="producto-info">
                             <h3>{{ $producto['name'] }}</h3>
-                            <div class="description">{!! $producto['description'] !!}</div>
+                            <div class="description">{!! str($producto['description'])->sanitizeHtml() !!}</div>
                             @if(!empty($producto['price']))
                                 <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($producto['price'], 2) }}</div>
                             @endif
@@ -153,7 +153,7 @@
                         @endif
                         <div class="producto-info">
                             <h3>{{ $servicio['name'] }}</h3>
-                            <div class="description">{!! $servicio['description'] !!}</div>
+                            <div class="description">{!! str($servicio['description'])->sanitizeHtml() !!}</div>
                             @if(!empty($servicio['price']))
                                 <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($servicio['price'], 2) }}</div>
                             @endif

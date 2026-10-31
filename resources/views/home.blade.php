@@ -309,7 +309,7 @@
     @if($inicio)
         <!-- Hero principal -->
         <div class="hero-custom">
-            <h1>{!! $inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad' !!}</h1>
+            <h1>{!! str($inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad')->sanitizeHtml() !!}</h1>
             <p>{{ $inicio->hero_description ?? 'Para obras y proyectos en Huancayo y toda la región' }}</p>
             @if($inicio->cta_text && $inicio->cta_url)
                 <a href="{{ $inicio->cta_url }}" class="btn-cotizar">

@@ -109,7 +109,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->quienes_somos_text ?? 'Somos una empresa peruana especializada en la producción de concreto premezclado...' !!}
+                    {!! str($nosotros->quienes_somos_text ?? 'Somos una empresa peruana especializada en la producción de concreto premezclado...')->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->quienes_somos_image)
                 <div class="section-image">
@@ -128,7 +128,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->mision_text !!}
+                    {!! str($nosotros->mision_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->mision_image)
                 <div class="section-image">
@@ -147,7 +147,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->vision_text !!}
+                    {!! str($nosotros->vision_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->vision_image)
                 <div class="section-image">
@@ -190,7 +190,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->actividad_text !!}
+                    {!! str($nosotros->actividad_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->actividad_image)
                 <div class="section-image">
@@ -209,7 +209,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->organigrama_text !!}
+                    {!! str($nosotros->organigrama_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->organigrama_image)
                 <div class="section-image">

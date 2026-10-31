@@ -204,6 +204,12 @@
                 </div>
             @endif
 
+            @error('general')
+                <div class="alert-success" style="background:#fef2f2;border-color:#fca5a5;color:#991b1b;">
+                    <i class="fas fa-exclamation-circle mr-2"></i> {{ $message }}
+                </div>
+            @enderror
+
             <form action="{{ route('contacto.store') }}" method="POST">
                 @csrf
                 <div class="form-group">
