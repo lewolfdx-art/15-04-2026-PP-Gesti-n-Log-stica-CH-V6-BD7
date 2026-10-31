@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
 class Trabajador extends Model
@@ -25,7 +26,13 @@ class Trabajador extends Model
         'orden',
         'activo',
         'user_id',
+        'sueldo_mensual',
     ];
+
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(PagoPersonal::class);
+    }
 
     /**
      * Usuario con el que entra al panel de operadores (opcional)
@@ -49,6 +56,7 @@ class Trabajador extends Model
         'fecha_nacimiento' => 'date',
         'activo' => 'boolean',
         'orden' => 'integer',
+        'sueldo_mensual' => 'decimal:2',
     ];
 
     /**

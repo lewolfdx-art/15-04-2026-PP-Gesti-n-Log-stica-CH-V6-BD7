@@ -104,6 +104,13 @@ class TrabajadoresResource extends Resource
                         }
                     }),
 
+                TextInput::make('sueldo_mensual')
+                    ->label('Sueldo mensual')
+                    ->prefix('S/')
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText('Se paga por quincenas: cada quincena propone la mitad (en Pagos al personal).'),
+
                 Textarea::make('descripcion')
                     ->label('Descripción / Observaciones')
                     ->rows(3)
@@ -135,6 +142,12 @@ class TrabajadoresResource extends Resource
                 TextColumn::make('dni')
                     ->label('DNI')
                     ->searchable(),
+
+                TextColumn::make('sueldo_mensual')
+                    ->label('Sueldo mensual')
+                    ->money('PEN')
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 TextColumn::make('user.email')
                     ->label('Acceso al sistema')

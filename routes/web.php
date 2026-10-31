@@ -22,6 +22,11 @@ Route::post('/contacto', [ContactoController::class, 'store'])->middleware('thro
 Route::get('/libro-reclamaciones', [LibroReclamacionController::class, 'index'])->name('reclamaciones.index');
 Route::post('/libro-reclamaciones', [LibroReclamacionController::class, 'store'])->middleware('throttle:formularios-publicos')->name('reclamaciones.store');
 
+// Comprobante imprimible de pagos al personal (solo administradores)
+Route::get('/admin/pagos-personal/{pago}/comprobante', [\App\Http\Controllers\ComprobantePagoController::class, 'show'])
+    ->middleware('auth')
+    ->name('pagos-personal.comprobante');
+
 // Ruta de logout usando Auth facade
 Route::post('/logout', function () {
     Auth::logout(); // 👈 Usar Auth::logout() en lugar de auth()->logout()
