@@ -25,6 +25,35 @@ class CuentaPorPagar extends Model
         'pagado' => 'boolean',
     ];
 
+    /**
+     * Texto legible del período de la cuenta (ej. "Fin de mes · Noviembre 2026")
+     */
+    public function periodoTexto(): string
+    {
+        $mesAño = trim(ucfirst((string) $this->mes) . ' ' . $this->año);
+
+        return match ($this->tipo) {
+            'fin_mes' => 'Fin de mes · ' . $mesAño,
+            'mes'     => $mesAño,
+            'viajes'  => 'Viajes' . ($this->fecha ? ' · ' . $this->fecha->format('d/m/Y') : ''),
+            default   => $this->fecha?->format('d/m/Y') ?? ucfirst((string) $this->tipo),
+        };
+    }
+
+    /**
+     * Etiqueta del tipo de gasto
+     */
+    public static function tipoTexto(?string $tipo): string
+    {
+        return match ($tipo) {
+            'fecha'   => 'Por fecha',
+            'mes'     => 'Mensual',
+            'fin_mes' => 'Fin de mes',
+            'viajes'  => 'Viajes',
+            default   => ucfirst((string) $tipo) ?: 'Sin tipo',
+        };
+    }
+
     // ==================== PROCEDIMIENTOS ALMACENADOS ====================
 
     /**

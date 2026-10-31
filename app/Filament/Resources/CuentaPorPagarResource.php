@@ -179,26 +179,16 @@ class CuentaPorPagarResource extends Resource
                     ->label('Pagar')
                     ->toggleable(),
             ])
-            ->header(function () {
-                $tableFilters = request()->get('tableFilters', []);
+            // Los filtros se leen del componente Livewire para que el resumen se actualice al filtrar
+            ->header(function ($livewire) {
+                $tableFilters = $livewire->tableFilters ?? [];
 
-                $filtros = [];
-                if (isset($tableFilters['tipo']['value'])) {
-                    $filtros['tipo'] = $tableFilters['tipo']['value'];
-                }
-                if (isset($tableFilters['mes']['value'])) {
-                    $filtros['mes'] = $tableFilters['mes']['value'];
-                }
-                if (isset($tableFilters['año']['value'])) {
-                    $filtros['año'] = $tableFilters['año']['value'];
-                }
+                $filtros = collect(['tipo', 'mes', 'año'])
+                    ->mapWithKeys(fn ($campo) => [$campo => $tableFilters[$campo]['value'] ?? null])
+                    ->filter(fn ($valor) => filled($valor))
+                    ->all();
 
-                $data = self::getTotalesYHistorial($filtros);
-
-                return view('filament.components.resumen-cuentas-por-pagar', [
-                    'total_por_pagar' => $data['total_por_pagar'],
-                    'historial'       => $data['historial'],
-                ]);
+                return view('filament.components.resumen-pagos', self::getResumenPagos($filtros));
             })
             ->defaultSort('created_at', 'desc')
             ->searchable()
@@ -256,50 +246,45 @@ class CuentaPorPagarResource extends Resource
     }
 
     /**
-     * Calcula el total por pagar y el historial de pagos
+     * Datos para el componente compartido resumen-pagos:
+     * totales, pendiente por tipo de gasto y últimos pagos realizados.
+     * La fecha de pago se toma de updated_at (no existe columna propia).
      */
-    public static function getTotalesYHistorial(array $filtros = []): array
+    public static function getResumenPagos(array $filtros = []): array
     {
-        // ==================== TOTAL POR PAGAR ====================
-        $queryPendientes = CuentaPorPagar::query()->where('pagado', false);
+        $base = fn () => CuentaPorPagar::query()->where($filtros);
 
-        if (!empty($filtros)) {
-            if (isset($filtros['tipo'])) {
-                $queryPendientes->where('tipo', $filtros['tipo']);
-            }
-            if (isset($filtros['mes'])) {
-                $queryPendientes->where('mes', $filtros['mes']);
-            }
-            if (isset($filtros['año'])) {
-                $queryPendientes->where('año', $filtros['año']);
-            }
-        }
+        $pendientes = $base()->where('pagado', false)->get(['tipo', 'total']);
 
-        $total_por_pagar = $queryPendientes->sum('total') ?? 0;
+        $desglose = $pendientes
+            ->groupBy('tipo')
+            ->mapWithKeys(fn ($items, $tipo) => [CuentaPorPagar::tipoTexto($tipo) => (float) $items->sum('total')])
+            ->sortDesc()
+            ->all();
 
-        // ==================== HISTORIAL DE PAGOS REALIZADOS ====================
-        $queryHistorial = CuentaPorPagar::query()
+        $historial = $base()
             ->where('pagado', true)
-            ->orderBy('updated_at', 'desc')
-            ->limit(15);
-
-        if (!empty($filtros)) {
-            if (isset($filtros['tipo'])) {
-                $queryHistorial->where('tipo', $filtros['tipo']);
-            }
-            if (isset($filtros['mes'])) {
-                $queryHistorial->where('mes', $filtros['mes']);
-            }
-            if (isset($filtros['año'])) {
-                $queryHistorial->where('año', $filtros['año']);
-            }
-        }
-
-        $historial = $queryHistorial->get();
+            ->latest('updated_at')
+            ->limit(15)
+            ->get()
+            ->map(fn (CuentaPorPagar $cuenta) => [
+                'fecha'     => $cuenta->updated_at,
+                'titulo'    => $cuenta->detalle,
+                'subtitulo' => $cuenta->cantidad,
+                'periodo'   => $cuenta->periodoTexto(),
+                'monto'     => (float) $cuenta->total,
+            ]);
 
         return [
-            'total_por_pagar' => $total_por_pagar,
-            'historial'       => $historial,
+            'total_pendiente'     => (float) $pendientes->sum('total'),
+            'cantidad_pendientes' => $pendientes->count(),
+            'pagado_mes'          => (float) $base()->where('pagado', true)
+                ->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('total'),
+            'desglose_titulo'     => 'Pendiente por tipo de gasto',
+            'desglose'            => $desglose,
+            'columna_detalle'     => 'Detalle',
+            'historial'           => $historial,
         ];
     }
 

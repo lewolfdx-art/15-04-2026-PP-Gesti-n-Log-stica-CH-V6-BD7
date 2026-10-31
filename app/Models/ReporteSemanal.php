@@ -38,6 +38,38 @@ class ReporteSemanal extends Model
         'monto' => 'decimal:2',
     ];
 
+    /**
+     * Texto legible del período del reporte (ej. "Semana 43 · 20/10 – 26/10/2026")
+     */
+    public function periodoTexto(): string
+    {
+        $mesAño = $this->mes
+            ? ucfirst(\Carbon\Carbon::create()->month((int) $this->mes)->locale('es')->monthName) . ' ' . $this->año
+            : (string) $this->año;
+
+        return match ($this->tipo_periodo) {
+            'semanal'  => "Semana {$this->semana}" . ($this->fecha_desde && $this->fecha_hasta
+                ? ' · ' . $this->fecha_desde->format('d/m') . ' – ' . $this->fecha_hasta->format('d/m/Y')
+                : ''),
+            'quincena' => ($this->quincena === 'PRIMERA' ? '1ra quincena' : '2da quincena') . ' · ' . $mesAño,
+            'fin_mes'  => 'Fin de mes · ' . ($this->fecha_fin_mes?->format('d/m/Y') ?? $mesAño),
+            default    => ucfirst((string) $this->tipo_periodo),
+        };
+    }
+
+    /**
+     * Etiqueta del tipo de período
+     */
+    public static function tipoPeriodoTexto(?string $tipo): string
+    {
+        return match ($tipo) {
+            'semanal'  => 'Semanal',
+            'quincena' => 'Quincenal',
+            'fin_mes'  => 'Fin de mes',
+            default    => ucfirst((string) $tipo) ?: 'Sin período',
+        };
+    }
+
     // ==================== PROCEDIMIENTOS ALMACENADOS ====================
 
     /**
