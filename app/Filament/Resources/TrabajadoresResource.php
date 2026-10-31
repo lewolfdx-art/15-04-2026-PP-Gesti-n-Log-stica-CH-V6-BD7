@@ -109,11 +109,6 @@ class TrabajadoresResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
-                TextInput::make('orden')
-                    ->label('Orden')
-                    ->numeric()
-                    ->default(0),
-
                 Toggle::make('activo')
                     ->label('Activo')
                     ->default(true),
@@ -155,13 +150,9 @@ class TrabajadoresResource extends Resource
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('orden')
-                    ->sortable()
-                    ->alignCenter(),
-
                 ToggleColumn::make('activo'),
             ])
-            ->defaultSort('orden', 'asc')
+            ->defaultSort('nombre_completo', 'asc')
             ->searchable()
             ->filters([
                 SelectFilter::make('tipo_cargo')

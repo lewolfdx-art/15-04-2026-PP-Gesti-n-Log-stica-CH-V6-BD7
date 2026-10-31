@@ -13,13 +13,13 @@ use Filament\Forms\Components\Toggle;
 trait CreaAsesorDeVentas
 {
     /**
-     * Opciones del Select de asesores de ventas activos, ordenados.
+     * Opciones del Select de asesores de ventas activos, por nombre.
      */
     protected static function opcionesAsesoresVentas(): array
     {
         return Trabajador::asesores()
             ->where('activo', true)
-            ->orderBy('orden')
+            ->orderBy('nombre_completo')
             ->pluck('nombre_completo', 'nombre_completo')
             ->toArray();
     }
@@ -76,11 +76,6 @@ trait CreaAsesorDeVentas
                     }
                 }),
 
-            TextInput::make('orden')
-                ->label('Orden (posición en la lista)')
-                ->numeric()
-                ->default(999),
-
             Textarea::make('descripcion')
                 ->label('Descripción / Nota')
                 ->rows(2),
@@ -98,7 +93,6 @@ trait CreaAsesorDeVentas
             'dni' => $data['dni'] ?? null,
             'fecha_nacimiento' => $data['tiene_fecha_nacimiento'] ? ($data['fecha_nacimiento'] ?? null) : null,
             'descripcion' => $data['descripcion'] ?? null,
-            'orden' => $data['orden'] ?? 999,
             'activo' => true,
         ]);
 

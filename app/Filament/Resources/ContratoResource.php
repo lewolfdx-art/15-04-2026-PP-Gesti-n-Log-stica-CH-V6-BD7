@@ -91,7 +91,7 @@ class ContratoResource extends Resource
                                 ->options(function () {
                                     return Trabajador::asesores()
                                         ->where('activo', true)
-                                        ->orderBy('orden')
+                                        ->orderBy('nombre_completo')
                                         ->pluck('nombre_completo', 'nombre_completo');
                                 })
                                 ->searchable()
@@ -146,11 +146,6 @@ class ContratoResource extends Resource
                                             }
                                         }),
                             
-                                    TextInput::make('orden')
-                                        ->label('Orden (posición en la lista)')
-                                        ->numeric()
-                                        ->default(999),
-                            
                                     Textarea::make('descripcion')
                                         ->label('Descripción / Nota')
                                         ->rows(2),
@@ -162,7 +157,6 @@ class ContratoResource extends Resource
                                         'dni'              => $data['dni'] ?? null,
                                         'fecha_nacimiento' => $data['tiene_fecha_nacimiento'] ? ($data['fecha_nacimiento'] ?? null) : null,
                                         'descripcion'      => $data['descripcion'] ?? null,
-                                        'orden'            => $data['orden'] ?? 999,
                                         'activo'           => true,
                                     ]);
                             
@@ -248,7 +242,7 @@ class ContratoResource extends Resource
                                     ->relationship(
                                         'operadores',
                                         'nombre_completo',
-                                        fn ($query) => $query->personal()->where('activo', true)->orderBy('orden'),
+                                        fn ($query) => $query->personal()->where('activo', true)->orderBy('nombre_completo'),
                                     )
                                     ->getOptionLabelFromRecordUsing(fn (Trabajador $trabajador): string => $trabajador->nombre_completo
                                         . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($trabajador->tipo_cargo)))

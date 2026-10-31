@@ -91,13 +91,9 @@ class AsesorVentasResource extends Resource
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('orden')
-                    ->sortable()
-                    ->alignCenter(),
-
                 ToggleColumn::make('activo'),
             ])
-            ->defaultSort('orden', 'asc')
+            ->defaultSort('nombre_completo', 'asc')
             ->filters([
                 TernaryFilter::make('activo'),
             ])
