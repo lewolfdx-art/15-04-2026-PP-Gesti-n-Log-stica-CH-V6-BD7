@@ -2,10 +2,27 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Placeholder;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Filament\Resources\UserResource\Pages\CreateUser;
+use App\Filament\Resources\UserResource\Pages\EditUser;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,36 +33,36 @@ use Illuminate\Support\Str;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Gestión de Usuarios';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Usuarios';
     //protected static ?int $navigationSort = 10;
     protected static ?string $recordTitleAttribute = 'name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Información del Usuario')
+        return $schema
+            ->components([
+                Section::make('Información del Usuario')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nombre Completo')
                             ->required()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->label('Correo Electrónico')
                             ->email()
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
 
-                        Forms\Components\Toggle::make('is_active')
+                        Toggle::make('is_active')
                             ->label('Cuenta Activa')
                             ->default(true)
                             ->helperText('Si está desactivado, el usuario no podrá iniciar sesión')
                             ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('password')
+                        TextInput::make('password')
                             ->label('Contraseña')
                             ->password()
                             ->revealable()
@@ -56,7 +73,7 @@ class UserResource extends Resource
                                 $context === 'edit' ? 'Dejar en blanco para mantener la contraseña actual' : ''
                             ),
 
-                        Forms\Components\TextInput::make('password_confirmation')
+                        TextInput::make('password_confirmation')
                             ->label('Confirmar Contraseña')
                             ->password()
                             ->revealable()
@@ -66,9 +83,9 @@ class UserResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Roles y Permisos')
+                Section::make('Roles y Permisos')
                     ->schema([
-                        Forms\Components\Select::make('roles')
+                        Select::make('roles')
                             ->label('Asignar Roles')
                             ->multiple()
                             ->preload()
@@ -76,13 +93,13 @@ class UserResource extends Resource
                             ->helperText('Solo "super_admin" y "admin" pueden acceder al panel.'),
                     ]),
 
-                Forms\Components\Section::make('Información de Sesión')
+                Section::make('Información de Sesión')
                     ->schema([
-                        Forms\Components\Placeholder::make('last_login_at')
+                        Placeholder::make('last_login_at')
                             ->label('Último acceso')
                             ->content(fn ($record) => $record?->last_login_at ? $record->last_login_at->format('d/m/Y H:i:s') : 'Nunca'),
 
-                        Forms\Components\Placeholder::make('last_login_ip')
+                        Placeholder::make('last_login_ip')
                             ->label('Última IP')
                             ->content(fn ($record) => $record?->last_login_ip ?? 'N/A'),
                     ])
@@ -95,18 +112,18 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->label('Correo')
                     ->searchable()
                     ->copyable()
                     ->copyMessage('Correo copiado'),
 
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
@@ -115,7 +132,7 @@ class UserResource extends Resource
                     ->falseColor('danger')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('roles.name')
+                TextColumn::make('roles.name')
                     ->label('Roles')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -126,13 +143,13 @@ class UserResource extends Resource
                     })
                     ->separator(', '),
 
-                Tables\Columns\TextColumn::make('last_login_at')
+                TextColumn::make('last_login_at')
                     ->label('Último acceso')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -140,21 +157,21 @@ class UserResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('is_active')
+                SelectFilter::make('is_active')
                     ->label('Estado de cuenta')
                     ->options([
                         '1' => 'Activos',
                         '0' => 'Inactivos',
                     ]),
-                Tables\Filters\SelectFilter::make('roles')
+                SelectFilter::make('roles')
                     ->label('Roles')
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload(),
             ])
-            ->actions([
+            ->recordActions([
                 // Orden: Desactivar -> Resetear contraseña -> Editar -> Borrar
-                Tables\Actions\Action::make('toggle_active')
+                Action::make('toggle_active')
                     ->label(fn ($record): string => $record->is_active ? 'Desactivar' : 'Activar')
                     ->icon(fn ($record): string => $record->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check-circle')
                     ->color(fn ($record): string => $record->is_active ? 'danger' : 'success')
@@ -182,7 +199,7 @@ class UserResource extends Resource
                         : '¿Estás seguro de activar este usuario? Podrá acceder al sistema nuevamente.')
                     ->visible(fn ($record): bool => !$record->hasRole('super_admin') || self::getAuthUser()->hasRole('super_admin')),
 
-                Tables\Actions\Action::make('reset_password')
+                Action::make('reset_password')
                     ->label('')
                     ->tooltip('Resetear contraseña')
                     ->icon('heroicon-o-key')
@@ -204,22 +221,22 @@ class UserResource extends Resource
                     ->modalDescription('Se generará una nueva contraseña aleatoria de 8 caracteres.')
                     ->visible(fn ($record): bool => self::getAuthUser()?->hasRole('super_admin') ?? false),
 
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->label('')
                     ->tooltip('Editar')
                     ->color('primary'),
 
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->label('')
                     ->tooltip('Borrar')
                     ->visible(fn ($record): bool => !$record->hasRole('super_admin') || self::getAuthUser()->hasRole('super_admin')),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
                         ->visible(fn (): bool => self::getAuthUser()?->hasRole('super_admin') ?? false),
                     
-                    Tables\Actions\BulkAction::make('bulk_activate')
+                    BulkAction::make('bulk_activate')
                         ->label('Activar seleccionados')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -227,7 +244,7 @@ class UserResource extends Resource
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
                     
-                    Tables\Actions\BulkAction::make('bulk_deactivate')
+                    BulkAction::make('bulk_deactivate')
                         ->label('Desactivar seleccionados')
                         ->icon('heroicon-o-no-symbol')
                         ->color('danger')
@@ -241,9 +258,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 

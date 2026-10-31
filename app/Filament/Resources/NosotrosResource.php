@@ -2,50 +2,66 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\NosotrosResource\Pages\ListNosotros;
+use App\Filament\Resources\NosotrosResource\Pages\CreateNosotros;
+use App\Filament\Resources\NosotrosResource\Pages\EditNosotros;
 use App\Filament\Resources\NosotrosResource\Pages;
 use App\Models\Nosotros;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Grid;
 
 class NosotrosResource extends Resource
 {
     protected static ?string $model = Nosotros::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Nosotros';
     protected static ?string $modelLabel = 'Nosotros';
     protected static ?string $pluralModelLabel = 'Nosotros';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Tabs::make('Configuración de Nosotros')
                     ->tabs([
                         // ===================== QUIÉNES SOMOS =====================
-                        Tabs\Tab::make('Quiénes Somos')
+                        Tab::make('Quiénes Somos')
                             ->schema([
-                                Forms\Components\TextInput::make('quienes_somos_title')
+                                TextInput::make('quienes_somos_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Quiénes Somos')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('quienes_somos_text')
+                                RichEditor::make('quienes_somos_text')
                                     ->label('Texto')
                                     ->required()
                                     ->placeholder('Describe quiénes son...')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                                 
-                                Forms\Components\FileUpload::make('quienes_somos_image')
+                                FileUpload::make('quienes_somos_image')
                                     ->label('Imagen')
                                     ->image()
                                     ->directory('nosotros')
@@ -54,21 +70,21 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== MISIÓN =====================
-                        Tabs\Tab::make('Misión')
+                        Tab::make('Misión')
                             ->schema([
-                                Forms\Components\TextInput::make('mision_title')
+                                TextInput::make('mision_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Misión')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('mision_text')
+                                RichEditor::make('mision_text')
                                     ->label('Texto')
                                     ->required()
                                     ->placeholder('Describe la misión...')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                                 
-                                Forms\Components\FileUpload::make('mision_image')
+                                FileUpload::make('mision_image')
                                     ->label('Imagen')
                                     ->image()
                                     ->directory('nosotros')
@@ -77,21 +93,21 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== VISIÓN =====================
-                        Tabs\Tab::make('Visión')
+                        Tab::make('Visión')
                             ->schema([
-                                Forms\Components\TextInput::make('vision_title')
+                                TextInput::make('vision_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Visión')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('vision_text')
+                                RichEditor::make('vision_text')
                                     ->label('Texto')
                                     ->required()
                                     ->placeholder('Describe la visión...')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                                 
-                                Forms\Components\FileUpload::make('vision_image')
+                                FileUpload::make('vision_image')
                                     ->label('Imagen')
                                     ->image()
                                     ->directory('nosotros')
@@ -100,15 +116,15 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== VALORES =====================
-                        Tabs\Tab::make('Valores')
+                        Tab::make('Valores')
                             ->schema([
-                                Forms\Components\TextInput::make('valores_title')
+                                TextInput::make('valores_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Nuestros Valores')
                                     ->maxLength(255),
                                 
-                                Forms\Components\FileUpload::make('valores_image')
+                                FileUpload::make('valores_image')
                                     ->label('Imagen General')
                                     ->image()
                                     ->directory('nosotros')
@@ -118,11 +134,11 @@ class NosotrosResource extends Resource
                                 Repeater::make('valores_list')
                                     ->label('Lista de Valores')
                                     ->schema([
-                                        Forms\Components\TextInput::make('title')
+                                        TextInput::make('title')
                                             ->label('Valor')
                                             ->required()
                                             ->placeholder('Ej: Responsabilidad'),
-                                        Forms\Components\Textarea::make('description')
+                                        Textarea::make('description')
                                             ->label('Descripción')
                                             ->rows(2)
                                             ->placeholder('Describe este valor...'),
@@ -137,21 +153,21 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== ACTIVIDAD PRINCIPAL =====================
-                        Tabs\Tab::make('Actividad Principal')
+                        Tab::make('Actividad Principal')
                             ->schema([
-                                Forms\Components\TextInput::make('actividad_title')
+                                TextInput::make('actividad_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Actividad Principal')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('actividad_text')
+                                RichEditor::make('actividad_text')
                                     ->label('Texto')
                                     ->required()
                                     ->placeholder('Describe la actividad principal...')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                                 
-                                Forms\Components\FileUpload::make('actividad_image')
+                                FileUpload::make('actividad_image')
                                     ->label('Imagen')
                                     ->image()
                                     ->directory('nosotros')
@@ -160,21 +176,21 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== ORGANIGRAMA =====================
-                        Tabs\Tab::make('Organigrama')
+                        Tab::make('Organigrama')
                             ->schema([
-                                Forms\Components\TextInput::make('organigrama_title')
+                                TextInput::make('organigrama_title')
                                     ->label('Título')
                                     ->required()
                                     ->default('Nuestro Organigrama')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('organigrama_text')
+                                RichEditor::make('organigrama_text')
                                     ->label('Texto')
                                     ->required()
                                     ->placeholder('Describe el organigrama...')
                                     ->toolbarButtons(['bold', 'italic', 'underline', 'bulletList', 'orderedList', 'link']),
                                 
-                                Forms\Components\FileUpload::make('organigrama_image')
+                                FileUpload::make('organigrama_image')
                                     ->label('Imagen')
                                     ->image()
                                     ->directory('nosotros')
@@ -183,9 +199,9 @@ class NosotrosResource extends Resource
                             ]),
                         
                         // ===================== ACTIVAR =====================
-                        Tabs\Tab::make('Activar')
+                        Tab::make('Activar')
                             ->schema([
-                                Forms\Components\Toggle::make('is_active')
+                                Toggle::make('is_active')
                                     ->label('Activo')
                                     ->default(true)
                                     ->helperText('Solo un registro puede estar activo a la vez'),
@@ -200,12 +216,12 @@ class NosotrosResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('quienes_somos_title')
+                TextColumn::make('quienes_somos_title')
                     ->label('Título')
                     ->searchable()
                     ->limit(30),
                 
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
@@ -213,23 +229,23 @@ class NosotrosResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger'),
                 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label('Estado'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -242,9 +258,9 @@ class NosotrosResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListNosotros::route('/'),
-            'create' => Pages\CreateNosotros::route('/create'),
-            'edit' => Pages\EditNosotros::route('/{record}/edit'),
+            'index' => ListNosotros::route('/'),
+            'create' => CreateNosotros::route('/create'),
+            'edit' => EditNosotros::route('/{record}/edit'),
         ];
     }
 }

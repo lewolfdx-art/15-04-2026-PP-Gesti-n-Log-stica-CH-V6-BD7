@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class Trabajador extends Model
             if ($trabajador->dni) {
                 $trabajador->dni = preg_replace('/[^0-9]/', '', $trabajador->dni); // solo números
                 if (strlen($trabajador->dni) !== 8) {
-                    throw new \Exception('El DNI debe tener exactamente 8 dígitos.');
+                    throw new Exception('El DNI debe tener exactamente 8 dígitos.');
                 }
             }
         });

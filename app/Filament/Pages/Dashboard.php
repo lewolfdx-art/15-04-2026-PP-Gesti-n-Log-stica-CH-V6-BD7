@@ -2,12 +2,16 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\TotalGeneralPagarWidget;
+use App\Filament\Widgets\VentasPorMesChart;
+use App\Filament\Widgets\ContratosPorVendedorChart;
+use App\Filament\Widgets\TiposEstructuraChart;
 use Filament\Pages\Dashboard as BaseDashboard;
 use App\Filament\Widgets\DatabaseBackupWidget;
 
 class Dashboard extends BaseDashboard
 {
-    protected static ?string $navigationIcon = 'heroicon-o-home';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home';
     protected static ?string $title = 'Dashboard - Concretera Mantaro';
     protected static ?string $navigationLabel = 'Escritorio';
 
@@ -16,7 +20,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             DatabaseBackupWidget::class, // 👈 AGREGAR AQUÍ
-            \App\Filament\Widgets\TotalGeneralPagarWidget::class,
+            TotalGeneralPagarWidget::class,
         ];
     }
 
@@ -24,13 +28,13 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            \App\Filament\Widgets\VentasPorMesChart::class,
-            \App\Filament\Widgets\ContratosPorVendedorChart::class,
-            \App\Filament\Widgets\TiposEstructuraChart::class,
+            VentasPorMesChart::class,
+            ContratosPorVendedorChart::class,
+            TiposEstructuraChart::class,
         ];
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int|array
     {
         return 2; // 2 columnas para los widgets del cuerpo
     }

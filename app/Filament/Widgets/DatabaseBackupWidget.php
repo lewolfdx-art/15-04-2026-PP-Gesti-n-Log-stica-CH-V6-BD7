@@ -2,13 +2,14 @@
 
 namespace App\Filament\Widgets;
 
+use Exception;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Artisan;
 use Filament\Notifications\Notification;
 
 class DatabaseBackupWidget extends Widget
 {
-    protected static string $view = 'filament.widgets.database-backup-widget';
+    protected string $view = 'filament.widgets.database-backup-widget';
 
     protected int | string | array $columnSpan = 'full';
 
@@ -30,7 +31,7 @@ class DatabaseBackupWidget extends Widget
                 ->success()
                 ->send();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('❌ Error al generar backup')
                 ->body($e->getMessage())
@@ -50,7 +51,7 @@ class DatabaseBackupWidget extends Widget
                 ->success()
                 ->send();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('❌ Error al generar backup mensual')
                 ->body($e->getMessage())

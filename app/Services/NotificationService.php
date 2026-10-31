@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Filament\Actions\Action;
 use App\Models\CuentaPorPagar;
 use App\Models\ReporteSemanal;
 use Filament\Notifications\Notification;
@@ -32,11 +33,11 @@ class NotificationService
                     ->icon('heroicon-o-currency-dollar')
                     ->iconColor('danger')
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('view_cuentas')
+                        Action::make('view_cuentas')
                             ->label('Ver Cuentas por Pagar')
                             ->url('/admin/cuentas-por-pagars')
                             ->button(),
-                        \Filament\Notifications\Actions\Action::make('view_reportes')
+                        Action::make('view_reportes')
                             ->label('Ver Reportes Semanales')
                             ->url('/admin/reporte-semanals')
                             ->button(),
@@ -77,7 +78,7 @@ class NotificationService
                 ->icon('heroicon-o-document-text')
                 ->iconColor('warning')
                 ->actions([
-                    \Filament\Notifications\Actions\Action::make('view')
+                    Action::make('view')
                         ->label('Ver Cuenta')
                         ->url('/admin/cuentas-por-pagars/' . $cuenta->id . '/edit')
                         ->button(),
@@ -123,7 +124,7 @@ class NotificationService
                     ->icon('heroicon-o-calendar')
                     ->iconColor($colorIcono)
                     ->actions([
-                        \Filament\Notifications\Actions\Action::make('view')
+                        Action::make('view')
                             ->label('Ver Reporte')
                             ->url('/admin/reporte-semanals/' . $reporte->id . '/edit')
                             ->button(),

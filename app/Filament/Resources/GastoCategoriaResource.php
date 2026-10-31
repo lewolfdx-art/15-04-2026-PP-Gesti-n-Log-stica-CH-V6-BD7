@@ -2,10 +2,23 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\GastoCategoriaResource\Pages\ListGastoCategorias;
+use App\Filament\Resources\GastoCategoriaResource\Pages\CreateGastoCategoria;
+use App\Filament\Resources\GastoCategoriaResource\Pages\EditGastoCategoria;
 use App\Filament\Resources\GastoCategoriaResource\Pages;
 use App\Models\GastoCategoria;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,36 +26,36 @@ use Filament\Tables\Table;
 class GastoCategoriaResource extends Resource
 {
     protected static ?string $model = GastoCategoria::class;
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationGroup = 'Gestión de Operaciones'; 
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-tag';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones'; 
     protected static ?string $pluralLabel = 'Categorías de Gastos';
     protected static ?string $singularLabel = 'Categoría de Gasto';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('grupo')
+        return $schema
+            ->components([
+                TextInput::make('grupo')
                     ->required()
                     ->label('Grupo Principal')
                     ->maxLength(255),
 
-                Forms\Components\TextInput::make('nombre')
+                TextInput::make('nombre')
                     ->required()
                     ->maxLength(255)
                     ->label('Nombre de la Categoría'),
 
-                Forms\Components\Select::make('parent_id')
+                Select::make('parent_id')
                     ->relationship('parent', 'nombre')
                     ->label('Categoría Padre')
                     ->searchable()
                     ->preload(),
 
-                Forms\Components\TextInput::make('orden')
+                TextInput::make('orden')
                     ->numeric()
                     ->default(0),
 
-                Forms\Components\Toggle::make('activo')
+                Toggle::make('activo')
                     ->default(true),
             ]);
     }
@@ -51,33 +64,33 @@ class GastoCategoriaResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('grupo')
+                TextColumn::make('grupo')
                     ->badge()
                     ->sortable()
                     ->searchable(),                    // ← Búsqueda
 
-                Tables\Columns\TextColumn::make('nombre')
+                TextColumn::make('nombre')
                     ->searchable()                     // ← Búsqueda principal
                     ->sortable()
                     ->weight('medium'),
 
-                Tables\Columns\TextColumn::make('parent.nombre')
+                TextColumn::make('parent.nombre')
                     ->label('Categoría Padre')
                     ->searchable()                     // ← También busca en padre
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('orden')
+                TextColumn::make('orden')
                     ->sortable()
                     ->alignCenter(),
 
-                Tables\Columns\ToggleColumn::make('activo'),
+                ToggleColumn::make('activo'),
             ])
             ->defaultSort('grupo')
             ->defaultSort('orden', 'asc')
             // ==================== MOTOR DE BÚSQUEDA GLOBAL ====================
             ->searchable()           // Activa la barra de búsqueda global
             ->filters([
-                Tables\Filters\SelectFilter::make('grupo')
+                SelectFilter::make('grupo')
                     ->options([
                         'MATERIA PRIMA'     => 'Materia Prima',
                         'COMBUSTIBLE'       => 'Combustible',
@@ -90,13 +103,13 @@ class GastoCategoriaResource extends Resource
                         'COMISIONES VENTAS' => 'Comisiones y Ventas',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -104,9 +117,9 @@ class GastoCategoriaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListGastoCategorias::route('/'),
-            'create' => Pages\CreateGastoCategoria::route('/create'),
-            'edit'   => Pages\EditGastoCategoria::route('/{record}/edit'),
+            'index'  => ListGastoCategorias::route('/'),
+            'create' => CreateGastoCategoria::route('/create'),
+            'edit'   => EditGastoCategoria::route('/{record}/edit'),
         ];
     }
 }

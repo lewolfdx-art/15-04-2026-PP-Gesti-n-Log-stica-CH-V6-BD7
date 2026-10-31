@@ -2,10 +2,20 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Carbon\Carbon;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use App\Filament\Resources\ReporteSemanalResource\Pages\ListReporteSemanals;
+use App\Filament\Resources\ReporteSemanalResource\Pages\CreateReporteSemanal;
+use App\Filament\Resources\ReporteSemanalResource\Pages\EditReporteSemanal;
+use App\Filament\Resources\ReporteSemanalResource\Pages\ViewReporteSemanal;
 use App\Filament\Resources\ReporteSemanalResource\Pages;
 use App\Models\ReporteSemanal;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -20,15 +30,15 @@ use Illuminate\Database\Eloquent\Builder;
 class ReporteSemanalResource extends Resource
 {
     protected static ?string $model = ReporteSemanal::class;
-    protected static ?string $navigationIcon = 'heroicon-o-calendar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Reporte Semanal';
     protected static ?string $pluralLabel = 'Reportes Semanales';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('tipo_periodo')
                     ->label('Tipo de Periodo')
                     ->options([
@@ -50,23 +60,23 @@ class ReporteSemanalResource extends Resource
                         4 => 'Semana 4',
                         5 => 'Semana 5',
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live(),
 
                     DatePicker::make('fecha_desde')
                     ->label('Fecha Desde')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
                     ->closeOnDateSelection() // 👈 mejora UX
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         if ($state && $get('semana')) {
-                            $fechaDesde = \Carbon\Carbon::parse($state);
+                            $fechaDesde = Carbon::parse($state);
                             $fechaHasta = $fechaDesde->copy()->addDays(6);
                             $set('fecha_hasta', $fechaHasta->format('Y-m-d'));
                         }
@@ -74,13 +84,13 @@ class ReporteSemanalResource extends Resource
                 
                 DatePicker::make('fecha_hasta')
                     ->label('Fecha Hasta')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
                     ->closeOnDateSelection()
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal'),
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal'),
 
                 Select::make('quincena')
                     ->label('Quincena')
@@ -88,14 +98,14 @@ class ReporteSemanalResource extends Resource
                         'PRIMERA' => 'Primera Quincena (1-15)',
                         'SEGUNDA' => 'Segunda Quincena (16-30/31)',
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         if ($state && $get('mes') && $get('año')) {
                             $mes = $get('mes');
                             $año = $get('año');
-                            $fecha = \Carbon\Carbon::createFromDate($año, $mes, 1);
+                            $fecha = Carbon::createFromDate($año, $mes, 1);
                             
                             if ($state === 'PRIMERA') {
                                 $set('fecha_desde_quincena', $fecha->format('Y-m-d'));
@@ -124,8 +134,8 @@ class ReporteSemanalResource extends Resource
                         11 => 'Noviembre',
                         12 => 'Diciembre',
                     ])
-                    ->visible(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
-                    ->required(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->visible(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->required(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
                     ->live()
                     ->native(false),
 
@@ -135,8 +145,8 @@ class ReporteSemanalResource extends Resource
                     ->minValue(2020)
                     ->maxValue(2030)
                     ->default(now()->year)
-                    ->visible(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
-                    ->required(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->visible(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->required(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
                     ->live(),
 
                 DatePicker::make('fecha_desde_quincena')
@@ -144,7 +154,7 @@ class ReporteSemanalResource extends Resource
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->disabled(),
 
                 DatePicker::make('fecha_hasta_quincena')
@@ -152,7 +162,7 @@ class ReporteSemanalResource extends Resource
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->disabled(),
 
                 DatePicker::make('fecha_fin_mes')
@@ -161,8 +171,8 @@ class ReporteSemanalResource extends Resource
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->default(now()->endOfMonth())
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'fin_mes')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'fin_mes'),
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'fin_mes')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'fin_mes'),
 
                 TextInput::make('proveedor')
                     ->label('Proveedor')
@@ -303,10 +313,10 @@ class ReporteSemanalResource extends Resource
                         'ADELANTO' => 'Adelanto',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                ViewAction::make(),
             ]);
     }
 
@@ -318,10 +328,10 @@ class ReporteSemanalResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListReporteSemanals::route('/'),
-            'create' => Pages\CreateReporteSemanal::route('/create'),
-            'edit' => Pages\EditReporteSemanal::route('/{record}/edit'),
-            'view' => Pages\ViewReporteSemanal::route('/{record}'),
+            'index' => ListReporteSemanals::route('/'),
+            'create' => CreateReporteSemanal::route('/create'),
+            'edit' => EditReporteSemanal::route('/{record}/edit'),
+            'view' => ViewReporteSemanal::route('/{record}'),
         ];
     }
 
@@ -357,9 +367,9 @@ class ReporteSemanalResource extends Resource
             if ($registro->tipo_periodo === 'semanal') {
                 $key = "Semana {$registro->semana}";
                 if ($registro->fecha_desde && $registro->fecha_hasta) {
-                    $key .= " (" . \Carbon\Carbon::parse($registro->fecha_desde)->format('d/m') . 
-                    " - " . \Carbon\Carbon::parse($registro->fecha_hasta)->format('d/m') . 
-                    "/" . \Carbon\Carbon::parse($registro->fecha_desde)->format('Y') . ")";
+                    $key .= " (" . Carbon::parse($registro->fecha_desde)->format('d/m') . 
+                    " - " . Carbon::parse($registro->fecha_hasta)->format('d/m') . 
+                    "/" . Carbon::parse($registro->fecha_desde)->format('Y') . ")";
                 }
                 if (!isset($totales['semanal'][$key])) {
                     $totales['semanal'][$key] = 0;

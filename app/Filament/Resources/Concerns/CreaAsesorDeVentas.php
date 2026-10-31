@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources\Concerns;
 
+use Filament\Schemas\Components\Utilities\Get;
 use App\Models\Trabajador;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
 
 trait CreaAsesorDeVentas
 {

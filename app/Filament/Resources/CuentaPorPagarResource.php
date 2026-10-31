@@ -2,10 +2,17 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\ListCuentaPorPagars;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\CreateCuentaPorPagar;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\EditCuentaPorPagar;
 use App\Filament\Resources\CuentaPorPagarResource\Pages;
 use App\Models\CuentaPorPagar;
 use App\Models\User;
-use Filament\Forms\Form;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
@@ -23,15 +30,15 @@ class CuentaPorPagarResource extends Resource
 {
     protected static ?string $model = CuentaPorPagar::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Cuentas por Pagar';
     protected static ?string $modelLabel = 'Cuenta por Pagar';
     protected static ?string $pluralModelLabel = 'Cuentas por Pagar';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
 
             TextInput::make('detalle')
                 ->label('Detalle')
@@ -236,13 +243,13 @@ class CuentaPorPagarResource extends Resource
                     ->trueLabel('Pagado')
                     ->falseLabel('Debe'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->striped();
@@ -299,9 +306,9 @@ class CuentaPorPagarResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCuentaPorPagars::route('/'),
-            'create' => Pages\CreateCuentaPorPagar::route('/create'),
-            'edit'   => Pages\EditCuentaPorPagar::route('/{record}/edit'),
+            'index'  => ListCuentaPorPagars::route('/'),
+            'create' => CreateCuentaPorPagar::route('/create'),
+            'edit'   => EditCuentaPorPagar::route('/{record}/edit'),
         ];
     }
 }

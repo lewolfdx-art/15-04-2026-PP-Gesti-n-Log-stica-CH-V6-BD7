@@ -2,44 +2,59 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\GastoResource\Pages\ListGastos;
+use App\Filament\Resources\GastoResource\Pages\CreateGasto;
+use App\Filament\Resources\GastoResource\Pages\EditGasto;
+use App\Filament\Resources\GastoResource\Pages\ViewGasto;
 use App\Models\Gasto;
 use App\Models\GastoCategoria;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
 
 class GastoResource extends Resource
 {
     protected static ?string $model = Gasto::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-minus-circle';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-minus-circle';
     protected static ?string $navigationLabel = 'Gastos';
     protected static ?string $pluralLabel = 'Gastos';
     protected static ?string $modelLabel = 'Gasto';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
     protected static ?int $navigationSort = 3;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Tabs::make()
+        return $schema
+            ->components([
+                Tabs::make()
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('Información Principal')
+                        Tab::make('Información Principal')
                             ->schema([
-                                Forms\Components\DatePicker::make('fecha')
+                                DatePicker::make('fecha')
                                     ->label('FECHA')
                                     ->default(now())
                                     ->required()
                                     ->displayFormat('d/m/Y'),
 
                                 // CATEGORÍA = grupo
-                                Forms\Components\Select::make('grupo')
+                                Select::make('grupo')
                                     ->label('CATEGORÍA')
                                     ->options(GastoCategoria::distinct()->pluck('grupo', 'grupo'))
                                     ->required()
@@ -48,7 +63,7 @@ class GastoResource extends Resource
                                     ->placeholder('Seleccione una categoría'),
 
                                 // SUBCATEGORÍA = nombre (dependiente del grupo)
-                                Forms\Components\Select::make('subcategoria')
+                                Select::make('subcategoria')
                                     ->label('SUBCATEGORÍA')
                                     ->options(function (Get $get) {
                                         $grupo = $get('grupo');
@@ -62,22 +77,22 @@ class GastoResource extends Resource
                                     ->searchable()
                                     ->placeholder('Seleccione primero una categoría'),
 
-                                Forms\Components\TextInput::make('responsable')
+                                TextInput::make('responsable')
                                     ->label('RESPONSABLE')
                                     ->maxLength(255)
                                     ->placeholder('Ej: MIGUEL ALBERTO, GYNA, JACSON'),
                             ])
                             ->columns(2),
 
-                        Forms\Components\Tabs\Tab::make('Detalle del Gasto')
+                        Tab::make('Detalle del Gasto')
                             ->schema([
-                                Forms\Components\Textarea::make('detalle')
+                                Textarea::make('detalle')
                                     ->label('DETALLE')
                                     ->rows(3)
                                     ->required()
                                     ->placeholder('Descripción detallada del gasto...'),
 
-                                Forms\Components\TextInput::make('importe')
+                                TextInput::make('importe')
                                     ->label('IMPORTE (S/)')
                                     ->numeric()
                                     ->step(0.01)
@@ -85,7 +100,7 @@ class GastoResource extends Resource
                                     ->prefix('S/')
                                     ->default(0),
 
-                                Forms\Components\Select::make('obs')
+                                Select::make('obs')
                                     ->label('OBS. / FORMA DE PAGO')
                                     ->options([
                                         'EFECTIVO' => 'EFECTIVO',
@@ -104,42 +119,42 @@ class GastoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('fecha')
+                TextColumn::make('fecha')
                     ->label('FECHA')
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('grupo')
+                TextColumn::make('grupo')
                     ->label('CATEGORÍA')
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('subcategoria')
+                TextColumn::make('subcategoria')
                     ->label('SUBCATEGORÍA')
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('responsable')
+                TextColumn::make('responsable')
                     ->label('RESPONSABLE')
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('detalle')
+                TextColumn::make('detalle')
                     ->label('DETALLE')
                     ->limit(60)
                     ->tooltip(fn (Gasto $record) => $record->detalle)
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('importe')
+                TextColumn::make('importe')
                     ->label('IMPORTE')
                     ->money('PEN')
                     ->sortable()
                     ->alignRight()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('obs')
+                TextColumn::make('obs')
                     ->label('OBS.')
                     ->searchable()
                     ->toggleable(),
@@ -147,14 +162,14 @@ class GastoResource extends Resource
             ->defaultSort('fecha', 'desc')
             ->searchable()
             ->filters([
-                Tables\Filters\SelectFilter::make('grupo')
+                SelectFilter::make('grupo')
                     ->label('Categoría')
                     ->options(GastoCategoria::distinct()->pluck('grupo', 'grupo')),
 
-                Tables\Filters\Filter::make('fecha')
-                    ->form([
-                        Forms\Components\DatePicker::make('fecha_desde'),
-                        Forms\Components\DatePicker::make('fecha_hasta'),
+                Filter::make('fecha')
+                    ->schema([
+                        DatePicker::make('fecha_desde'),
+                        DatePicker::make('fecha_hasta'),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
@@ -162,14 +177,14 @@ class GastoResource extends Resource
                             ->when($data['fecha_hasta'], fn ($q) => $q->whereDate('fecha', '<=', $data['fecha_hasta']));
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()->label('Editar'),
                 DeleteAction::make()->label('Eliminar')->color('danger'),
             ])
             
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -177,10 +192,10 @@ class GastoResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => \App\Filament\Resources\GastoResource\Pages\ListGastos::route('/'),
-            'create' => \App\Filament\Resources\GastoResource\Pages\CreateGasto::route('/create'),
-            'edit'   => \App\Filament\Resources\GastoResource\Pages\EditGasto::route('/{record}/edit'),
-            'view'   => \App\Filament\Resources\GastoResource\Pages\ViewGasto::route('/{record}'),
+            'index'  => ListGastos::route('/'),
+            'create' => CreateGasto::route('/create'),
+            'edit'   => EditGasto::route('/{record}/edit'),
+            'view'   => ViewGasto::route('/{record}'),
         ];
     }
 }

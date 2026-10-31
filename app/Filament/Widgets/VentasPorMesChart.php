@@ -9,8 +9,8 @@ use App\Models\Contrato;
 
 class VentasPorMesChart extends ChartWidget
 {
-    protected static ?string $heading = 'Ventas por Mes (m³)';
-    protected static ?string $maxHeight = '340px';
+    protected ?string $heading = 'Ventas por Mes (m³)';
+    protected ?string $maxHeight = '340px';
 
     protected function getData(): array
     {

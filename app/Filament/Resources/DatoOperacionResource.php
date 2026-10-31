@@ -2,10 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\DatoOperacionResource\Pages\ListDatoOperacions;
+use App\Filament\Resources\DatoOperacionResource\Pages\CreateDatoOperacion;
+use App\Filament\Resources\DatoOperacionResource\Pages\EditDatoOperacion;
 use App\Filament\Resources\DatoOperacionResource\Pages;
 use App\Models\DatoOperacion;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,17 +29,17 @@ class DatoOperacionResource extends Resource
 {
     protected static ?string $model = DatoOperacion::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Gestión de Operaciones';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones';
     protected static ?string $pluralLabel = 'Datos de Operación';
     protected static ?string $singularLabel = 'Dato de Operación';
     protected static ?string $recordTitleAttribute = 'valor';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('tipo')
+        return $schema
+            ->components([
+                Select::make('tipo')
                     ->label('Tipo')
                     ->options([
                         'modo_pago'   => '🔸 Modo de Pago',
@@ -37,22 +52,22 @@ class DatoOperacionResource extends Resource
                     ->searchable()
                     ->live(),
 
-                Forms\Components\TextInput::make('valor')
+                TextInput::make('valor')
                     ->label('Valor / Nombre')
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\Textarea::make('descripcion')
+                Textarea::make('descripcion')
                     ->label('Descripción / Observación')
                     ->rows(3)
                     ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('orden')
+                TextInput::make('orden')
                     ->label('Orden')
                     ->numeric()
                     ->default(0),
 
-                Forms\Components\Toggle::make('activo')
+                Toggle::make('activo')
                     ->label('Activo')
                     ->default(true),
             ]);
@@ -62,7 +77,7 @@ class DatoOperacionResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('tipo')
+                TextColumn::make('tipo')
                     ->label('Tipo')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => 
@@ -86,29 +101,29 @@ class DatoOperacionResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('valor')
+                TextColumn::make('valor')
                     ->label('Valor / Nombre')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
 
-                Tables\Columns\TextColumn::make('descripcion')
+                TextColumn::make('descripcion')
                     ->label('Descripción')
                     ->limit(80)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('orden')
+                TextColumn::make('orden')
                     ->sortable()
                     ->alignCenter()
                     ->toggleable(),
 
-                Tables\Columns\ToggleColumn::make('activo')
+                ToggleColumn::make('activo')
                     ->label('Activo'),
             ])
             ->defaultSort('orden', 'asc')
             ->searchable()
             ->filters([
-                Tables\Filters\SelectFilter::make('tipo')
+                SelectFilter::make('tipo')
                     ->label('Tipo')
                     ->options([
                         'modo_pago'   => 'Modo de Pago',
@@ -119,15 +134,15 @@ class DatoOperacionResource extends Resource
                     ->multiple()
                     ->searchable(),
 
-                Tables\Filters\TernaryFilter::make('activo'),
+                TernaryFilter::make('activo'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -135,9 +150,9 @@ class DatoOperacionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListDatoOperacions::route('/'),
-            'create' => Pages\CreateDatoOperacion::route('/create'),
-            'edit'   => Pages\EditDatoOperacion::route('/{record}/edit'),
+            'index'  => ListDatoOperacions::route('/'),
+            'create' => CreateDatoOperacion::route('/create'),
+            'edit'   => EditDatoOperacion::route('/{record}/edit'),
         ];
     }
 }

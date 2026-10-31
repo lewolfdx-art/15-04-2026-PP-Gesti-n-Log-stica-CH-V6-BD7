@@ -2,11 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use App\Models\Trabajador;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use App\Filament\Resources\IngresoResource\Pages\ListIngresos;
+use App\Filament\Resources\IngresoResource\Pages\CreateIngreso;
+use App\Filament\Resources\IngresoResource\Pages\EditIngreso;
 use App\Filament\Resources\IngresoResource\Pages;
 use App\Models\Ingreso;
 use App\Models\DatoOperacion;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -19,25 +34,25 @@ class IngresoResource extends Resource
 {
     protected static ?string $model = Ingreso::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
     protected static ?string $navigationLabel = 'Control de Ingresos';
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Tabs::make()
+        return $schema
+            ->components([
+                Tabs::make()
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('Información Principal')
+                        Tab::make('Información Principal')
                             ->schema([
-                                Forms\Components\DatePicker::make('fecha')
+                                DatePicker::make('fecha')
                                 ->label('FECHA A VACIAR')
                                 ->default(now())
                                 ->required(),
 
-                                Forms\Components\Select::make('modo_pago')
+                                Select::make('modo_pago')
                                     ->label('Modo pago')
                                     ->required()
                                     ->options([
@@ -46,15 +61,15 @@ class IngresoResource extends Resource
                                         'IN-OTROS'     => 'IN-OTROS',
                                     ]),
 
-                                Forms\Components\TextInput::make('numero_contrato')
+                                TextInput::make('numero_contrato')
                                     ->label('N° Contrato')
                                     ->prefix('C-')
                                     ->placeholder('S/C1857'),
 
-                                Forms\Components\Select::make('asesor')
+                                Select::make('asesor')
                                     ->label('Asesor')
                                     ->options(function () {
-                                        return \App\Models\Trabajador::where('tipo_cargo', 'asesor_ventas')
+                                        return Trabajador::where('tipo_cargo', 'asesor_ventas')
                                             ->where('activo', true)
                                             ->orderBy('orden')
                                             ->pluck('nombre_completo', 'nombre_completo');
@@ -64,7 +79,7 @@ class IngresoResource extends Resource
                                     ->required()
                                     ->live()
                                     ->createOptionForm([
-                                        Forms\Components\Select::make('tipo_cargo')
+                                        Select::make('tipo_cargo')
                                             ->label('Cargo / Tipo')
                                             ->options([
                                                 'asesor_ventas' => '💼 Asesor de Ventas',
@@ -73,12 +88,12 @@ class IngresoResource extends Resource
                                             ->required()
                                             ->disabled(),
 
-                                        Forms\Components\TextInput::make('nombre_completo')
+                                        TextInput::make('nombre_completo')
                                             ->label('Nombre Completo del Asesor')
                                             ->required()
                                             ->maxLength(255),
 
-                                        Forms\Components\TextInput::make('dni')
+                                        TextInput::make('dni')
                                             ->label('DNI')
                                             ->required()
                                             ->mask('99999999')
@@ -87,13 +102,13 @@ class IngresoResource extends Resource
                                             ->unique('trabajadores', 'dni'),
 
                                         // ======= SWITCH PARA FECHA DE NACIMIENTO OPCIONAL =======
-                                        Forms\Components\Toggle::make('tiene_fecha_nacimiento')
+                                        Toggle::make('tiene_fecha_nacimiento')
                                             ->label('¿Tiene fecha de nacimiento?')
                                             ->default(true)
                                             ->live()
                                             ->columnSpanFull(),
 
-                                        Forms\Components\DatePicker::make('fecha_nacimiento')
+                                        DatePicker::make('fecha_nacimiento')
                                             ->label('Fecha de Nacimiento')
                                             ->default(now()->subYears(25))
                                             ->native(false)
@@ -102,27 +117,27 @@ class IngresoResource extends Resource
                                             ->maxDate(now())
                                             ->closeOnDateSelection(true)
                                             ->placeholder('dd/mm/yyyy')
-                                            ->required(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
-                                            ->disabled(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === false)
-                                            ->dehydrated(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
-                                            ->rules(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true ? ['required', 'date'] : ['nullable', 'date'])
+                                            ->required(fn (Get $get) => $get('tiene_fecha_nacimiento') === true)
+                                            ->disabled(fn (Get $get) => $get('tiene_fecha_nacimiento') === false)
+                                            ->dehydrated(fn (Get $get) => $get('tiene_fecha_nacimiento') === true)
+                                            ->rules(fn (Get $get) => $get('tiene_fecha_nacimiento') === true ? ['required', 'date'] : ['nullable', 'date'])
                                             ->afterStateHydrated(function ($state, callable $set) {
                                                 if (empty($state)) {
                                                     $set('tiene_fecha_nacimiento', false);
                                                 }
                                             }),
 
-                                        Forms\Components\TextInput::make('orden')
+                                        TextInput::make('orden')
                                             ->label('Orden (posición en la lista)')
                                             ->numeric()
                                             ->default(999),
 
-                                        Forms\Components\Textarea::make('descripcion')
+                                        Textarea::make('descripcion')
                                             ->label('Descripción / Nota')
                                             ->rows(2),
                                     ])
                                     ->createOptionUsing(function (array $data) {
-                                        $nuevoTrabajador = \App\Models\Trabajador::create([
+                                        $nuevoTrabajador = Trabajador::create([
                                             'tipo_cargo'       => 'asesor_ventas',
                                             'nombre_completo'  => strtoupper(trim($data['nombre_completo'])),
                                             'dni'              => $data['dni'] ?? null,
@@ -138,22 +153,22 @@ class IngresoResource extends Resource
                             ])
                             ->columns(2),
 
-                        Forms\Components\Tabs\Tab::make('Detalle y Monto')
+                        Tab::make('Detalle y Monto')
                             ->schema([
-                                Forms\Components\Textarea::make('detalle')
+                                Textarea::make('detalle')
                                     ->label('Detalle')
                                     ->required()
                                     ->rows(5)
                                     ->columnSpanFull(),
 
-                                Forms\Components\TextInput::make('monto')
+                                TextInput::make('monto')
                                     ->label('Monto')
                                     ->required()
                                     ->numeric()
                                     ->prefix('S/')
                                     ->rule('min:0'),
 
-                                Forms\Components\Select::make('banco')
+                                Select::make('banco')
                                     ->label('Banco')
                                     ->options([
                                         'EFECTIVO' => 'EFECTIVO',
@@ -162,7 +177,7 @@ class IngresoResource extends Resource
                                     ->nullable()
                                     ->placeholder('Seleccione...'),
 
-                                Forms\Components\Select::make('obs')
+                                Select::make('obs')
                                     ->label('OBS.')
                                     ->options([
                                         'EFECTIVO' => 'EFECTIVO',
@@ -224,9 +239,9 @@ class IngresoResource extends Resource
             ->defaultSort('fecha', 'desc')
             ->filters([
                 Filter::make('fecha')
-                    ->form([
-                        Forms\Components\DatePicker::make('desde')->label('Desde'),
-                        Forms\Components\DatePicker::make('hasta')->label('Hasta'),
+                    ->schema([
+                        DatePicker::make('desde')->label('Desde'),
+                        DatePicker::make('hasta')->label('Hasta'),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
@@ -252,7 +267,7 @@ class IngresoResource extends Resource
 
                 SelectFilter::make('asesor')
                     ->label('Asesor')
-                    ->options(fn () => \App\Models\Trabajador::where('tipo_cargo', 'asesor_ventas')
+                    ->options(fn () => Trabajador::where('tipo_cargo', 'asesor_ventas')
                         ->where('activo', true)
                         ->orderBy('orden')
                         ->pluck('nombre_completo', 'nombre_completo')
@@ -276,7 +291,7 @@ class IngresoResource extends Resource
                     ])
                     ->multiple(),
 
-                Tables\Filters\TernaryFilter::make('tiene_contrato')
+                TernaryFilter::make('tiene_contrato')
                     ->label('Con N° Contrato')
                     ->nullable()
                     ->placeholder('Todos')
@@ -290,18 +305,18 @@ class IngresoResource extends Resource
             ])
             ->filtersFormColumns(1)
             ->filtersFormMaxHeight('400px')
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListIngresos::route('/'),
-            'create' => Pages\CreateIngreso::route('/create'),
-            'edit'   => Pages\EditIngreso::route('/{record}/edit'),
+            'index'  => ListIngresos::route('/'),
+            'create' => CreateIngreso::route('/create'),
+            'edit'   => EditIngreso::route('/{record}/edit'),
         ];
     }
 }
