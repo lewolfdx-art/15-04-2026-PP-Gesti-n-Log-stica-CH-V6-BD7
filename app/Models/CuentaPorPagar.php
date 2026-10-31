@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\CuentaPorPagarObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+#[ObservedBy(CuentaPorPagarObserver::class)]
 class CuentaPorPagar extends Model
 {
     protected $table = 'cuentas_por_pagar';

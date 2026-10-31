@@ -34,10 +34,13 @@ class IngresoResource extends Resource
 {
     protected static ?string $model = Ingreso::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
-    protected static ?string $navigationLabel = 'Control de Ingresos';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-trending-up';
+    protected static ?string $navigationLabel = 'Ingresos';
+    protected static ?string $modelLabel = 'Ingreso';
+    protected static ?string $pluralModelLabel = 'Ingresos';
     protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'ingresos';
 
     public static function form(Schema $schema): Schema
     {

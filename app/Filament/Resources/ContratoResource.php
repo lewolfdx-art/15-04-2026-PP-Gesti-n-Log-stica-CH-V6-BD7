@@ -13,7 +13,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Filament\Actions\ViewAction;
@@ -43,11 +42,14 @@ class ContratoResource extends Resource
 {
     protected static ?string $model = Contrato::class;
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Comercial';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Contratos / Ventas';
-    protected static ?string $pluralLabel = 'Contratos';
     protected static ?string $modelLabel = 'Contrato';
-    protected static string | \UnitEnum | null $navigationGroup = 'Comercial';
+    protected static ?string $pluralModelLabel = 'Contratos';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'contratos';
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -428,12 +430,14 @@ class ContratoResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                BadgeColumn::make('estado_pago')
+                TextColumn::make('estado_pago')
                     ->label('Estado Pago')
-                    ->colors([
-                        'success' => 'PAGADO',
-                        'danger'  => 'DEBE',
-                    ])
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'PAGADO' => 'success',
+                        'DEBE'   => 'danger',
+                        default  => 'gray',
+                    })
                     ->toggleable(),
             ])
             ->defaultSort('fecha', 'desc')

@@ -32,11 +32,14 @@ use Filament\Forms\Components\Repeater;
 class SostenibilidadResource extends Resource
 {
     protected static ?string $model = Sostenibilidad::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 4;
-    protected static ?string $navigationLabel = 'Sostenibilidad';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-globe-americas';
+    protected static ?string $navigationLabel = 'Sostenibilidad';
+    protected static ?string $modelLabel = 'Sostenibilidad';
+    protected static ?string $pluralModelLabel = 'Sostenibilidad';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $slug = 'sostenibilidad';
     public static function form(Schema $schema): Schema
     {
         return $schema

@@ -30,11 +30,13 @@ class CuentaPorPagarResource extends Resource
 {
     protected static ?string $model = CuentaPorPagar::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Cuentas por Pagar';
-    protected static ?string $modelLabel = 'Cuenta por Pagar';
-    protected static ?string $pluralModelLabel = 'Cuentas por Pagar';
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
+    protected static ?string $navigationLabel = 'Cuentas por pagar';
+    protected static ?string $modelLabel = 'Cuenta por pagar';
+    protected static ?string $pluralModelLabel = 'Cuentas por pagar';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'cuentas-por-pagar';
 
     public static function form(Schema $schema): Schema
     {

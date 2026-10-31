@@ -32,11 +32,14 @@ use Filament\Forms\Components\Repeater;
 class ProductoResource extends Resource
 {
     protected static ?string $model = Producto::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
-    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 3;
-    protected static ?string $navigationLabel = 'Productos';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationLabel = 'Productos';
+    protected static ?string $modelLabel = 'Producto';
+    protected static ?string $pluralModelLabel = 'Productos';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'productos';
     public static function form(Schema $schema): Schema
     {
         return $schema

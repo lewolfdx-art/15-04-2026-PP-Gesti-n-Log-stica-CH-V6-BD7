@@ -32,13 +32,15 @@ use Filament\Forms\Components\Repeater;
 class InicioResource extends Resource
 {
     protected static ?string $model = Inicio::class;
-    
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home';
-    
-    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
-    
-    protected static ?int $navigationSort = 1;
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home';
+    protected static ?string $navigationLabel = 'Página de inicio';
+    protected static ?string $modelLabel = 'Página de inicio';
+    protected static ?string $pluralModelLabel = 'Página de inicio';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'pagina-inicio';
+    
     public static function form(Schema $schema): Schema
     {
         return $schema

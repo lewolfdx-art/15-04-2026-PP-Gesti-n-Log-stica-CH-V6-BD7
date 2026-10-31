@@ -32,12 +32,13 @@ class GastoResource extends Resource
 {
     protected static ?string $model = Gasto::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-minus-circle';
-    protected static ?string $navigationLabel = 'Gastos';
-    protected static ?string $pluralLabel = 'Gastos';
-    protected static ?string $modelLabel = 'Gasto';
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
-    protected static ?int $navigationSort = 3;
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-trending-down';
+    protected static ?string $navigationLabel = 'Gastos';
+    protected static ?string $modelLabel = 'Gasto';
+    protected static ?string $pluralModelLabel = 'Gastos';
+    protected static ?int $navigationSort = 2;
+    protected static ?string $slug = 'gastos';
 
     public static function form(Schema $schema): Schema
     {

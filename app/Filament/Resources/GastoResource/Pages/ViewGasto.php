@@ -71,11 +71,11 @@ class ViewGasto extends ViewRecord
                     ->schema([
                         TextEntry::make('created_at')
                             ->label('Fecha de registro')
-                            ->dateTime('d/m/Y H:i:s'),
+                            ->dateTime('d/m/Y H:i'),
 
                         TextEntry::make('updated_at')
                             ->label('Última actualización')
-                            ->dateTime('d/m/Y H:i:s'),
+                            ->dateTime('d/m/Y H:i'),
                     ])
                     ->columns(2)
                     ->collapsible(),

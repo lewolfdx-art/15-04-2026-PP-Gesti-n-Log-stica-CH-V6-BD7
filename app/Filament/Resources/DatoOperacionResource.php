@@ -29,9 +29,14 @@ class DatoOperacionResource extends Resource
 {
     protected static ?string $model = DatoOperacion::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones';
-    protected static ?string $pluralLabel = 'Datos de Operación';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static ?string $navigationLabel = 'Datos de operación';
+    protected static ?string $modelLabel = 'Dato de operación';
+    protected static ?string $pluralModelLabel = 'Datos de operación';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'datos-operacion';
+
     protected static ?string $singularLabel = 'Dato de Operación';
     protected static ?string $recordTitleAttribute = 'valor';
 

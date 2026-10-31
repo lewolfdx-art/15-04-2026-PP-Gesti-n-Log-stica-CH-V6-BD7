@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Observers\ReporteSemanalObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
+#[ObservedBy(ReporteSemanalObserver::class)]
 class ReporteSemanal extends Model
 {
     use HasFactory;

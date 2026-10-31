@@ -31,9 +31,14 @@ class TrabajadoresResource extends Resource
 {
     protected static ?string $model = Trabajador::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
-    protected static ?string $pluralLabel = 'Trabajadores y Asesores';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
+    protected static ?string $navigationLabel = 'Trabajadores y asesores';
+    protected static ?string $modelLabel = 'Trabajador';
+    protected static ?string $pluralModelLabel = 'Trabajadores y asesores';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'trabajadores';
+
     protected static ?string $singularLabel = 'Trabajador';
     protected static ?string $recordTitleAttribute = 'nombre_completo';
 

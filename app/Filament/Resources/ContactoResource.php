@@ -30,12 +30,13 @@ class ContactoResource extends Resource
 {
     protected static ?string $model = Contacto::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-envelope';
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 5;
-    protected static ?string $navigationLabel = 'Mensajes de Contacto';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-envelope';
+    protected static ?string $navigationLabel = 'Mensajes de contacto';
     protected static ?string $modelLabel = 'Mensaje';
-    protected static ?string $pluralModelLabel = 'Mensajes';
+    protected static ?string $pluralModelLabel = 'Mensajes de contacto';
+    protected static ?int $navigationSort = 5;
+    protected static ?string $slug = 'mensajes-contacto';
 
     public static function form(Schema $schema): Schema
     {

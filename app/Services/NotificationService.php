@@ -2,135 +2,159 @@
 
 namespace App\Services;
 
-use Filament\Actions\Action;
+use App\Filament\Resources\CuentaPorPagarResource;
+use App\Filament\Resources\ReporteSemanalResource;
 use App\Models\CuentaPorPagar;
 use App\Models\ReporteSemanal;
-use Filament\Notifications\Notification;
 use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class NotificationService
 {
     /**
-     * Verifica y envía notificaciones por cuentas por pagar
+     * Monto a partir del cual se envía la alerta crítica
      */
-    public static function checkAndNotifyPayables()
+    public const UMBRAL_ALERTA = 50000;
+
+    /**
+     * Clave de caché que recuerda si la alerta crítica ya fue enviada
+     */
+    private const CACHE_ALERTA = 'alerta_critica_pagos_enviada';
+
+    /**
+     * Total general por pagar: cuentas no pagadas + reportes en DEBE o ADELANTO
+     */
+    public static function totalGeneralPorPagar(): float
     {
-        // Calcular TOTAL GENERAL POR PAGAR
-        $totalCuentasPorPagar = CuentaPorPagar::where('pagado', false)->sum('total');
-        $totalReportesSemanales = ReporteSemanal::whereIn('estado', ['DEBE', 'ADELANTO'])->sum('monto');
-        $totalGeneral = $totalCuentasPorPagar + $totalReportesSemanales;
-        
-        // Obtener usuarios
-        $usuarios = User::all();
-        
-        // Si hay deudas pendientes
-        if ($totalGeneral > 0) {
-            foreach ($usuarios as $usuario) {
-                // Enviar notificación SIMPLE sin verificación
-                Notification::make()
-                    ->title('💰 Alerta de Cuentas por Pagar')
-                    ->body("El TOTAL GENERAL POR PAGAR es de S/ " . number_format($totalGeneral, 2))
-                    ->icon('heroicon-o-currency-dollar')
-                    ->iconColor('danger')
-                    ->actions([
-                        Action::make('view_cuentas')
-                            ->label('Ver Cuentas por Pagar')
-                            ->url('/admin/cuentas-por-pagars')
-                            ->button(),
-                        Action::make('view_reportes')
-                            ->label('Ver Reportes Semanales')
-                            ->url('/admin/reporte-semanals')
-                            ->button(),
-                    ])
-                    ->sendToDatabase($usuario);
-            }
+        return (float) CuentaPorPagar::where('pagado', false)->sum('total')
+            + (float) ReporteSemanal::whereIn('estado', ['DEBE', 'ADELANTO'])->sum('monto');
+    }
+
+    /**
+     * Envía la alerta crítica solo cuando el total cruza el umbral (una vez),
+     * y la rearma cuando vuelve a bajar.
+     */
+    public static function checkAndNotifyPayables(): float
+    {
+        $totalGeneral = self::totalGeneralPorPagar();
+
+        if ($totalGeneral <= self::UMBRAL_ALERTA) {
+            Cache::forget(self::CACHE_ALERTA);
+
+            return $totalGeneral;
         }
-        
-        // Alerta crítica si supera umbral
-        $umbralAlerta = 50000;
-        if ($totalGeneral > $umbralAlerta) {
-            foreach ($usuarios as $usuario) {
-                Notification::make()
-                    ->title('🚨 ALERTA CRÍTICA')
-                    ->body("El TOTAL GENERAL POR PAGAR (S/ " . number_format($totalGeneral, 2) . ") ha superado el umbral de S/ " . number_format($umbralAlerta, 2))
-                    ->persistent()
-                    ->danger()
-                    ->icon('heroicon-o-exclamation-triangle')
-                    ->sendToDatabase($usuario);
-            }
+
+        if (Cache::has(self::CACHE_ALERTA)) {
+            return $totalGeneral;
         }
-        
+
+        Cache::forever(self::CACHE_ALERTA, true);
+
+        $notificacion = Notification::make()
+            ->title('🚨 Alerta crítica de cuentas por pagar')
+            ->body('El total general por pagar (' . self::soles($totalGeneral) . ') superó el umbral de ' . self::soles(self::UMBRAL_ALERTA) . '.')
+            ->danger()
+            ->icon('heroicon-o-exclamation-triangle')
+            ->actions([
+                Action::make('ver_cuentas')
+                    ->label('Ver cuentas por pagar')
+                    ->url(CuentaPorPagarResource::getUrl('index', isAbsolute: false))
+                    ->button(),
+                Action::make('ver_reportes')
+                    ->label('Ver reportes semanales')
+                    ->url(ReporteSemanalResource::getUrl('index', isAbsolute: false))
+                    ->link(),
+            ]);
+
+        self::enviar($notificacion);
+
         return $totalGeneral;
     }
-    
+
     /**
-     * Notificación cuando se crea una nueva cuenta por pagar
+     * Notificación cuando se registra una nueva cuenta por pagar pendiente
      */
-    public static function notifyNewPayable($cuenta)
+    public static function notifyNewPayable(CuentaPorPagar $cuenta): void
     {
-        $totalPendiente = CuentaPorPagar::where('pagado', false)->sum('total');
-        $usuarios = User::all();
-        
-        foreach ($usuarios as $usuario) {
-            Notification::make()
-                ->title('📝 Nueva Cuenta por Pagar')
-                ->body("{$cuenta->detalle} - Total: S/ " . number_format($cuenta->total, 2))
-                ->icon('heroicon-o-document-text')
-                ->iconColor('warning')
-                ->actions([
-                    Action::make('view')
-                        ->label('Ver Cuenta')
-                        ->url('/admin/cuentas-por-pagars/' . $cuenta->id . '/edit')
-                        ->button(),
-                ])
-                ->sendToDatabase($usuario);
-        }
+        $notificacion = Notification::make()
+            ->title('📝 Nueva cuenta por pagar')
+            ->body("{$cuenta->detalle} · " . self::soles($cuenta->total))
+            ->icon('heroicon-o-document-text')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver cuenta')
+                    ->url(CuentaPorPagarResource::getUrl('edit', ['record' => $cuenta], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
     }
-    
+
     /**
      * Notificación cuando se paga una cuenta
      */
-    public static function notifyPayablePaid($cuenta)
+    public static function notifyPayablePaid(CuentaPorPagar $cuenta): void
     {
-        $totalPendiente = CuentaPorPagar::where('pagado', false)->sum('total');
-        $usuarios = User::all();
-        
-        foreach ($usuarios as $usuario) {
-            Notification::make()
-                ->title('✅ Cuenta Pagada')
-                ->body("Se ha pagado: {$cuenta->detalle} (S/ " . number_format($cuenta->total, 2) . ")\nTotal pendiente restante: S/ " . number_format($totalPendiente, 2))
-                ->icon('heroicon-o-check-circle')
-                ->iconColor('success')
-                ->sendToDatabase($usuario);
+        $totalPendiente = (float) CuentaPorPagar::where('pagado', false)->sum('total');
+
+        $notificacion = Notification::make()
+            ->title('✅ Cuenta pagada')
+            ->body("Se pagó: {$cuenta->detalle} (" . self::soles($cuenta->total) . ").\nPendiente restante: " . self::soles($totalPendiente))
+            ->icon('heroicon-o-check-circle')
+            ->iconColor('success');
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Notificación para reportes semanales en DEBE o ADELANTO
+     */
+    public static function notifyReporteSemanal(ReporteSemanal $reporte): void
+    {
+        if (! in_array($reporte->estado, ['DEBE', 'ADELANTO'])) {
+            return;
+        }
+
+        $notificacion = Notification::make()
+            ->title("📊 Reporte semanal · {$reporte->estado}")
+            ->body("Proveedor: {$reporte->proveedor}\nMonto: " . self::soles($reporte->monto))
+            ->icon('heroicon-o-calendar')
+            ->iconColor($reporte->estado === 'DEBE' ? 'danger' : 'warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver reporte')
+                    ->url(ReporteSemanalResource::getUrl('edit', ['record' => $reporte], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Guarda la notificación al instante para cada administrador.
+     * Filament la encola por defecto (ShouldQueue) y sin un worker nunca se entregaría.
+     */
+    private static function enviar(Notification $notificacion): void
+    {
+        foreach (self::destinatarios() as $usuario) {
+            $usuario->notifyNow($notificacion->toDatabase());
         }
     }
-    
+
     /**
-     * Notificación para reportes semanales
+     * Usuarios que reciben las notificaciones: administradores activos
      */
-    public static function notifyReporteSemanal($reporte)
+    private static function destinatarios(): Collection
     {
-        if (in_array($reporte->estado, ['DEBE', 'ADELANTO'])) {
-            $totalPendiente = ReporteSemanal::whereIn('estado', ['DEBE', 'ADELANTO'])->sum('monto');
-            $usuarios = User::all();
-            
-            $estadoTexto = $reporte->estado == 'DEBE' ? 'DEBE' : 'ADELANTO';
-            $colorIcono = $reporte->estado == 'DEBE' ? 'danger' : 'warning';
-            
-            foreach ($usuarios as $usuario) {
-                Notification::make()
-                    ->title("📊 Reporte Semanal - {$estadoTexto}")
-                    ->body("Proveedor: {$reporte->proveedor}\nMonto: S/ " . number_format($reporte->monto, 2))
-                    ->icon('heroicon-o-calendar')
-                    ->iconColor($colorIcono)
-                    ->actions([
-                        Action::make('view')
-                            ->label('Ver Reporte')
-                            ->url('/admin/reporte-semanals/' . $reporte->id . '/edit')
-                            ->button(),
-                    ])
-                    ->sendToDatabase($usuario);
-            }
-        }
+        return User::role(['super_admin', 'admin'])->where('is_active', true)->get();
+    }
+
+    private static function soles(float|string|null $monto): string
+    {
+        return 'S/ ' . number_format((float) $monto, 2);
     }
 }

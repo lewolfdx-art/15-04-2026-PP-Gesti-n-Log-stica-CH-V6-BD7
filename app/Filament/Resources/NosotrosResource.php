@@ -33,12 +33,13 @@ class NosotrosResource extends Resource
 {
     protected static ?string $model = Nosotros::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 2;
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationLabel = 'Nosotros';
     protected static ?string $modelLabel = 'Nosotros';
     protected static ?string $pluralModelLabel = 'Nosotros';
+    protected static ?int $navigationSort = 2;
+    protected static ?string $slug = 'nosotros';
 
     public static function form(Schema $schema): Schema
     {

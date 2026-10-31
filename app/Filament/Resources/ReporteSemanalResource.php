@@ -23,18 +23,20 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class ReporteSemanalResource extends Resource
 {
     protected static ?string $model = ReporteSemanal::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationLabel = 'Reporte Semanal';
-    protected static ?string $pluralLabel = 'Reportes Semanales';
-    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?string $navigationLabel = 'Reportes semanales';
+    protected static ?string $modelLabel = 'Reporte semanal';
+    protected static ?string $pluralModelLabel = 'Reportes semanales';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $slug = 'reportes-semanales';
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -267,13 +269,15 @@ class ReporteSemanalResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
     
-                BadgeColumn::make('estado')
+                TextColumn::make('estado')
                     ->label('Estado')
-                    ->colors([
-                        'success' => 'CANCELADO',
-                        'danger' => 'DEBE',
-                        'warning' => 'ADELANTO',
-                    ])
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'CANCELADO' => 'success',
+                        'DEBE'      => 'danger',
+                        'ADELANTO'  => 'warning',
+                        default     => 'gray',
+                    })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
             ])

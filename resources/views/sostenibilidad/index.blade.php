@@ -298,7 +298,7 @@
             <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
             <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
             <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar el contenido de Sostenibilidad.</p>
-            <a href="{{ url('/admin/sostenibilidad/create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
+            <a href="{{ \App\Filament\Resources\SostenibilidadResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
     @endif
 @endsection

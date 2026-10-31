@@ -33,9 +33,14 @@ use Illuminate\Support\Str;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
-    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Usuarios';
-    //protected static ?int $navigationSort = 10;
+
+    protected static string | \UnitEnum | null $navigationGroup = 'Usuarios';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationLabel = 'Usuarios';
+    protected static ?string $modelLabel = 'Usuario';
+    protected static ?string $pluralModelLabel = 'Usuarios';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'usuarios';
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
