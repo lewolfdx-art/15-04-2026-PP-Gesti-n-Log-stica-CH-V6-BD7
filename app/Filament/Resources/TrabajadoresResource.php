@@ -37,9 +37,9 @@ class TrabajadoresResource extends Resource
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
-    protected static ?string $navigationLabel = 'Trabajadores';
+    protected static ?string $navigationLabel = 'Trabajadores / Operadores';
     protected static ?string $modelLabel = 'Trabajador';
-    protected static ?string $pluralModelLabel = 'Trabajadores';
+    protected static ?string $pluralModelLabel = 'Trabajadores / Operadores';
     protected static ?int $navigationSort = 1;
     protected static ?string $slug = 'trabajadores';
 
