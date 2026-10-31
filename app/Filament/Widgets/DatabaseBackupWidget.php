@@ -23,7 +23,9 @@ class DatabaseBackupWidget extends Widget
     public function backup()
     {
         try {
-            Artisan::call('db:backup');
+            if (Artisan::call('db:backup') !== 0) {
+                throw new Exception(trim(Artisan::output()));
+            }
 
             Notification::make()
                 ->title('✅ Backup completado exitosamente')
@@ -43,7 +45,9 @@ class DatabaseBackupWidget extends Widget
     public function backupMonthly()
     {
         try {
-            Artisan::call('db:backup --monthly');
+            if (Artisan::call('db:backup --monthly') !== 0) {
+                throw new Exception(trim(Artisan::output()));
+            }
 
             Notification::make()
                 ->title('✅ Backup mensual completado')

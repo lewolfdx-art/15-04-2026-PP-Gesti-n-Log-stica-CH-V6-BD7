@@ -46,6 +46,8 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
+            // Ejecutable para db:backup (en XAMPP: D:\xampp\mysql\bin\mysqldump.exe)
+            'mysqldump_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
