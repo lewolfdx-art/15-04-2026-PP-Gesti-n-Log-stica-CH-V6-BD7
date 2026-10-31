@@ -6,6 +6,10 @@
     $t = $pago->trabajador;
     $soles = fn ($n) => 'S/ ' . number_format((float) $n, 2);
     $cargo = trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($t->tipo_cargo)));
+    $contacto = \App\Models\Inicio::getActiveContent();
+    $color = fn (?string $c, string $defecto) => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $c) ? $c : $defecto;
+    $c1 = $color($empresa['color_principal'] ?? null, '#16222e');
+    $c2 = $color($empresa['color_acento'] ?? null, '#f5811e');
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -14,11 +18,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Comprobante {{ $pago->codigo }} · {{ $t->nombre_completo }}</title>
 <style>
-:root { --c1: #16222e; --c2: #f5811e; --tint: #fff4ea; --tint2: #fbd9bb; --ink: #1b2430; }
+:root { --c1: {{ $c1 }}; --c2: {{ $c2 }}; --tint: color-mix(in srgb, var(--c2) 9%, white); --tint2: color-mix(in srgb, var(--c2) 30%, white); --ink: #1b2430; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #eef0f2; color: var(--ink); font: 12px/1.45 Arial, Helvetica, sans-serif; }
 .toolbar { display: flex; justify-content: center; gap: 10px; padding: 14px; }
-.toolbar button { border: 0; border-radius: 6px; padding: 9px 18px; font: inherit; font-weight: 700; cursor: pointer; background: var(--c2); color: #fff; }
+.toolbar button { border: 0; border-radius: 6px; padding: 9px 18px; font: inherit; font-weight: 700; cursor: pointer; background: var(--c2); color: var(--c1); }
 .toolbar button.sec { background: #fff; color: var(--c1); border: 1px solid #cfd5da; }
 
 .paper { background: #fff; max-width: 820px; margin: 0 auto 30px; box-shadow: 0 2px 14px rgba(0,0,0,.18); overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -33,8 +37,22 @@ body { margin: 0; background: #eef0f2; color: var(--ink); font: 12px/1.45 Arial,
 .d-title .t { font-size: 21px; line-height: 1.1; }
 .d-title .n { font-size: 13px; margin-top: 6px; }
 
-.d-bar { display: flex; flex-wrap: wrap; gap: 4px 28px; background: var(--c1); border-top: 3px solid var(--c2); color: #fff; padding: 9px 18px; font-size: 11px; }
-.d-bar b { color: var(--c2); }
+.d-slogan { flex: 1; text-align: center; font-weight: 700; font-size: 12px; line-height: 1.3; text-transform: uppercase; padding: 0 42% 0 14px; position: relative; z-index: 1; opacity: .9; }
+
+/* Barra: contacto con íconos a la izquierda, número y datos del documento a la derecha */
+.d-bar { display: flex; align-items: stretch; background: var(--c1); border-top: 3px solid var(--c2); min-height: 62px; }
+.d-contact { flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 0; padding: 8px 10px; color: #fff; font-size: 10.5px; line-height: 1.3; }
+.d-contact .ci { display: flex; gap: 7px; align-items: center; padding: 0 10px; border-right: 1px solid rgba(255,255,255,.35); }
+.d-contact .ci:last-child { border-right: 0; }
+.d-contact .ci b { font-size: 10px; letter-spacing: .03em; display: block; }
+.ico { width: 26px; height: 26px; border-radius: 50%; background: var(--c2); display: flex; align-items: center; justify-content: center; color: var(--c1); flex: none; }
+.ico svg { width: 15px; height: 15px; fill: currentColor; display: block; }
+.d-right { flex: 0 0 52%; display: flex; background: #fff; min-width: 0; }
+.d-no { flex: 0 0 36%; background: var(--c2); color: var(--c1); padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; font-weight: 800; font-size: 11px; text-transform: uppercase; line-height: 1.25; }
+.d-no b { font-size: 14px; display: block; overflow-wrap: anywhere; }
+.d-fields { flex: 1; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; align-content: center; padding: 8px 12px; font-size: 10.5px; }
+.d-fields .k { font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.d-fields .v { color: var(--c1); font-weight: 700; overflow-wrap: anywhere; }
 
 .d-body { padding: 16px; }
 
@@ -73,6 +91,9 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
 
 @media (max-width: 640px) {
     .d-box .g { grid-template-columns: 1fr; }
+    .d-bar { flex-direction: column; }
+    .d-right { flex-basis: auto; }
+    .d-slogan { display: none; }
     .d-title { width: 44%; }
     .d-title .t { font-size: 16px; }
     .d-logo .nm { font-size: 15px; }
@@ -102,16 +123,41 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
                 @endif
             </div>
         </div>
+        <div class="d-slogan">{{ $empresa['eslogan'] }}</div>
         <div class="d-title">
             <div class="t">COMPROBANTE<br>DE PAGO</div>
-            <div class="n">N.° {{ $pago->codigo }}</div>
         </div>
     </div>
 
     <div class="d-bar">
-        <span><b>Tipo:</b> {{ PagoPersonal::TIPOS[$pago->tipo] ?? $pago->tipo }}</span>
-        <span><b>Período:</b> {{ $pago->periodoTexto() }}</span>
-        <span><b>Emitido:</b> {{ $pago->created_at->format('d/m/Y') }}</span>
+        <div class="d-contact">
+            @if ($contacto?->oficina_telefono)
+                <div class="ci">
+                    <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.2 1l-2.3 2.3z"/></svg></span>
+                    <span><b>TELÉFONO</b>{{ $contacto->oficina_telefono }}@if($contacto->oficina_celular)<br>{{ $contacto->oficina_celular }}@endif</span>
+                </div>
+            @endif
+            @if ($contacto?->oficina_email)
+                <div class="ci">
+                    <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-11zm2.2.5 6.8 5.1L18.8 7H5.2zM19 8.6l-6.4 4.8a1 1 0 0 1-1.2 0L5 8.6v8.4h14V8.6z"/></svg></span>
+                    <span><b>CORREO</b>{{ $contacto->oficina_email }}</span>
+                </div>
+            @endif
+            @if ($empresa['direccion'] ?? $contacto?->oficina_direccion)
+                <div class="ci">
+                    <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></span>
+                    <span><b>DIRECCIÓN</b>{{ $empresa['direccion'] ?? $contacto->oficina_direccion }}</span>
+                </div>
+            @endif
+        </div>
+        <div class="d-right">
+            <div class="d-no">Comprobante N.°<b>{{ $pago->codigo }}</b></div>
+            <div class="d-fields">
+                <span class="k">Emisión</span><span class="v">{{ $pago->created_at->format('d/m/Y') }}</span>
+                <span class="k">Tipo</span><span class="v">{{ PagoPersonal::TIPOS[$pago->tipo] ?? $pago->tipo }}</span>
+                <span class="k">Período</span><span class="v">{{ ($pago->quincena === 1 ? '1ra' : '2da') . ' quincena · ' . $pago->periodo_desde->format('d/m') . ' – ' . $pago->periodo_hasta->format('d/m/Y') }}</span>
+            </div>
+        </div>
     </div>
 
     <div class="d-body">
