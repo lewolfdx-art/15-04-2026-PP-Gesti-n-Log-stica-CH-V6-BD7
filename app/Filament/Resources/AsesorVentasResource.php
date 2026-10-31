@@ -31,7 +31,7 @@ class AsesorVentasResource extends Resource
 
     protected static ?string $model = Trabajador::class;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Comercial';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-briefcase';
     protected static ?string $navigationLabel = 'Asesores de ventas';
     protected static ?string $modelLabel = 'Asesor de ventas';
