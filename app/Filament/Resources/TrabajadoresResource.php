@@ -13,7 +13,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -138,6 +141,12 @@ class TrabajadoresResource extends Resource
                     ->label('DNI')
                     ->searchable(),
 
+                TextColumn::make('user.email')
+                    ->label('Acceso al sistema')
+                    ->icon('heroicon-o-key')
+                    ->placeholder('Sin acceso')
+                    ->toggleable(),
+
                 TextColumn::make('fecha_nacimiento')
                     ->label('Fecha Nac.')
                     ->date('d/m/Y'),
@@ -164,6 +173,45 @@ class TrabajadoresResource extends Resource
                 TernaryFilter::make('activo'),
             ])
             ->recordActions([
+                // Crea el usuario con rol "operador" para que vea sus obras en /operador
+                Action::make('dar_acceso')
+                    ->label('Dar acceso')
+                    ->icon('heroicon-o-key')
+                    ->color('success')
+                    ->visible(fn (Trabajador $record): bool => $record->user_id === null)
+                    ->modalHeading(fn (Trabajador $record): string => "Acceso al sistema para {$record->nombre_completo}")
+                    ->modalDescription('Podrá entrar desde el celular a /operador y ver solo las obras que se le asignen.')
+                    ->schema([
+                        TextInput::make('email')
+                            ->label('Correo (usuario)')
+                            ->email()
+                            ->required()
+                            // Regla directa: unique() de Filament excluiría el id del trabajador de la fila
+                            ->rule('unique:users,email'),
+
+                        TextInput::make('password')
+                            ->label('Contraseña')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->minLength(8),
+                    ])
+                    ->action(function (Trabajador $record, array $data): void {
+                        $usuario = User::create([
+                            'name'      => $record->nombre_completo,
+                            'email'     => $data['email'],
+                            'password'  => $data['password'],
+                            'is_active' => true,
+                        ]);
+                        $usuario->assignRole('operador');
+                        $record->update(['user_id' => $usuario->getKey()]);
+
+                        Notification::make()
+                            ->title('Acceso creado')
+                            ->body("{$record->nombre_completo} ya puede entrar en " . url('/operador'))
+                            ->success()
+                            ->send();
+                    }),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

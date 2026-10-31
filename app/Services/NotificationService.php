@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Filament\Operador\Resources\MisObrasResource;
 use App\Filament\Resources\CuentaPorPagarResource;
 use App\Filament\Resources\ReporteSemanalResource;
+use App\Models\Contrato;
 use App\Models\CuentaPorPagar;
 use App\Models\ReporteSemanal;
 use App\Models\User;
@@ -132,6 +134,50 @@ class NotificationService
             ]);
 
         self::enviar($notificacion);
+    }
+
+    /**
+     * Avisa a los operadores recién asignados a la obra de un contrato.
+     * Solo a quienes tienen usuario activo y aún no fueron notificados de esta obra.
+     */
+    public static function notificarOperadores(Contrato $contrato): int
+    {
+        $pendientes = $contrato->operadores()
+            ->wherePivotNull('notificado_at')
+            ->with('user')
+            ->get();
+
+        $enviadas = 0;
+
+        foreach ($pendientes as $trabajador) {
+            $usuario = $trabajador->user;
+
+            if (! $usuario || ! $usuario->is_active) {
+                continue;
+            }
+
+            $notificacion = Notification::make()
+                ->title('🚛 Nueva obra asignada')
+                ->body(collect([
+                    'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha') . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
+                    $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
+                    $contrato->viabilidad ? Contrato::VIABILIDADES[$contrato->viabilidad] ?? null : null,
+                ])->filter()->implode("\n"))
+                ->icon('heroicon-o-map-pin')
+                ->iconColor('warning')
+                ->actions([
+                    Action::make('ver_obra')
+                        ->label('Ver obra y mapa')
+                        ->url(MisObrasResource::getUrl('view', ['record' => $contrato], isAbsolute: false, panel: 'operador'))
+                        ->button(),
+                ]);
+
+            $usuario->notifyNow($notificacion->toDatabase());
+            $contrato->operadores()->updateExistingPivot($trabajador->getKey(), ['notificado_at' => now()]);
+            $enviadas++;
+        }
+
+        return $enviadas;
     }
 
     /**

@@ -6,6 +6,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
 
 class Trabajador extends Model
@@ -22,7 +24,26 @@ class Trabajador extends Model
         'descripcion',
         'orden',
         'activo',
+        'user_id',
     ];
+
+    /**
+     * Usuario con el que entra al panel de operadores (opcional)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Obras (contratos) a las que está asignado como operador
+     */
+    public function obras(): BelongsToMany
+    {
+        return $this->belongsToMany(Contrato::class, 'contrato_operador')
+            ->withPivot('notificado_at')
+            ->withTimestamps();
+    }
 
     protected $casts = [
         'fecha_nacimiento' => 'date',

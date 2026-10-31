@@ -22,6 +22,8 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\BulkAction;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\ViewField;
 use App\Exports\ContratoExport;
 use App\Filament\Resources\ContratoResource\Pages\ListContratos;
 use App\Filament\Resources\ContratoResource\Pages\CreateContrato;
@@ -183,6 +185,79 @@ class ContratoResource extends Resource
                                     ->label('TIPO DE CONCRETO')
                                     ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280'])
                                     ->required(),
+                            ])
+                            ->columns(2),
+
+                        Tab::make('Ubicación y viabilidad')
+                            ->icon('heroicon-o-map-pin')
+                            ->schema([
+                                // El mapa escribe en latitud/longitud; los campos quedan visibles por si se quieren corregir a mano
+                                ViewField::make('mapa')
+                                    ->hiddenLabel()
+                                    ->view('filament.forms.mapa-ubicacion')
+                                    ->dehydrated(false)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('latitud')
+                                    ->label('Latitud')
+                                    ->numeric()
+                                    ->minValue(-90)
+                                    ->maxValue(90),
+
+                                TextInput::make('longitud')
+                                    ->label('Longitud')
+                                    ->numeric()
+                                    ->minValue(-180)
+                                    ->maxValue(180),
+
+                                Select::make('viabilidad')
+                                    ->label('¿Es viable el vaciado?')
+                                    ->options(Contrato::VIABILIDADES)
+                                    ->native(false)
+                                    ->live(),
+
+                                Textarea::make('viabilidad_comentario')
+                                    ->label('Comentarios sobre la viabilidad')
+                                    ->placeholder('Ej: calle angosta, hay que usar bomba; acceso solo con carretilla; cables en la altura...')
+                                    ->rows(3)
+                                    ->required(fn (Get $get): bool => in_array($get('viabilidad'), ['observaciones', 'no_viable']))
+                                    ->helperText('Obligatorio si tiene observaciones o no es viable.'),
+
+                                Textarea::make('descripcion_lugar')
+                                    ->label('Descripción del lugar')
+                                    ->placeholder('Acceso, terreno, espacio para mixer o bomba, distancia, etc.')
+                                    ->rows(3)
+                                    ->columnSpanFull(),
+
+                                FileUpload::make('fotos_lugar')
+                                    ->label('Fotos del lugar')
+                                    ->image()
+                                    ->multiple()
+                                    ->reorderable()
+                                    ->maxFiles(8)
+                                    ->maxSize(5120)
+                                    ->imageResizeMode('contain')
+                                    ->imageResizeTargetWidth('1600')
+                                    ->imageResizeTargetHeight('1600')
+                                    ->directory('contratos/lugar')
+                                    ->panelLayout('grid')
+                                    ->columnSpanFull(),
+
+                                Select::make('operadores')
+                                    ->label('Operadores asignados')
+                                    ->relationship(
+                                        'operadores',
+                                        'nombre_completo',
+                                        fn ($query) => $query->personal()->where('activo', true)->orderBy('orden'),
+                                    )
+                                    ->getOptionLabelFromRecordUsing(fn (Trabajador $trabajador): string => $trabajador->nombre_completo
+                                        . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($trabajador->tipo_cargo)))
+                                        . ($trabajador->user_id ? '' : ' (sin acceso)'))
+                                    ->multiple()
+                                    ->preload()
+                                    ->searchable()
+                                    ->helperText('Los operadores con acceso al sistema recibirán una notificación con el mapa y los datos de la obra.')
+                                    ->columnSpanFull(),
                             ])
                             ->columns(2),
 
@@ -416,6 +491,14 @@ class ContratoResource extends Resource
 
                 TextColumn::make('bombeo')
                     ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('viabilidad')
+                    ->label('Viabilidad')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
+                    ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                    ->placeholder('Sin evaluar')
                     ->toggleable(),
 
                 TextColumn::make('monto_total')

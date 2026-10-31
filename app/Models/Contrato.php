@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
 
 class Contrato extends Model
@@ -48,6 +49,24 @@ class Contrato extends Model
         'vendedor_id',
         'gasto_categoria_id',
         'activo',
+        'latitud',
+        'longitud',
+        'descripcion_lugar',
+        'fotos_lugar',
+        'viabilidad',
+        'viabilidad_comentario',
+    ];
+
+    public const VIABILIDADES = [
+        'viable'        => '✅ Viable',
+        'observaciones' => '⚠️ Viable con observaciones',
+        'no_viable'     => '❌ No viable',
+    ];
+
+    public const VIABILIDAD_COLORES = [
+        'viable'        => 'success',
+        'observaciones' => 'warning',
+        'no_viable'     => 'danger',
     ];
 
     protected $casts = [
@@ -69,7 +88,35 @@ class Contrato extends Model
         'alimentos_dc'             => 'decimal:2',
         'total_para_empresa'       => 'decimal:2',
         'activo'                   => 'boolean',
+        'latitud'                  => 'float',
+        'longitud'                 => 'float',
+        'fotos_lugar'              => 'array',
     ];
+
+    /**
+     * Operadores (trabajadores) asignados a la obra
+     */
+    public function operadores(): BelongsToMany
+    {
+        return $this->belongsToMany(Trabajador::class, 'contrato_operador')
+            ->withPivot('notificado_at')
+            ->withTimestamps();
+    }
+
+    public function tieneUbicacion(): bool
+    {
+        return $this->latitud !== null && $this->longitud !== null;
+    }
+
+    /**
+     * Enlace de Google Maps con la ruta hasta la obra
+     */
+    public function urlComoLlegar(): ?string
+    {
+        return $this->tieneUbicacion()
+            ? "https://www.google.com/maps/dir/?api=1&destination={$this->latitud},{$this->longitud}"
+            : null;
+    }
 
     // ==================== PROCEDIMIENTOS ALMACENADOS ====================
 

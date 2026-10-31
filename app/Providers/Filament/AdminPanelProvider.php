@@ -18,6 +18,7 @@ use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -40,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('3rem')
             ->favicon(asset('favicon.ico'))
             ->viteTheme('resources/css/filament/admin/theme.css')
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.mapa-assets'))
             ->colors([
                 'primary' => Color::Orange,
             ])
