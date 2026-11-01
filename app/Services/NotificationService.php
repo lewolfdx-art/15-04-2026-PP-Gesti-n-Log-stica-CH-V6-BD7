@@ -62,7 +62,7 @@ class NotificationService
         Cache::forever(self::CACHE_ALERTA, true);
 
         $notificacion = Notification::make()
-            ->title('🚨 Alerta crítica de cuentas por pagar')
+            ->title('Alerta crítica de cuentas por pagar')
             ->body('El total general por pagar (' . self::soles($totalGeneral) . ') superó el umbral de ' . self::soles(self::UMBRAL_ALERTA) . '.')
             ->danger()
             ->icon('heroicon-o-exclamation-triangle')
@@ -88,7 +88,7 @@ class NotificationService
     public static function notifyNewPayable(CuentaPorPagar $cuenta): void
     {
         $notificacion = Notification::make()
-            ->title('📝 Nueva cuenta por pagar')
+            ->title('Nueva cuenta por pagar')
             ->body("{$cuenta->detalle} · " . self::soles($cuenta->total))
             ->icon('heroicon-o-document-text')
             ->iconColor('warning')
@@ -110,7 +110,7 @@ class NotificationService
         $totalPendiente = (float) CuentaPorPagar::where('pagado', false)->sum('total');
 
         $notificacion = Notification::make()
-            ->title('✅ Cuenta pagada')
+            ->title('Cuenta pagada')
             ->body("Se pagó: {$cuenta->detalle} (" . self::soles($cuenta->total) . ").\nPendiente restante: " . self::soles($totalPendiente))
             ->icon('heroicon-o-check-circle')
             ->iconColor('success');
@@ -128,7 +128,7 @@ class NotificationService
         }
 
         $notificacion = Notification::make()
-            ->title("📊 Reporte semanal · {$reporte->estado}")
+            ->title("Reporte semanal · {$reporte->estado}")
             ->body("Proveedor: {$reporte->proveedor}\nMonto: " . self::soles($reporte->monto))
             ->icon('heroicon-o-calendar')
             ->iconColor($reporte->estado === 'DEBE' ? 'danger' : 'warning')
@@ -163,13 +163,13 @@ class NotificationService
             }
 
             $notificacion = Notification::make()
-                ->title('🚛 Nueva obra asignada')
+                ->title('Nueva obra asignada')
                 ->body(collect([
                     'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha')
                         . ($contrato->horarioTexto() ? " · {$contrato->horarioTexto()}" : '')
                         . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
-                    $contrato->vehiculos->isNotEmpty() ? '🚛 ' . $contrato->vehiculos->pluck('codigo')->implode(', ') : null,
-                    $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
+                    $contrato->vehiculos->isNotEmpty() ? 'Vehículos: ' . $contrato->vehiculos->pluck('codigo')->implode(', ') : null,
+                    $contrato->ubicacion_referencia ? "Lugar: {$contrato->ubicacion_referencia}" : null,
                     $contrato->viabilidad ? Contrato::VIABILIDADES[$contrato->viabilidad] ?? null : null,
                 ])->filter()->implode("\n"))
                 ->icon('heroicon-o-map-pin')
@@ -195,7 +195,7 @@ class NotificationService
     public static function notificarNuevaReclamacion(LibroReclamacion $hoja): void
     {
         $notificacion = Notification::make()
-            ->title("📕 Nuevo {$hoja->tipo} en el Libro de Reclamaciones")
+            ->title("Nuevo {$hoja->tipo} en el Libro de Reclamaciones")
             ->body("{$hoja->codigo} · {$hoja->claimant_name}\nResponder a más tardar el " . $hoja->fecha_limite->format('d/m/Y'))
             ->icon('heroicon-o-book-open')
             ->iconColor('danger')
@@ -215,7 +215,7 @@ class NotificationService
     public static function notificarNuevaCotizacion(Cotizacion $cotizacion): void
     {
         $notificacion = Notification::make()
-            ->title('📋 Nueva cotización por revisar')
+            ->title('Nueva cotización por revisar')
             ->body(collect([
                 "{$cotizacion->codigo} · {$cotizacion->asesor?->nombre_completo}",
                 "Cliente: {$cotizacion->cliente_nombre}",
@@ -264,11 +264,11 @@ class NotificationService
     public static function notificarVaciadoPorProgramar(Contrato $contrato): void
     {
         $notificacion = Notification::make()
-            ->title('🗓️ Nuevo vaciado por programar')
+            ->title('Nuevo vaciado por programar')
             ->body(collect([
                 "{$contrato->nombre_cliente} · {$contrato->volumen_guia} m³ · {$contrato->estructura}",
                 'Fecha pedida: ' . ($contrato->fecha?->format('d/m/Y') ?? '—'),
-                $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
+                $contrato->ubicacion_referencia ? "Lugar: {$contrato->ubicacion_referencia}" : null,
             ])->filter()->implode("\n"))
             ->icon('heroicon-o-calendar-days')
             ->iconColor('warning')

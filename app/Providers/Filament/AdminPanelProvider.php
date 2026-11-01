@@ -50,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()->label('Escritorio')->collapsible(false),
                 NavigationGroup::make()->label('Navegación')->collapsible(false),
                 NavigationGroup::make()->label('Gestión de Contenido'),
-                NavigationGroup::make()->label('Usuarios'), // 👈 USUARIOS AQUÍ
+                NavigationGroup::make()->label('Usuarios'), // USUARIOS AQUÍ
                 NavigationGroup::make()->label('Gestión de Operaciones'),
                 NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Comercial'),

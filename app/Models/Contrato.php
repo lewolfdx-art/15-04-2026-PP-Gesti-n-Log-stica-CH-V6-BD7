@@ -77,15 +77,21 @@ class Contrato extends Model
     public const BOMBEOS = ['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA'];
 
     public const VIABILIDADES = [
-        'viable'        => '✅ Viable',
-        'observaciones' => '⚠️ Viable con observaciones',
-        'no_viable'     => '❌ No viable',
+        'viable'        => 'Viable',
+        'observaciones' => 'Viable con observaciones',
+        'no_viable'     => 'No viable',
     ];
 
     public const VIABILIDAD_COLORES = [
         'viable'        => 'success',
         'observaciones' => 'warning',
         'no_viable'     => 'danger',
+    ];
+
+    public const VIABILIDAD_ICONOS = [
+        'viable'        => 'heroicon-o-check-circle',
+        'observaciones' => 'heroicon-o-exclamation-triangle',
+        'no_viable'     => 'heroicon-o-x-circle',
     ];
 
     protected $casts = [

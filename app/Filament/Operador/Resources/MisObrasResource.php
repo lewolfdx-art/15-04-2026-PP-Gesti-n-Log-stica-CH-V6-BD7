@@ -86,6 +86,7 @@ class MisObrasResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                     ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                    ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                     ->placeholder('Sin evaluar'),
             ])
             ->defaultSort('fecha', 'desc')
@@ -138,6 +139,7 @@ class MisObrasResource extends Resource
                             ->badge()
                             ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                             ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                            ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                             ->placeholder('Sin evaluar'),
 
                         TextEntry::make('viabilidad_comentario')

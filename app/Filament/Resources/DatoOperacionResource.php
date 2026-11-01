@@ -49,10 +49,10 @@ class DatoOperacionResource extends Resource
                 Select::make('tipo')
                     ->label('Tipo')
                     ->options([
-                        'modo_pago'   => '🔸 Modo de Pago',
-                        'banco'       => '🏦 Banco',
-                        'cancelacion' => '✅ Cancelación',
-                        'estado'      => '📊 Estado',
+                        'modo_pago'   => 'Modo de Pago',
+                        'banco'       => 'Banco',
+                        'cancelacion' => 'Cancelación',
+                        'estado'      => 'Estado',
                     ])
                     ->required()
                     ->native(false)

@@ -387,9 +387,9 @@
                 <div x-show="open" x-transition.opacity.duration.200ms
                      class="absolute left-0 mt-2 w-48 dropdown-neon shadow-xl z-50 py-2"
                      @mouseenter="open = true" @mouseleave="open = false">
-                    <a href="{{ url('/sostenibilidad') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">🌱 Políticas</a>
-                    <a href="{{ url('/experiencia') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">🏭 Experiencia</a>
-                    <a href="{{ url('/concretips') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]">💡 Tips</a>
+                    <a href="{{ url('/sostenibilidad') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-leaf mr-2"></i>Políticas</a>
+                    <a href="{{ url('/experiencia') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-industry mr-2"></i>Experiencia</a>
+                    <a href="{{ url('/concretips') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-lightbulb mr-2"></i>Tips</a>
                 </div>
             </div>
 

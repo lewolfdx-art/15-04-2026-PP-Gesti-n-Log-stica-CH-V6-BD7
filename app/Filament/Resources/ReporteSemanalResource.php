@@ -75,7 +75,7 @@ class ReporteSemanalResource extends Resource
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
-                    ->closeOnDateSelection() // 👈 mejora UX
+                    ->closeOnDateSelection() // mejora UX
                     ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live()
                     ->afterStateUpdated(function ($state, Set $set, Get $get) {

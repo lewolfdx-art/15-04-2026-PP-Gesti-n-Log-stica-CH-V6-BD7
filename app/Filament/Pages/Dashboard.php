@@ -2,40 +2,46 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\AgendaVaciadosWidget;
+use App\Filament\Widgets\BalanceMesWidget;
+use App\Filament\Widgets\ContratosPorVendedorChart;
+use App\Filament\Widgets\DatabaseBackupWidget;
+use App\Filament\Widgets\ResumenHoyWidget;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
 use App\Filament\Widgets\VentasPorMesChart;
-use App\Filament\Widgets\ContratosPorVendedorChart;
 use Filament\Pages\Dashboard as BaseDashboard;
-use App\Filament\Widgets\DatabaseBackupWidget;
 
 class Dashboard extends BaseDashboard
 {
     use \App\Filament\Concerns\SoloAdministradores;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-squares-2x2';
-    protected static ?string $title = 'Dashboard - Concretera Mantaro';
+    protected static ?string $title = 'Escritorio';
     protected static ?string $navigationLabel = 'Escritorio';
 
-    // Widgets que van en la cabecera (arriba, ocupan todo el ancho)
+    // Arriba, a todo el ancho: lo del día y la plata del mes
     protected function getHeaderWidgets(): array
     {
         return [
-            DatabaseBackupWidget::class, // 👈 AGREGAR AQUÍ
+            ResumenHoyWidget::class,
+            BalanceMesWidget::class,
             TotalGeneralPagarWidget::class,
         ];
     }
 
-    // Widgets que van en el cuerpo (abajo, en columnas)
+    // Cuerpo: agenda a todo el ancho y luego los gráficos en dos columnas
     public function getWidgets(): array
     {
         return [
+            AgendaVaciadosWidget::class,
             VentasPorMesChart::class,
             ContratosPorVendedorChart::class,
+            DatabaseBackupWidget::class,
         ];
     }
 
     public function getColumns(): int|array
     {
-        return 2; // 2 columnas para los widgets del cuerpo
+        return 2;
     }
 }

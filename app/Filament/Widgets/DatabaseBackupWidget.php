@@ -28,14 +28,14 @@ class DatabaseBackupWidget extends Widget
             }
 
             Notification::make()
-                ->title('✅ Backup completado exitosamente')
+                ->title('Backup completado exitosamente')
                 ->body('El backup de la base de datos se ha generado correctamente.')
                 ->success()
                 ->send();
 
         } catch (Exception $e) {
             Notification::make()
-                ->title('❌ Error al generar backup')
+                ->title('Error al generar backup')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
@@ -50,14 +50,14 @@ class DatabaseBackupWidget extends Widget
             }
 
             Notification::make()
-                ->title('✅ Backup mensual completado')
+                ->title('Backup mensual completado')
                 ->body('El backup mensual de la base de datos se ha generado correctamente.')
                 ->success()
                 ->send();
 
         } catch (Exception $e) {
             Notification::make()
-                ->title('❌ Error al generar backup mensual')
+                ->title('Error al generar backup mensual')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();

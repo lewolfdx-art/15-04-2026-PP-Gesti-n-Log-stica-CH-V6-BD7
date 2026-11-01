@@ -90,7 +90,7 @@ class CotizacionResource extends Resource
             ->action(function (Cotizacion $record, array $data): void {
                 $record->registrarAdelanto((float) $data['monto'], $data['forma_pago'], auth()->user());
 
-                NotificationService::notificarAsesor($record, "💵 Adelanto registrado · {$record->codigo}",
+                NotificationService::notificarAsesor($record, "Adelanto registrado · {$record->codigo}",
                     "El cliente {$record->cliente_nombre} dio un adelanto de S/ " . number_format((float) $record->adelanto_monto, 2) . '.');
 
                 Notification::make()->title("Adelanto registrado. {$record->codigo} queda en espera.")->success()->send();
@@ -133,7 +133,7 @@ class CotizacionResource extends Resource
                 }
 
                 NotificationService::notificarVaciadoPorProgramar($contrato);
-                NotificationService::notificarAsesor($record, "✅ {$record->codigo} pasó a contrato",
+                NotificationService::notificarAsesor($record, "{$record->codigo} pasó a contrato",
                     "La obra de {$record->cliente_nombre} ya es un contrato y pasa a programación.");
 
                 Notification::make()
@@ -159,7 +159,7 @@ class CotizacionResource extends Resource
             ->action(function (Cotizacion $record, array $data): void {
                 $record->rechazar($data['motivo'], auth()->user());
 
-                NotificationService::notificarAsesor($record, "❌ {$record->codigo} rechazada", $data['motivo']);
+                NotificationService::notificarAsesor($record, "{$record->codigo} rechazada", $data['motivo']);
 
                 Notification::make()->title("{$record->codigo} rechazada")->success()->send();
             });
@@ -247,7 +247,8 @@ class CotizacionResource extends Resource
                     ->schema([
                         TextEntry::make('viabilidad')->label('Viabilidad')->badge()
                             ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
-                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray'),
+                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                            ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null),
                         TextEntry::make('viabilidad_comentario')->label('Comentarios')->placeholder('—'),
                         TextEntry::make('descripcion_lugar')->label('Descripción del lugar')->placeholder('—')->columnSpanFull(),
                         ImageEntry::make('fotos_lugar')->label('Fotos')->disk('public')->imageHeight(150)->placeholder('Sin fotos')->columnSpanFull(),

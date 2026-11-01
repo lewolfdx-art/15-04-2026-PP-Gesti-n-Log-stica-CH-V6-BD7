@@ -40,7 +40,7 @@ class DatabaseBackup extends Command
         $sqlPath = "{$backupPath}/{$sqlFilename}";
         $zipPath = "{$backupPath}/{$zipFilename}";
 
-        $this->info("🚀 Iniciando backup {$type} de la base de datos '{$dbName}'...");
+        $this->info("Iniciando backup {$type} de la base de datos '{$dbName}'...");
 
         // 1. Crear el dump SQL
         // Argumentos como lista (sin pasar por la consola) y contraseña por variable de entorno,
@@ -83,7 +83,7 @@ class DatabaseBackup extends Command
 
         if (! $process->isSuccessful()) {
             @unlink($sqlPath);
-            $this->error('❌ mysqldump falló: ' . trim($errores ?: 'código ' . $process->getExitCode()));
+            $this->error('mysqldump falló: ' . trim($errores ?: 'código ' . $process->getExitCode()));
             $this->error("Revisa MYSQLDUMP_PATH en el .env (actual: {$mysqldump})");
 
             return self::FAILURE;
@@ -92,18 +92,18 @@ class DatabaseBackup extends Command
         $sqlSize = filesize($sqlPath);
         if ($sqlSize === 0) {
             @unlink($sqlPath);
-            $this->error('❌ El respaldo quedó vacío.');
+            $this->error('El respaldo quedó vacío.');
 
             return self::FAILURE;
         }
 
-        $this->info('✅ Archivo SQL creado: ' . round($sqlSize / 1024, 2) . ' KB');
+        $this->info('Archivo SQL creado: ' . round($sqlSize / 1024, 2) . ' KB');
 
         // 2. Comprimir el archivo SQL en ZIP
         $this->info('Comprimiendo backup...');
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            $this->error("❌ Error al comprimir el backup. El SQL quedó en {$sqlFilename}");
+            $this->error("Error al comprimir el backup. El SQL quedó en {$sqlFilename}");
 
             return self::FAILURE;
         }
@@ -117,12 +117,12 @@ class DatabaseBackup extends Command
         $zipSize = filesize($zipPath);
         $compressionRatio = round((1 - ($zipSize / $sqlSize)) * 100, 2);
 
-        $this->info("✅ Backup {$type} completado exitosamente!");
-        $this->info("📁 Archivo: {$zipFilename}");
-        $this->info('📊 Tamaño SQL original: ' . round($sqlSize / 1024, 2) . ' KB');
-        $this->info('🗜️ Tamaño ZIP: ' . round($zipSize / 1024, 2) . ' KB');
-        $this->info("📈 Compresión: {$compressionRatio}%");
-        $this->info('💾 Ruta: ' . realpath($backupPath));
+        $this->info("Backup {$type} completado exitosamente!");
+        $this->info("Archivo: {$zipFilename}");
+        $this->info('Tamaño SQL original: ' . round($sqlSize / 1024, 2) . ' KB');
+        $this->info('Tamaño ZIP: ' . round($zipSize / 1024, 2) . ' KB');
+        $this->info("Compresión: {$compressionRatio}%");
+        $this->info('Ruta: ' . realpath($backupPath));
 
         return self::SUCCESS;
     }

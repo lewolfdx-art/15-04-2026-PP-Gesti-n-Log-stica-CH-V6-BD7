@@ -93,13 +93,16 @@ class ProgramacionResource extends Resource
         $conflictos = Contrato::conflictosDeVehiculos($record->getKey(), Carbon::parse($fecha)->toDateString(), $inicio, $fin, $vehiculos);
 
         if ($conflictos->isEmpty()) {
-            return new HtmlString('<span style="color:#16a34a;font-weight:600">✅ Vehículos libres en ese horario.</span>');
+            return new HtmlString('<span style="color:#16a34a;font-weight:600;display:inline-flex;align-items:center;gap:6px">'
+                . svg('heroicon-o-check-circle', 'h-5 w-5')->toHtml() . 'Vehículos libres en ese horario.</span>');
         }
 
-        $lineas = $conflictos->map(fn (Contrato $c) => '<li>🚫 <b>' . e($c->vehiculos->pluck('codigo')->implode(', ')) . '</b> ocupado en '
+        $lineas = $conflictos->map(fn (Contrato $c) => '<li><b>' . e($c->vehiculos->pluck('codigo')->implode(', ')) . '</b> ocupado en '
             . e($c->nombre_cliente) . ' (' . e($c->horarioTexto()) . ')</li>')->implode('');
 
-        return new HtmlString("<div style=\"color:#dc2626\"><b>Choque de vehículos:</b><ul style=\"margin:4px 0 0 18px;list-style:disc\">{$lineas}</ul></div>");
+        return new HtmlString('<div style="color:#dc2626"><b style="display:inline-flex;align-items:center;gap:6px">'
+            . svg('heroicon-o-exclamation-triangle', 'h-5 w-5')->toHtml() . 'Choque de vehículos:</b>'
+            . "<ul style=\"margin:4px 0 0 18px;list-style:disc\">{$lineas}</ul></div>");
     }
 
     public static function accionProgramar(): Action
@@ -145,7 +148,7 @@ class ProgramacionResource extends Resource
                     ->label('Operadores')
                     ->options(fn () => Trabajador::personal()->where('activo', true)->orderBy('nombre_completo')->get()
                         ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · '
-                            . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($t->tipo_cargo)))
+                            . Trabajador::cargoTexto($t->tipo_cargo)
                             . ($t->user_id ? '' : ' (sin acceso)')]))
                     ->multiple()
                     ->searchable()
@@ -255,7 +258,8 @@ class ProgramacionResource extends Resource
                         TextEntry::make('bombeo')->label('Bombeo')->placeholder('—'),
                         TextEntry::make('viabilidad')->label('Viabilidad')->badge()
                             ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
-                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray'),
+                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                            ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null),
                         TextEntry::make('viabilidad_comentario')->label('Comentarios')->placeholder('—'),
                         TextEntry::make('descripcion_lugar')->label('Descripción del lugar')->placeholder('—')->columnSpanFull(),
                         ImageEntry::make('fotos_lugar')->label('Fotos')->disk('public')->imageHeight(140)->placeholder('Sin fotos')->columnSpanFull(),

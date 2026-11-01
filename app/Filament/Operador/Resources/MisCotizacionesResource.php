@@ -204,7 +204,8 @@ class MisCotizacionesResource extends Resource
                         TextEntry::make('precio_unitario_propuesto')->label('Precio propuesto por m³')->money('PEN'),
                         TextEntry::make('viabilidad')->label('Viabilidad')->badge()
                             ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
-                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray'),
+                            ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                            ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null),
                         TextEntry::make('viabilidad_comentario')->label('Comentarios')->placeholder('—'),
                         TextEntry::make('descripcion_lugar')->label('Descripción del lugar')->placeholder('—')->columnSpanFull(),
                         ImageEntry::make('fotos_lugar')->label('Fotos')->disk('public')->imageHeight(140)->placeholder('Sin fotos')->columnSpanFull(),

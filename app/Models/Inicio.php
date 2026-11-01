@@ -14,7 +14,7 @@ class Inicio extends Model
         'cta_url', 'is_active',
         // Logo
         'logo_image', 'logo_text', 'logo_text_color', 'logo_span_color',
-        'favicon', // 👈 Agregado
+        'favicon', // Agregado
         // Footer
         'oficina_titulo', 'oficina_direccion', 'oficina_telefono',
         'oficina_celular', 'oficina_email', 'oficina_maps_url',

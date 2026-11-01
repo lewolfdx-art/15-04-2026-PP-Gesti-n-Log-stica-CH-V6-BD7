@@ -21,10 +21,17 @@ class Vehiculo extends Model
     ];
 
     public const TIPOS = [
-        'mixer'              => '🚛 Mixer',
-        'bomba_telescopica'  => '🏗️ Bomba telescópica',
-        'bomba_estacionaria' => '⚙️ Bomba estacionaria',
-        'otro'               => '🚚 Otro',
+        'mixer'              => 'Mixer',
+        'bomba_telescopica'  => 'Bomba telescópica',
+        'bomba_estacionaria' => 'Bomba estacionaria',
+        'otro'               => 'Otro',
+    ];
+
+    public const TIPO_ICONOS = [
+        'mixer'              => 'heroicon-o-truck',
+        'bomba_telescopica'  => 'heroicon-o-arrow-up-right',
+        'bomba_estacionaria' => 'heroicon-o-cog-6-tooth',
+        'otro'               => 'heroicon-o-wrench-screwdriver',
     ];
 
     public function contratos(): BelongsToMany
@@ -39,7 +46,7 @@ class Vehiculo extends Model
 
     public function etiqueta(): string
     {
-        $tipo = trim(preg_replace('/^\X\s*/u', '', self::TIPOS[$this->tipo] ?? $this->tipo));
+        $tipo = self::TIPOS[$this->tipo] ?? $this->tipo;
 
         return "{$this->codigo} · {$tipo}" . ($this->placa ? " ({$this->placa})" : '');
     }

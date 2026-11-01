@@ -86,7 +86,8 @@ class VehiculoResource extends Resource
             ->columns([
                 TextColumn::make('codigo')->label('Código')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('tipo')->label('Tipo')->badge()
-                    ->formatStateUsing(fn (string $state): string => Vehiculo::TIPOS[$state] ?? $state),
+                    ->formatStateUsing(fn (string $state): string => Vehiculo::TIPOS[$state] ?? $state)
+                    ->icon(fn (string $state): ?string => Vehiculo::TIPO_ICONOS[$state] ?? null),
                 TextColumn::make('placa')->label('Placa')->searchable()->placeholder('—'),
                 TextColumn::make('capacidad_m3')->label('Capacidad')->suffix(' m³')->placeholder('—'),
                 TextColumn::make('contratos_count')->label('Vaciados')->counts('contratos')->badge()->alignCenter(),

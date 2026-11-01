@@ -41,11 +41,11 @@
 
     <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
         <p class="text-xs text-gray-500 dark:text-gray-400">
-            <span class="font-medium">📁 Ubicación:</span> 
+            <span class="font-medium inline-flex items-center gap-1">{{ svg('heroicon-o-folder', 'h-4 w-4') }} Ubicación:</span> 
             storage/app/backups/
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            <span class="font-medium">⏱️ Tiempo estimado:</span> 
+            <span class="font-medium inline-flex items-center gap-1">{{ svg('heroicon-o-clock', 'h-4 w-4') }} Tiempo estimado:</span> 
             El proceso puede tomar algunos segundos dependiendo del tamaño de la base de datos.
         </p>
     </div>

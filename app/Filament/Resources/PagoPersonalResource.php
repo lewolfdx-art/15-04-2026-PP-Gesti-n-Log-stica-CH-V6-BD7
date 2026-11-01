@@ -105,7 +105,7 @@ class PagoPersonalResource extends Resource
                         Select::make('trabajador_id')
                             ->label('Trabajador')
                             ->options(fn () => Trabajador::where('activo', true)->orderBy('nombre_completo')->get()
-                                ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($t->tipo_cargo)))]))
+                                ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · ' . Trabajador::cargoTexto($t->tipo_cargo)]))
                             ->searchable()
                             ->required()
                             ->live()
@@ -150,11 +150,14 @@ class PagoPersonalResource extends Resource
                                     return new HtmlString('');
                                 }
 
-                                return new HtmlString(PagoPersonal::tipoPara($t) === 'comision'
-                                    ? '💼 <b>Asesor de ventas</b>: se paga la comisión de sus contratos de la quincena que aún no fueron pagados.'
-                                    : '👷 <b>Sueldo fijo</b>: ' . ($t->sueldo_mensual
+                                $esComision = PagoPersonal::tipoPara($t) === 'comision';
+                                $icono = svg($esComision ? 'heroicon-o-briefcase' : 'heroicon-o-user', 'h-5 w-5 shrink-0 text-primary-500')->toHtml();
+
+                                return new HtmlString('<span style="display:inline-flex;align-items:flex-start;gap:6px">' . $icono . '<span>' . ($esComision
+                                    ? '<b>Asesor de ventas</b>: se paga la comisión de sus contratos de la quincena que aún no fueron pagados.'
+                                    : '<b>Sueldo fijo</b>: ' . ($t->sueldo_mensual
                                         ? 'sueldo mensual S/ ' . number_format((float) $t->sueldo_mensual, 2) . ', la quincena es la mitad. Puedes ajustarla.'
-                                        : '<span style="color:#dc2626">no tiene sueldo registrado en su ficha</span>; ingresa el monto de la quincena.'));
+                                        : '<span style="color:#dc2626">no tiene sueldo registrado en su ficha</span>; ingresa el monto de la quincena.')) . '</span></span>');
                             })
                             ->columnSpanFull(),
 

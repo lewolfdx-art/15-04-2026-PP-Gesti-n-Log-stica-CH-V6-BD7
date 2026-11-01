@@ -94,7 +94,7 @@ class ContratoResource extends Resource
                                     Select::make('tipo_cargo')
                                         ->label('Cargo / Tipo')
                                         ->options([
-                                            'asesor_ventas' => '💼 Asesor de Ventas',
+                                            'asesor_ventas' => 'Asesor de Ventas',
                                         ])
                                         ->default('asesor_ventas')
                                         ->required()
@@ -237,7 +237,7 @@ class ContratoResource extends Resource
                                         fn ($query) => $query->personal()->where('activo', true)->orderBy('nombre_completo'),
                                     )
                                     ->getOptionLabelFromRecordUsing(fn (Trabajador $trabajador): string => $trabajador->nombre_completo
-                                        . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($trabajador->tipo_cargo)))
+                                        . ' · ' . Trabajador::cargoTexto($trabajador->tipo_cargo)
                                         . ($trabajador->user_id ? '' : ' (sin acceso)'))
                                     ->multiple()
                                     ->preload()
@@ -484,6 +484,7 @@ class ContratoResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                     ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                    ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                     ->placeholder('Sin evaluar')
                     ->toggleable(),
 
@@ -614,7 +615,7 @@ class ContratoResource extends Resource
             
                             Notification::make()
                                 ->success()
-                                ->title('Exportación completada ✅')
+                                ->title('Exportación completada ')
                                 ->body('Se han exportado ' . $records->count() . ' registros. El archivo se está descargando...')
                                 ->send();
             
