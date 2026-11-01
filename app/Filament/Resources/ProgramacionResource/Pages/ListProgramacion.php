@@ -19,10 +19,10 @@ class ListProgramacion extends ListRecords
                 ->icon('heroicon-o-clock')
                 ->badge(Contrato::whereNull('programado_at')->whereDate('fecha', '>=', today())->count() ?: null)
                 ->badgeColor('warning')
-                ->modifyQueryUsing(fn (Builder $q) => $q->whereNull('programado_at')->whereDate('fecha', '>=', today())),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('programado_at')->whereDate('fecha', '>=', today())),
             'programados' => Tab::make('Programados')
                 ->icon('heroicon-o-calendar-days')
-                ->modifyQueryUsing(fn (Builder $q) => $q->whereNotNull('programado_at')->whereDate('fecha', '>=', today())),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereNotNull('programado_at')->whereDate('fecha', '>=', today())),
             'todos' => Tab::make('Todos'),
         ];
     }

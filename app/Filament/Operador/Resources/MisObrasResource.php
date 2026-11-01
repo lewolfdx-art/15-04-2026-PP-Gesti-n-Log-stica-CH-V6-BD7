@@ -43,7 +43,7 @@ class MisObrasResource extends Resource
         $usuario = auth()->user();
 
         return parent::getEloquentQuery()
-            ->whereHas('operadores', fn (Builder $q) => $q->where('trabajadores.user_id', $usuario?->getKey()));
+            ->whereHas('operadores', fn (Builder $query) => $query->where('trabajadores.user_id', $usuario?->getKey()));
     }
 
     public static function canCreate(): bool
@@ -96,8 +96,8 @@ class MisObrasResource extends Resource
                     ->trueLabel('Hoy y próximas')
                     ->falseLabel('Pasadas')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereDate('fecha', '>=', today()),
-                        false: fn (Builder $q) => $q->whereDate('fecha', '<', today()),
+                        true: fn (Builder $query) => $query->whereDate('fecha', '>=', today()),
+                        false: fn (Builder $query) => $query->whereDate('fecha', '<', today()),
                     ),
             ])
             ->recordUrl(fn (Contrato $record): string => static::getUrl('view', ['record' => $record]))

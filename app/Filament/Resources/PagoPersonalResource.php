@@ -339,8 +339,8 @@ class PagoPersonalResource extends Resource
                     ->trueLabel('Entregados')
                     ->falseLabel('Pendientes')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereNotNull('pagado_at'),
-                        false: fn (Builder $q) => $q->whereNull('pagado_at'),
+                        true: fn (Builder $query) => $query->whereNotNull('pagado_at'),
+                        false: fn (Builder $query) => $query->whereNull('pagado_at'),
                     ),
             ])
             ->recordActions([
