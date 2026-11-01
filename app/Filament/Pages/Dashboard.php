@@ -23,6 +23,7 @@ class Dashboard extends BaseDashboard
     protected function getHeaderWidgets(): array
     {
         return [
+            DatabaseBackupWidget::class,
             ResumenHoyWidget::class,
             BalanceMesWidget::class,
             TotalGeneralPagarWidget::class,
@@ -36,7 +37,6 @@ class Dashboard extends BaseDashboard
             AgendaVaciadosWidget::class,
             VentasPorMesChart::class,
             ContratosPorVendedorChart::class,
-            DatabaseBackupWidget::class,
         ];
     }
 
