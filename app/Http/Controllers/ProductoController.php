@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Producto;
-use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductoController extends Controller
 {
@@ -11,10 +11,21 @@ class ProductoController extends Controller
     {
         return view('productos.index');
     }
-    
-    public function show($slug)
+
+    /**
+     * Enlace directo a un producto o servicio: /productos/lanzado lleva a su tarjeta
+     * dentro de /productos (los productos son ítems de la página, no tienen página propia).
+     */
+    public function show(string $slug)
     {
-        $producto = Producto::where('slug', $slug)->where('is_active', true)->firstOrFail();
-        return view('productos.show', compact('producto'));
+        $pagina = Producto::where('is_active', true)->first();
+
+        $existe = collect($pagina?->tipos_concreto ?? [])
+            ->merge($pagina?->servicios_complementarios ?? [])
+            ->contains(fn ($item) => Str::slug($item['name'] ?? '') === $slug);
+
+        abort_unless($existe, 404);
+
+        return redirect()->to(route('productos.index') . '#' . $slug, 301);
     }
 }

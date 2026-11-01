@@ -6,15 +6,18 @@ use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 use App\Models\Contrato;
+use Carbon\Carbon;
 
 class VentasPorMesChart extends ChartWidget
 {
-    protected static ?string $heading = 'Ventas por Mes (m³)';
-    protected static ?string $maxHeight = '340px';
+    protected ?string $heading = 'Ventas por Mes (m³)';
+    protected ?string $maxHeight = '340px';
 
     protected function getData(): array
     {
+        // Por fecha de vaciado: created_at es cuándo se registró en el sistema, no cuándo se vendió
         $data = Trend::model(Contrato::class)
+            ->dateColumn('fecha')
             ->between(
                 start: now()->startOfYear(),
                 end: now()->endOfYear(),
@@ -32,7 +35,7 @@ class VentasPorMesChart extends ChartWidget
                     'borderWidth'     => 2,
                 ],
             ],
-            'labels' => $data->map(fn (TrendValue $value) => $value->date),
+            'labels' => $data->map(fn (TrendValue $value) => ucfirst(Carbon::parse($value->date . '-01')->locale('es')->shortMonthName)),
         ];
     }
 

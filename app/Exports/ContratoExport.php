@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -131,7 +132,7 @@ class ContratoExport implements FromCollection, WithHeadings, WithMapping, WithT
                 $sheet->setCellValue('A1', 'REPORTE DE CONTRATOS - CONCRETERA Mantaro');
 
                 $colCount = count($this->headings());
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colCount);
+                $lastColumn = Coordinate::stringFromColumnIndex($colCount);
 
                 $sheet->mergeCells("A1:{$lastColumn}1");
 

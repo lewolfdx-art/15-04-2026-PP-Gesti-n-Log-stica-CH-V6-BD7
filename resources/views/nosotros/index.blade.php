@@ -109,7 +109,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->quienes_somos_text ?? 'Somos una empresa peruana especializada en la producción de concreto premezclado...' !!}
+                    {!! str($nosotros->quienes_somos_text ?? 'Somos una empresa peruana especializada en la producción de concreto premezclado...')->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->quienes_somos_image)
                 <div class="section-image">
@@ -128,7 +128,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->mision_text !!}
+                    {!! str($nosotros->mision_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->mision_image)
                 <div class="section-image">
@@ -147,7 +147,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->vision_text !!}
+                    {!! str($nosotros->vision_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->vision_image)
                 <div class="section-image">
@@ -190,7 +190,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->actividad_text !!}
+                    {!! str($nosotros->actividad_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->actividad_image)
                 <div class="section-image">
@@ -209,7 +209,7 @@
             </div>
             <div class="section-content">
                 <div class="section-text">
-                    {!! $nosotros->organigrama_text !!}
+                    {!! str($nosotros->organigrama_text)->sanitizeHtml() !!}
                 </div>
                 @if($nosotros->organigrama_image)
                 <div class="section-image">
@@ -225,7 +225,7 @@
             <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
             <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
             <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar el contenido de Nosotros.</p>
-            <a href="{{ url('/admin/nosotros/create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
+            <a href="{{ \App\Filament\Resources\NosotrosResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
     @endif
 @endsection

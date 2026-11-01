@@ -15,11 +15,17 @@ class MakeSuperAdmin extends Command
     public function handle()
     {
         $name     = 'Super Admin';
-        $email    = env('SUPER_ADMIN_EMAIL', 'geremy_rko56@hotmail.com');
-        $password = env('SUPER_ADMIN_PASSWORD', 'NOMERCY1881mmm');
+        $email    = env('SUPER_ADMIN_EMAIL');
+        // Sin valor por defecto: la contraseña nunca debe estar escrita en el código
+        $password = env('SUPER_ADMIN_PASSWORD');
 
-        if (empty($password)) {
-            $this->error('❌ No se encontró SUPER_ADMIN_PASSWORD en el .env');
+        if (empty($email) || empty($password)) {
+            $this->error('❌ Define SUPER_ADMIN_EMAIL y SUPER_ADMIN_PASSWORD en el .env');
+            return 1;
+        }
+
+        if (strlen($password) < 12) {
+            $this->error('❌ SUPER_ADMIN_PASSWORD debe tener al menos 12 caracteres');
             return 1;
         }
 

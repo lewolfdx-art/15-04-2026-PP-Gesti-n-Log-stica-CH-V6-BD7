@@ -2,61 +2,75 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\TrabajadoresResource\Pages\ListTrabajadores;
+use App\Filament\Resources\TrabajadoresResource\Pages\CreateTrabajadores;
+use App\Filament\Resources\TrabajadoresResource\Pages\EditTrabajadores;
 use App\Filament\Resources\TrabajadoresResource\Pages;
 use App\Models\Trabajador;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TrabajadoresResource extends Resource
 {
     protected static ?string $model = Trabajador::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Gestión de Personal';
-    protected static ?string $pluralLabel = 'Trabajadores y Asesores';
-    protected static ?string $singularLabel = 'Trabajador';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
+    protected static ?string $navigationLabel = 'Trabajadores / Operadores';
+    protected static ?string $modelLabel = 'Trabajador';
+    protected static ?string $pluralModelLabel = 'Trabajadores / Operadores';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $slug = 'trabajadores';
+
     protected static ?string $recordTitleAttribute = 'nombre_completo';
 
-    public static function form(Form $form): Form
+    /**
+     * Solo personal: los asesores de ventas se gestionan en AsesorVentasResource
+     */
+    public static function getEloquentQuery(): Builder
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('tipo_cargo')
+        return parent::getEloquentQuery()->personal();
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Select::make('tipo_cargo')
                     ->label('Cargo / Tipo')
-                    ->options([
-                        'asesor_ventas'                => '💼 Asesor de Ventas',
-                        'operador_planta'              => '👷 Operador de Planta',
-                        'operador_retroexcavadora'     => '🚜 Operador de Retroexcavadora',
-                        'ayudante_planta'              => '👷 Ayudante de Planta',
-                        'operador_bomba_telescopica'   => '🚧 Operador de Bomba Telescópica',
-                        'ayudante_manguerero_bt'       => '👷 Ayudante Manguerero B.T',
-                        'ayudante_vibrador_bt'         => '👷 Ayudante Vibrador B.T',
-                        'jefe_mantenimiento'           => '🛠️ Jefe de Mantenimiento',
-                        'operador_mixer'               => '🚛 Operador de Mixer',
-                        'operador_trayler'             => '🚛 Operador de Trayler',
-                        'ayudante_bomba'               => '👷 Ayudante de Bomba',
-                        'asistente_calidad'            => '📋 Asistente de Calidad',
-                        'administracion'               => '🏢 Administración',
-                        'asistente_administrativo'     => '📑 Asistente Administrativo',
-                        'planeamiento'                 => '📊 Planeamiento',
-                        'seguridad_noche'              => '🌙 Seguridad de Noche',
-                        'contador'                     => '💰 Contador',
-                        'personal_curado'              => '👷 Personal de Curado',
-                    ])
+                    ->options(Trabajador::CARGOS_PERSONAL)
                     ->required()
                     ->native(false)
                     ->searchable()
                     ->live(),
 
-                Forms\Components\TextInput::make('nombre_completo')
+                TextInput::make('nombre_completo')
                     ->label('Nombre Completo')
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\TextInput::make('dni')
+                TextInput::make('dni')
                     ->label('DNI')
                     ->required()
                     ->mask('99999999')
@@ -65,13 +79,13 @@ class TrabajadoresResource extends Resource
                     ->unique(ignoreRecord: true),
 
                 // SWITCH PARA HABILITAR/DESHABILITAR FECHA DE NACIMIENTO
-                Forms\Components\Toggle::make('tiene_fecha_nacimiento')
+                Toggle::make('tiene_fecha_nacimiento')
                     ->label('¿Tiene fecha de nacimiento?')
                     ->default(true)
                     ->live()
                     ->columnSpanFull(),
 
-                Forms\Components\DatePicker::make('fecha_nacimiento')
+                DatePicker::make('fecha_nacimiento')
                     ->label('Fecha de Nacimiento')
                     ->default(now())
                     ->native(false)
@@ -80,27 +94,29 @@ class TrabajadoresResource extends Resource
                     ->maxDate(now())
                     ->closeOnDateSelection(true)
                     ->placeholder('dd/mm/yyyy')
-                    ->required(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
-                    ->disabled(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === false)
-                    ->dehydrated(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true)
-                    ->rules(fn (Forms\Get $get) => $get('tiene_fecha_nacimiento') === true ? ['required', 'date'] : ['nullable', 'date'])
+                    ->required(fn (Get $get) => $get('tiene_fecha_nacimiento') === true)
+                    ->disabled(fn (Get $get) => $get('tiene_fecha_nacimiento') === false)
+                    ->dehydrated(fn (Get $get) => $get('tiene_fecha_nacimiento') === true)
+                    ->rules(fn (Get $get) => $get('tiene_fecha_nacimiento') === true ? ['required', 'date'] : ['nullable', 'date'])
                     ->afterStateHydrated(function ($state, callable $set) {
                         if (empty($state)) {
                             $set('tiene_fecha_nacimiento', false);
                         }
                     }),
 
-                Forms\Components\Textarea::make('descripcion')
+                TextInput::make('sueldo_mensual')
+                    ->label('Sueldo mensual')
+                    ->prefix('S/')
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText('Se paga por quincenas: cada quincena propone la mitad (en Pagos al personal).'),
+
+                Textarea::make('descripcion')
                     ->label('Descripción / Observaciones')
                     ->rows(3)
                     ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('orden')
-                    ->label('Orden')
-                    ->numeric()
-                    ->default(0),
-
-                Forms\Components\Toggle::make('activo')
+                Toggle::make('activo')
                     ->label('Activo')
                     ->default(true),
             ]);
@@ -110,79 +126,102 @@ class TrabajadoresResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('tipo_cargo')
+                TextColumn::make('tipo_cargo')
                     ->label('Cargo')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => match($state) {
-                        'asesor_ventas'                => '💼 Asesor de Ventas',
-                        'operador_planta'              => '👷 Operador de Planta',
-                        'operador_retroexcavadora'     => '🚜 Operador de Retroexcavadora',
-                        'ayudante_planta'              => '👷 Ayudante de Planta',
-                        'operador_bomba_telescopica'   => '🚧 Operador Bomba Telescópica',
-                        'ayudante_manguerero_bt'       => '👷 Ayudante Manguerero',
-                        'ayudante_vibrador_bt'         => '👷 Ayudante Vibrador',
-                        'jefe_mantenimiento'           => '🛠️ Jefe de Mantenimiento',
-                        'operador_mixer'               => '🚛 Operador de Mixer',
-                        'operador_trayler'             => '🚛 Operador de Trayler',
-                        'ayudante_bomba'               => '👷 Ayudante de Bomba',
-                        'asistente_calidad'            => '📋 Asistente de Calidad',
-                        'administracion'               => '🏢 Administración',
-                        'asistente_administrativo'     => '📑 Asistente Administrativo',
-                        'planeamiento'                 => '📊 Planeamiento',
-                        'seguridad_noche'              => '🌙 Seguridad Noche',
-                        'contador'                     => '💰 Contador',
-                        'personal_curado'              => '👷 Personal de Curado',
-                        default => str_replace('_', ' ', ucwords($state)),
-                    })
+                    ->formatStateUsing(fn (?string $state) => Trabajador::cargoTexto($state))
                     ->color('primary')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('nombre_completo')
+                TextColumn::make('nombre_completo')
                     ->label('Nombre')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
 
-                Tables\Columns\TextColumn::make('dni')
+                TextColumn::make('dni')
                     ->label('DNI')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('fecha_nacimiento')
+                TextColumn::make('sueldo_mensual')
+                    ->label('Sueldo mensual')
+                    ->money('PEN')
+                    ->placeholder('—')
+                    ->toggleable(),
+
+                TextColumn::make('user.email')
+                    ->label('Acceso al sistema')
+                    ->icon('heroicon-o-key')
+                    ->placeholder('Sin acceso')
+                    ->toggleable(),
+
+                TextColumn::make('fecha_nacimiento')
                     ->label('Fecha Nac.')
                     ->date('d/m/Y'),
 
-                Tables\Columns\TextColumn::make('descripcion')
+                TextColumn::make('descripcion')
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('orden')
-                    ->sortable()
-                    ->alignCenter(),
-
-                Tables\Columns\ToggleColumn::make('activo'),
+                ToggleColumn::make('activo'),
             ])
-            ->defaultSort('orden', 'asc')
+            ->defaultSort('nombre_completo', 'asc')
             ->searchable()
             ->filters([
-                Tables\Filters\SelectFilter::make('tipo_cargo')
+                SelectFilter::make('tipo_cargo')
                     ->label('Cargo')
-                    ->options([
-                        'asesor_ventas' => '💼 Asesor de Ventas',
-                        'operador_planta' => '👷 Operador de Planta',
-                        // puedes agregar más aquí si quieres
-                    ])
+                    ->options(Trabajador::CARGOS_PERSONAL)
                     ->multiple()
                     ->searchable(),
 
-                Tables\Filters\TernaryFilter::make('activo'),
+                TernaryFilter::make('activo'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                // Crea el usuario con rol "operador" para que vea sus obras en /operador
+                Action::make('dar_acceso')
+                    ->label('Dar acceso')
+                    ->icon('heroicon-o-key')
+                    ->color('success')
+                    ->visible(fn (Trabajador $record): bool => $record->user_id === null)
+                    ->modalHeading(fn (Trabajador $record): string => "Acceso al sistema para {$record->nombre_completo}")
+                    ->modalDescription('Podrá entrar desde el celular a /operador y ver solo las obras que se le asignen.')
+                    ->schema([
+                        TextInput::make('email')
+                            ->label('Correo (usuario)')
+                            ->email()
+                            ->required()
+                            // Regla directa: unique() de Filament excluiría el id del trabajador de la fila
+                            ->rule('unique:users,email'),
+
+                        TextInput::make('password')
+                            ->label('Contraseña')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->minLength(8),
+                    ])
+                    ->action(function (Trabajador $record, array $data): void {
+                        $usuario = User::create([
+                            'name'      => $record->nombre_completo,
+                            'email'     => $data['email'],
+                            'password'  => $data['password'],
+                            'is_active' => true,
+                        ]);
+                        $usuario->assignRole('operador');
+                        $record->update(['user_id' => $usuario->getKey()]);
+
+                        Notification::make()
+                            ->title('Acceso creado')
+                            ->body("{$record->nombre_completo} ya puede entrar en " . url('/operador'))
+                            ->success()
+                            ->send();
+                    }),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -190,9 +229,9 @@ class TrabajadoresResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListTrabajadores::route('/'),
-            'create' => Pages\CreateTrabajadores::route('/create'),
-            'edit'   => Pages\EditTrabajadores::route('/{record}/edit'),
+            'index'  => ListTrabajadores::route('/'),
+            'create' => CreateTrabajadores::route('/create'),
+            'edit'   => EditTrabajadores::route('/{record}/edit'),
         ];
     }
 }

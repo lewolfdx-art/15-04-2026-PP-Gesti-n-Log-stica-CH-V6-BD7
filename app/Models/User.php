@@ -5,6 +5,7 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -52,11 +53,23 @@ class User extends Authenticatable implements FilamentUser
         }
 
         $roles = $this->getRoleNames();
-        $tieneAcceso = $this->hasAnyRole(['super_admin', 'admin']);
 
-        Log::info("Acceso Filament - Email: {$this->email} | Activo: {$this->is_active} | Roles: {$roles->join(', ')} | Acceso: " . ($tieneAcceso ? 'SI' : 'NO'));
+        // Panel de operadores: solo ven sus obras asignadas (los admins también pueden entrar a revisar)
+        $tieneAcceso = $panel->getId() === 'operador'
+            ? $this->hasAnyRole(['operador', 'super_admin', 'admin'])
+            : $this->hasAnyRole(['super_admin', 'admin']);
+
+        Log::info("Acceso Filament - Panel: /{$panel->getPath()} | Email: {$this->email} | Activo: {$this->is_active} | Roles: {$roles->join(', ')} | Acceso: " . ($tieneAcceso ? 'SI' : 'NO'));
 
         return $tieneAcceso;
+    }
+
+    /**
+     * Ficha de trabajador vinculada (para los usuarios operadores)
+     */
+    public function trabajador(): HasOne
+    {
+        return $this->hasOne(Trabajador::class);
     }
 
     /**

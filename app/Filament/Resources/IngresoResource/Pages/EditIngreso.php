@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\IngresoResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\IngresoResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditIngreso extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     protected function getRedirectUrl(): string

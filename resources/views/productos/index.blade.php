@@ -72,6 +72,14 @@
             gap: 2rem;
             margin-bottom: 3rem;
         }
+        /* Enlace directo a un producto (/productos/lanzado → /productos#lanzado) */
+        .producto-card[id] {
+            scroll-margin-top: 110px;
+        }
+        .producto-card:target {
+            box-shadow: 0 0 0 3px var(--color-primary), 0 10px 25px rgba(0,0,0,0.12);
+        }
+
         .producto-card {
             background: white;
             border-radius: 1rem;
@@ -114,7 +122,7 @@
         <!-- Hero -->
         <div class="hero-products">
             <h1>{{ $productos->page_title ?? 'Nuestros <span>Productos y Servicios</span>' }}</h1>
-            <p>{!! $productos->page_description ?? 'Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.' !!}</p>
+            <p>{!! str($productos->page_description ?? 'Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.')->sanitizeHtml() !!}</p>
         </div>
 
         <!-- ===================== TIPOS DE CONCRETO ===================== -->
@@ -122,7 +130,7 @@
             <h2 class="section-title">Tipos de <span>Concreto</span></h2>
             <div class="productos-grid">
                 @foreach($tiposConcreto as $producto)
-                    <div class="producto-card">
+                    <div class="producto-card" id="{{ Str::slug($producto['name'] ?? '') }}">
                         @if(!empty($producto['image']))
                             <img src="{{ Storage::url($producto['image']) }}" alt="{{ $producto['name'] }}">
                         @else
@@ -130,7 +138,7 @@
                         @endif
                         <div class="producto-info">
                             <h3>{{ $producto['name'] }}</h3>
-                            <div class="description">{!! $producto['description'] !!}</div>
+                            <div class="description">{!! str($producto['description'])->sanitizeHtml() !!}</div>
                             @if(!empty($producto['price']))
                                 <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($producto['price'], 2) }}</div>
                             @endif
@@ -145,7 +153,7 @@
             <h2 class="section-title">Servicios <span>Complementarios</span></h2>
             <div class="productos-grid">
                 @foreach($servicios as $servicio)
-                    <div class="producto-card">
+                    <div class="producto-card" id="{{ Str::slug($servicio['name'] ?? '') }}">
                         @if(!empty($servicio['image']))
                             <img src="{{ Storage::url($servicio['image']) }}" alt="{{ $servicio['name'] }}">
                         @else
@@ -153,7 +161,7 @@
                         @endif
                         <div class="producto-info">
                             <h3>{{ $servicio['name'] }}</h3>
-                            <div class="description">{!! $servicio['description'] !!}</div>
+                            <div class="description">{!! str($servicio['description'])->sanitizeHtml() !!}</div>
                             @if(!empty($servicio['price']))
                                 <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($servicio['price'], 2) }}</div>
                             @endif
@@ -167,7 +175,7 @@
             <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
             <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
             <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar los productos.</p>
-            <a href="{{ url('/admin/productos/create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
+            <a href="{{ \App\Filament\Resources\ProductoResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
     @endif
 @endsection

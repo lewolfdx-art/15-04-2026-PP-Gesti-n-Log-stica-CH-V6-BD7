@@ -2,10 +2,17 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\ListCuentaPorPagars;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\CreateCuentaPorPagar;
+use App\Filament\Resources\CuentaPorPagarResource\Pages\EditCuentaPorPagar;
 use App\Filament\Resources\CuentaPorPagarResource\Pages;
 use App\Models\CuentaPorPagar;
 use App\Models\User;
-use Filament\Forms\Form;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
@@ -23,15 +30,17 @@ class CuentaPorPagarResource extends Resource
 {
     protected static ?string $model = CuentaPorPagar::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Cuentas por Pagar';
-    protected static ?string $modelLabel = 'Cuenta por Pagar';
-    protected static ?string $pluralModelLabel = 'Cuentas por Pagar';
-    protected static ?string $navigationGroup = 'Finanzas';
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
+    protected static ?string $navigationLabel = 'Cuentas por pagar';
+    protected static ?string $modelLabel = 'Cuenta por pagar';
+    protected static ?string $pluralModelLabel = 'Cuentas por pagar';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'cuentas-por-pagar';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
 
             TextInput::make('detalle')
                 ->label('Detalle')
@@ -172,26 +181,16 @@ class CuentaPorPagarResource extends Resource
                     ->label('Pagar')
                     ->toggleable(),
             ])
-            ->header(function () {
-                $tableFilters = request()->get('tableFilters', []);
+            // Los filtros se leen del componente Livewire para que el resumen se actualice al filtrar
+            ->header(function ($livewire) {
+                $tableFilters = $livewire->tableFilters ?? [];
 
-                $filtros = [];
-                if (isset($tableFilters['tipo']['value'])) {
-                    $filtros['tipo'] = $tableFilters['tipo']['value'];
-                }
-                if (isset($tableFilters['mes']['value'])) {
-                    $filtros['mes'] = $tableFilters['mes']['value'];
-                }
-                if (isset($tableFilters['año']['value'])) {
-                    $filtros['año'] = $tableFilters['año']['value'];
-                }
+                $filtros = collect(['tipo', 'mes', 'año'])
+                    ->mapWithKeys(fn ($campo) => [$campo => $tableFilters[$campo]['value'] ?? null])
+                    ->filter(fn ($valor) => filled($valor))
+                    ->all();
 
-                $data = self::getTotalesYHistorial($filtros);
-
-                return view('filament.components.resumen-cuentas-por-pagar', [
-                    'total_por_pagar' => $data['total_por_pagar'],
-                    'historial'       => $data['historial'],
-                ]);
+                return view('filament.components.resumen-pagos', self::getResumenPagos($filtros));
             })
             ->defaultSort('created_at', 'desc')
             ->searchable()
@@ -236,72 +235,67 @@ class CuentaPorPagarResource extends Resource
                     ->trueLabel('Pagado')
                     ->falseLabel('Debe'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->striped();
     }
 
     /**
-     * Calcula el total por pagar y el historial de pagos
+     * Datos para el componente compartido resumen-pagos:
+     * totales, pendiente por tipo de gasto y últimos pagos realizados.
+     * La fecha de pago se toma de updated_at (no existe columna propia).
      */
-    public static function getTotalesYHistorial(array $filtros = []): array
+    public static function getResumenPagos(array $filtros = []): array
     {
-        // ==================== TOTAL POR PAGAR ====================
-        $queryPendientes = CuentaPorPagar::query()->where('pagado', false);
+        $base = fn () => CuentaPorPagar::query()->where($filtros);
 
-        if (!empty($filtros)) {
-            if (isset($filtros['tipo'])) {
-                $queryPendientes->where('tipo', $filtros['tipo']);
-            }
-            if (isset($filtros['mes'])) {
-                $queryPendientes->where('mes', $filtros['mes']);
-            }
-            if (isset($filtros['año'])) {
-                $queryPendientes->where('año', $filtros['año']);
-            }
-        }
+        $pendientes = $base()->where('pagado', false)->get(['tipo', 'total']);
 
-        $total_por_pagar = $queryPendientes->sum('total') ?? 0;
+        $desglose = $pendientes
+            ->groupBy('tipo')
+            ->mapWithKeys(fn ($items, $tipo) => [CuentaPorPagar::tipoTexto($tipo) => (float) $items->sum('total')])
+            ->sortDesc()
+            ->all();
 
-        // ==================== HISTORIAL DE PAGOS REALIZADOS ====================
-        $queryHistorial = CuentaPorPagar::query()
+        $historial = $base()
             ->where('pagado', true)
-            ->orderBy('updated_at', 'desc')
-            ->limit(15);
-
-        if (!empty($filtros)) {
-            if (isset($filtros['tipo'])) {
-                $queryHistorial->where('tipo', $filtros['tipo']);
-            }
-            if (isset($filtros['mes'])) {
-                $queryHistorial->where('mes', $filtros['mes']);
-            }
-            if (isset($filtros['año'])) {
-                $queryHistorial->where('año', $filtros['año']);
-            }
-        }
-
-        $historial = $queryHistorial->get();
+            ->latest('updated_at')
+            ->limit(15)
+            ->get()
+            ->map(fn (CuentaPorPagar $cuenta) => [
+                'fecha'     => $cuenta->updated_at,
+                'titulo'    => $cuenta->detalle,
+                'subtitulo' => $cuenta->cantidad,
+                'periodo'   => $cuenta->periodoTexto(),
+                'monto'     => (float) $cuenta->total,
+            ]);
 
         return [
-            'total_por_pagar' => $total_por_pagar,
-            'historial'       => $historial,
+            'total_pendiente'     => (float) $pendientes->sum('total'),
+            'cantidad_pendientes' => $pendientes->count(),
+            'pagado_mes'          => (float) $base()->where('pagado', true)
+                ->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('total'),
+            'desglose_titulo'     => 'Pendiente por tipo de gasto',
+            'desglose'            => $desglose,
+            'columna_detalle'     => 'Detalle',
+            'historial'           => $historial,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCuentaPorPagars::route('/'),
-            'create' => Pages\CreateCuentaPorPagar::route('/create'),
-            'edit'   => Pages\EditCuentaPorPagar::route('/{record}/edit'),
+            'index'  => ListCuentaPorPagars::route('/'),
+            'create' => CreateCuentaPorPagar::route('/create'),
+            'edit'   => EditCuentaPorPagar::route('/{record}/edit'),
         ];
     }
 }

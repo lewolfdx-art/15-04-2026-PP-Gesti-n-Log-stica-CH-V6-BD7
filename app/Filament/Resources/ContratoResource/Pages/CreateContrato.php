@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ContratoResource\Pages;
 
 use App\Filament\Resources\ContratoResource;
+use App\Services\NotificationService;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateContrato extends CreateRecord
@@ -24,6 +25,11 @@ class CreateContrato extends CreateRecord
 
         return $data;
     }
+    protected function afterCreate(): void
+    {
+        NotificationService::notificarOperadores($this->record);
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

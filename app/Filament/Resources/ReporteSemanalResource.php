@@ -2,10 +2,20 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Carbon\Carbon;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use App\Filament\Resources\ReporteSemanalResource\Pages\ListReporteSemanals;
+use App\Filament\Resources\ReporteSemanalResource\Pages\CreateReporteSemanal;
+use App\Filament\Resources\ReporteSemanalResource\Pages\EditReporteSemanal;
+use App\Filament\Resources\ReporteSemanalResource\Pages\ViewReporteSemanal;
 use App\Filament\Resources\ReporteSemanalResource\Pages;
 use App\Models\ReporteSemanal;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,22 +23,24 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class ReporteSemanalResource extends Resource
 {
     protected static ?string $model = ReporteSemanal::class;
-    protected static ?string $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationLabel = 'Reporte Semanal';
-    protected static ?string $pluralLabel = 'Reportes Semanales';
-    protected static ?string $navigationGroup = 'Finanzas';
 
-    public static function form(Form $form): Form
+    protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?string $navigationLabel = 'Reportes semanales';
+    protected static ?string $modelLabel = 'Reporte semanal';
+    protected static ?string $pluralModelLabel = 'Reportes semanales';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $slug = 'reportes-semanales';
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('tipo_periodo')
                     ->label('Tipo de Periodo')
                     ->options([
@@ -50,23 +62,23 @@ class ReporteSemanalResource extends Resource
                         4 => 'Semana 4',
                         5 => 'Semana 5',
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live(),
 
                     DatePicker::make('fecha_desde')
                     ->label('Fecha Desde')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
                     ->closeOnDateSelection() // 👈 mejora UX
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         if ($state && $get('semana')) {
-                            $fechaDesde = \Carbon\Carbon::parse($state);
+                            $fechaDesde = Carbon::parse($state);
                             $fechaHasta = $fechaDesde->copy()->addDays(6);
                             $set('fecha_hasta', $fechaHasta->format('Y-m-d'));
                         }
@@ -74,13 +86,13 @@ class ReporteSemanalResource extends Resource
                 
                 DatePicker::make('fecha_hasta')
                     ->label('Fecha Hasta')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'semanal')
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
                     ->closeOnDateSelection()
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'semanal'),
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'semanal'),
 
                 Select::make('quincena')
                     ->label('Quincena')
@@ -88,14 +100,14 @@ class ReporteSemanalResource extends Resource
                         'PRIMERA' => 'Primera Quincena (1-15)',
                         'SEGUNDA' => 'Segunda Quincena (16-30/31)',
                     ])
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         if ($state && $get('mes') && $get('año')) {
                             $mes = $get('mes');
                             $año = $get('año');
-                            $fecha = \Carbon\Carbon::createFromDate($año, $mes, 1);
+                            $fecha = Carbon::createFromDate($año, $mes, 1);
                             
                             if ($state === 'PRIMERA') {
                                 $set('fecha_desde_quincena', $fecha->format('Y-m-d'));
@@ -124,8 +136,8 @@ class ReporteSemanalResource extends Resource
                         11 => 'Noviembre',
                         12 => 'Diciembre',
                     ])
-                    ->visible(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
-                    ->required(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->visible(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->required(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
                     ->live()
                     ->native(false),
 
@@ -135,8 +147,8 @@ class ReporteSemanalResource extends Resource
                     ->minValue(2020)
                     ->maxValue(2030)
                     ->default(now()->year)
-                    ->visible(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
-                    ->required(fn (Forms\Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->visible(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
+                    ->required(fn (Get $get) => in_array($get('tipo_periodo'), ['quincena', 'fin_mes']))
                     ->live(),
 
                 DatePicker::make('fecha_desde_quincena')
@@ -144,7 +156,7 @@ class ReporteSemanalResource extends Resource
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->disabled(),
 
                 DatePicker::make('fecha_hasta_quincena')
@@ -152,7 +164,7 @@ class ReporteSemanalResource extends Resource
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'quincena')
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'quincena')
                     ->disabled(),
 
                 DatePicker::make('fecha_fin_mes')
@@ -161,8 +173,8 @@ class ReporteSemanalResource extends Resource
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->default(now()->endOfMonth())
-                    ->visible(fn (Forms\Get $get) => $get('tipo_periodo') === 'fin_mes')
-                    ->required(fn (Forms\Get $get) => $get('tipo_periodo') === 'fin_mes'),
+                    ->visible(fn (Get $get) => $get('tipo_periodo') === 'fin_mes')
+                    ->required(fn (Get $get) => $get('tipo_periodo') === 'fin_mes'),
 
                 TextInput::make('proveedor')
                     ->label('Proveedor')
@@ -257,33 +269,28 @@ class ReporteSemanalResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
     
-                BadgeColumn::make('estado')
+                TextColumn::make('estado')
                     ->label('Estado')
-                    ->colors([
-                        'success' => 'CANCELADO',
-                        'danger' => 'DEBE',
-                        'warning' => 'ADELANTO',
-                    ])
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'CANCELADO' => 'success',
+                        'DEBE'      => 'danger',
+                        'ADELANTO'  => 'warning',
+                        default     => 'gray',
+                    })
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
-            ->header(function () {
-                $tableFilters = request()->get('tableFilters', []);
-                
-                $filtros = [];
-                if (isset($tableFilters['tipo_periodo']['value'])) {
-                    $filtros['tipo_periodo'] = $tableFilters['tipo_periodo']['value'];
-                }
-                if (isset($tableFilters['estado']['value'])) {
-                    $filtros['estado'] = $tableFilters['estado']['value'];
-                }
-                
-                $data = self::getTotalesAgrupados($filtros);
-                
-                return view('filament.components.resumen-totales', [
-                    'totales' => $data['pendientes'],
-                    'historial' => $data['historial']
-                ]);
+            // Los filtros se leen del componente Livewire para que el resumen se actualice al filtrar
+            ->header(function ($livewire) {
+                $tableFilters = $livewire->tableFilters ?? [];
+
+                $filtros = collect(['tipo_periodo', 'estado'])
+                    ->mapWithKeys(fn ($campo) => [$campo => $tableFilters[$campo]['value'] ?? null])
+                    ->filter(fn ($valor) => filled($valor))
+                    ->all();
+
+                return view('filament.components.resumen-pagos', self::getResumenPagos($filtros));
             })
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -303,10 +310,10 @@ class ReporteSemanalResource extends Resource
                         'ADELANTO' => 'Adelanto',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                ViewAction::make(),
             ]);
     }
 
@@ -318,87 +325,63 @@ class ReporteSemanalResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListReporteSemanals::route('/'),
-            'create' => Pages\CreateReporteSemanal::route('/create'),
-            'edit' => Pages\EditReporteSemanal::route('/{record}/edit'),
-            'view' => Pages\ViewReporteSemanal::route('/{record}'),
+            'index' => ListReporteSemanals::route('/'),
+            'create' => CreateReporteSemanal::route('/create'),
+            'edit' => EditReporteSemanal::route('/{record}/edit'),
+            'view' => ViewReporteSemanal::route('/{record}'),
         ];
     }
 
-    // Método auxiliar para calcular totales agrupados con historial
-    public static function getTotalesAgrupados(array $filtros = []): array
+    /**
+     * Datos para el componente compartido resumen-pagos:
+     * totales, pendiente por tipo de período y últimos pagos realizados.
+     * Pendiente = DEBE + ADELANTO; pagado = CANCELADO.
+     * La fecha de pago se toma de updated_at (no existe columna propia).
+     */
+    public static function getResumenPagos(array $filtros = []): array
     {
-        // ========== PARTE 1: REGISTROS PENDIENTES (DEBE y ADELANTO) ==========
-        $query = ReporteSemanal::query();
-        
-        // Aplicar filtros
-        if (!empty($filtros)) {
-            if (isset($filtros['tipo_periodo'])) {
-                $query->where('tipo_periodo', $filtros['tipo_periodo']);
-            }
-            
-            if (isset($filtros['estado'])) {
-                $query->where('estado', $filtros['estado']);
-            }
-        }
-        
-        // Filtrar solo registros no pagados (DEBE y ADELANTO)
-        $query->whereIn('estado', ['DEBE', 'ADELANTO']);
-        
-        $registros = $query->get();
-        
-        $totales = [
-            'semanal' => [],
-            'quincenal' => [],
-            'fin_mes' => [],
-        ];
-        
-        foreach ($registros as $registro) {
-            if ($registro->tipo_periodo === 'semanal') {
-                $key = "Semana {$registro->semana}";
-                if ($registro->fecha_desde && $registro->fecha_hasta) {
-                    $key .= " (" . \Carbon\Carbon::parse($registro->fecha_desde)->format('d/m') . 
-                    " - " . \Carbon\Carbon::parse($registro->fecha_hasta)->format('d/m') . 
-                    "/" . \Carbon\Carbon::parse($registro->fecha_desde)->format('Y') . ")";
-                }
-                if (!isset($totales['semanal'][$key])) {
-                    $totales['semanal'][$key] = 0;
-                }
-                $totales['semanal'][$key] += $registro->monto;
-            } elseif ($registro->tipo_periodo === 'quincena') {
-                $key = $registro->quincena === 'PRIMERA' ? 'Primera Quincena' : 'Segunda Quincena';
-                $key .= " ({$registro->mes}/{$registro->año})";
-                if (!isset($totales['quincenal'][$key])) {
-                    $totales['quincenal'][$key] = 0;
-                }
-                $totales['quincenal'][$key] += $registro->monto;
-            } elseif ($registro->tipo_periodo === 'fin_mes') {
-                $key = "Fin de Mes - {$registro->mes}/{$registro->año}";
-                if (!isset($totales['fin_mes'][$key])) {
-                    $totales['fin_mes'][$key] = 0;
-                }
-                $totales['fin_mes'][$key] += $registro->monto;
-            }
-        }
-        
-        // ========== PARTE 2: HISTORIAL DE REGISTROS PAGADOS (CANCELADO) ==========
-        $queryHistorial = ReporteSemanal::query();
-        
-        // Aplicar mismos filtros de tipo_periodo al historial (pero NO filtro de estado)
-        if (!empty($filtros) && isset($filtros['tipo_periodo'])) {
-            $queryHistorial->where('tipo_periodo', $filtros['tipo_periodo']);
-        }
-        
-        // Solo traer los CANCELADOS para el historial
-        $queryHistorial->where('estado', 'CANCELADO');
-        $queryHistorial->orderBy('created_at', 'desc');
-        
-        $historial = $queryHistorial->get();
-        
-        // ========== PARTE 3: RETORNAR AMBOS ==========
+        $estadoFiltrado = $filtros['estado'] ?? null;
+        $base = fn () => ReporteSemanal::query()->where(collect($filtros)->except('estado')->all());
+
+        $pendientes = $base()
+            ->whereIn('estado', $estadoFiltrado ? array_intersect([$estadoFiltrado], ['DEBE', 'ADELANTO']) : ['DEBE', 'ADELANTO'])
+            ->get(['tipo_periodo', 'monto']);
+
+        $desglose = $pendientes
+            ->groupBy('tipo_periodo')
+            ->mapWithKeys(fn ($items, $tipo) => [ReporteSemanal::tipoPeriodoTexto($tipo) => (float) $items->sum('monto')])
+            ->sortDesc()
+            ->all();
+
+        $mostrarPagados = ! $estadoFiltrado || $estadoFiltrado === 'CANCELADO';
+
+        $historial = $mostrarPagados
+            ? $base()
+                ->where('estado', 'CANCELADO')
+                ->latest('updated_at')
+                ->limit(15)
+                ->get()
+                ->map(fn (ReporteSemanal $reporte) => [
+                    'fecha'     => $reporte->updated_at,
+                    'titulo'    => trim((string) $reporte->proveedor),
+                    'subtitulo' => $reporte->detalle,
+                    'periodo'   => $reporte->periodoTexto(),
+                    'monto'     => (float) $reporte->monto,
+                ])
+            : collect();
+
         return [
-            'pendientes' => $totales,
-            'historial' => $historial,
+            'total_pendiente'     => (float) $pendientes->sum('monto'),
+            'cantidad_pendientes' => $pendientes->count(),
+            'pagado_mes'          => $mostrarPagados
+                ? (float) $base()->where('estado', 'CANCELADO')
+                    ->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])
+                    ->sum('monto')
+                : 0.0,
+            'desglose_titulo'     => 'Pendiente por tipo de período',
+            'desglose'            => $desglose,
+            'columna_detalle'     => 'Proveedor',
+            'historial'           => $historial,
         ];
     }
 }

@@ -2,69 +2,89 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ProductoResource\Pages\ListProductos;
+use App\Filament\Resources\ProductoResource\Pages\CreateProducto;
+use App\Filament\Resources\ProductoResource\Pages\EditProducto;
 use App\Filament\Resources\ProductoResource\Pages;
 use App\Models\Producto;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Repeater;
 
 class ProductoResource extends Resource
 {
     protected static ?string $model = Producto::class;
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?string $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 3;
-    protected static ?string $navigationLabel = 'Productos';
 
-    public static function form(Form $form): Form
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationLabel = 'Productos';
+    protected static ?string $modelLabel = 'Producto';
+    protected static ?string $pluralModelLabel = 'Productos';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'productos';
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Tabs::make('Configuración de Productos')
                     ->tabs([
-                        Tabs\Tab::make('Configuración')
+                        Tab::make('Configuración')
                             ->schema([
-                                Forms\Components\TextInput::make('page_title')
+                                TextInput::make('page_title')
                                     ->label('Título de la página')
                                     ->default('Nuestros Productos y Servicios')
                                     ->maxLength(255),
                                 
-                                Forms\Components\RichEditor::make('page_description')
+                                RichEditor::make('page_description')
                                     ->label('Descripción de la página')
                                     ->default('Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.')
                                     ->toolbarButtons(['bold', 'italic', 'underline']),
                                 
-                                Forms\Components\Toggle::make('is_active')
+                                Toggle::make('is_active')
                                     ->label('Activo')
                                     ->default(true)
                                     ->helperText('Solo un registro puede estar activo a la vez'),
                             ]),
                         
                         // ===================== CATEGORÍA 1: TIPOS DE CONCRETO =====================
-                        Tabs\Tab::make('Tipos de Concreto')
+                        Tab::make('Tipos de Concreto')
                             ->schema([
                                 Repeater::make('tipos_concreto')
                                     ->label('Lista de Tipos de Concreto')
                                     ->schema([
-                                        Forms\Components\TextInput::make('name')
+                                        TextInput::make('name')
                                             ->label('Nombre')
                                             ->required()
                                             ->placeholder('Ej: Convencionales'),
-                                        Forms\Components\RichEditor::make('description')
+                                        RichEditor::make('description')
                                             ->label('Descripción')
                                             ->required()
                                             ->placeholder('Describe este tipo de concreto...'),
-                                        Forms\Components\FileUpload::make('image')
+                                        FileUpload::make('image')
                                             ->label('Imagen')
                                             ->image()
                                             ->directory('productos')
                                             ->imageResizeMode('cover')
                                             ->imageCropAspectRatio('16:9'),
-                                        Forms\Components\TextInput::make('price')
+                                        TextInput::make('price')
                                             ->label('Precio (opcional)')
                                             ->numeric()
                                             ->prefix('S/')
@@ -83,26 +103,26 @@ class ProductoResource extends Resource
                             ]),
                         
                         // ===================== CATEGORÍA 2: SERVICIOS COMPLEMENTARIOS =====================
-                        Tabs\Tab::make('Servicios Complementarios')
+                        Tab::make('Servicios Complementarios')
                             ->schema([
                                 Repeater::make('servicios_complementarios')
                                     ->label('Lista de Servicios Complementarios')
                                     ->schema([
-                                        Forms\Components\TextInput::make('name')
+                                        TextInput::make('name')
                                             ->label('Nombre')
                                             ->required()
                                             ->placeholder('Ej: Venta de Concreto Premezclado'),
-                                        Forms\Components\RichEditor::make('description')
+                                        RichEditor::make('description')
                                             ->label('Descripción')
                                             ->required()
                                             ->placeholder('Describe este servicio...'),
-                                        Forms\Components\FileUpload::make('image')
+                                        FileUpload::make('image')
                                             ->label('Imagen')
                                             ->image()
                                             ->directory('productos')
                                             ->imageResizeMode('cover')
                                             ->imageCropAspectRatio('16:9'),
-                                        Forms\Components\TextInput::make('price')
+                                        TextInput::make('price')
                                             ->label('Precio (opcional)')
                                             ->numeric()
                                             ->prefix('S/')
@@ -118,20 +138,20 @@ class ProductoResource extends Resource
                             ]),
                         
                         // ===================== CATEGORÍA 3: PAVIMENTOS =====================
-                        Tabs\Tab::make('Pavimentos')
+                        Tab::make('Pavimentos')
                             ->schema([
                                 Repeater::make('pavimentos')
                                     ->label('Pavimentos')
                                     ->schema([
-                                        Forms\Components\TextInput::make('name')
+                                        TextInput::make('name')
                                             ->label('Nombre')
                                             ->required()
                                             ->placeholder('Ej: Pavimento Rígido'),
-                                        Forms\Components\RichEditor::make('description')
+                                        RichEditor::make('description')
                                             ->label('Descripción')
                                             ->required()
                                             ->placeholder('Describe este tipo de pavimento...'),
-                                        Forms\Components\FileUpload::make('image')
+                                        FileUpload::make('image')
                                             ->label('Imagen')
                                             ->image()
                                             ->directory('productos')
@@ -147,22 +167,22 @@ class ProductoResource extends Resource
                             ]),
                         
                         // ===================== APLICACIONES CONSTRUCTIVAS =====================
-                        Tabs\Tab::make('Aplicaciones Constructivas')
+                        Tab::make('Aplicaciones Constructivas')
                             ->schema([
-                                Forms\Components\Section::make('Aplicaciones para Estructuras')
+                                Section::make('Aplicaciones para Estructuras')
                                     ->schema([
                                         Repeater::make('aplicaciones')
                                             ->label('Aplicaciones Constructivas')
                                             ->schema([
-                                                Forms\Components\TextInput::make('name')
+                                                TextInput::make('name')
                                                     ->label('Nombre')
                                                     ->required()
                                                     ->placeholder('Ej: Zapatas y Cimientos'),
-                                                Forms\Components\RichEditor::make('description')
+                                                RichEditor::make('description')
                                                     ->label('Descripción')
                                                     ->required()
                                                     ->placeholder('Describe esta aplicación...'),
-                                                Forms\Components\FileUpload::make('image')
+                                                FileUpload::make('image')
                                                     ->label('Imagen')
                                                     ->image()
                                                     ->directory('productos/aplicaciones')
@@ -180,31 +200,31 @@ class ProductoResource extends Resource
                             ]),
                         
                         // ===================== SECCIÓN DE MÉTRICAS =====================
-                        Tabs\Tab::make('Métricas')
+                        Tab::make('Métricas')
                             ->schema([
-                                Forms\Components\Section::make('Estadísticas de la Empresa')
+                                Section::make('Estadísticas de la Empresa')
                                     ->schema([
-                                        Forms\Components\Grid::make(2)
+                                        Grid::make(2)
                                             ->schema([
-                                                Forms\Components\TextInput::make('metric_proyectos')
+                                                TextInput::make('metric_proyectos')
                                                     ->label('Proyectos realizados')
                                                     ->numeric()
                                                     ->default(35)
                                                     ->suffix('+'),
                                                 
-                                                Forms\Components\TextInput::make('metric_concreto')
+                                                TextInput::make('metric_concreto')
                                                     ->label('m³ de concreto')
                                                     ->numeric()
                                                     ->default(47)
                                                     ->suffix('K+'),
                                                 
-                                                Forms\Components\TextInput::make('metric_mixers')
+                                                TextInput::make('metric_mixers')
                                                     ->label('Mixers modernos')
                                                     ->numeric()
                                                     ->default(15)
                                                     ->suffix('+'),
                                                 
-                                                Forms\Components\TextInput::make('metric_experiencia')
+                                                TextInput::make('metric_experiencia')
                                                     ->label('Años de experiencia')
                                                     ->numeric()
                                                     ->default(10)
@@ -222,30 +242,30 @@ class ProductoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('page_title')
+                TextColumn::make('page_title')
                     ->label('Título de página')
                     ->searchable()
                     ->limit(30),
-                Tables\Columns\IconColumn::make('is_active')
+                IconColumn::make('is_active')
                     ->label('Activo')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label('Estado'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -253,9 +273,9 @@ class ProductoResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProductos::route('/'),
-            'create' => Pages\CreateProducto::route('/create'),
-            'edit' => Pages\EditProducto::route('/{record}/edit'),
+            'index' => ListProductos::route('/'),
+            'create' => CreateProducto::route('/create'),
+            'edit' => EditProducto::route('/{record}/edit'),
         ];
     }
 }

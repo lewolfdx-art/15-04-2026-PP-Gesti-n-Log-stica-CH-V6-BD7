@@ -7,8 +7,8 @@ use App\Models\Contrato;
 
 class ContratosPorVendedorChart extends ChartWidget
 {
-    protected static ?string $heading = 'Contratos por Asesor / Vendedor';
-    protected static ?string $maxHeight = '340px';
+    protected ?string $heading = 'Contratos por Asesor / Vendedor';
+    protected ?string $maxHeight = '340px';
 
     protected function getData(): array
     {

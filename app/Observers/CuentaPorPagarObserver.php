@@ -1,5 +1,4 @@
 <?php
-// app/Observers/CuentaPorPagarObserver.php
 
 namespace App\Observers;
 
@@ -8,27 +7,28 @@ use App\Services\NotificationService;
 
 class CuentaPorPagarObserver
 {
-    public function created(CuentaPorPagar $cuentaPorPagar)
+    public function created(CuentaPorPagar $cuentaPorPagar): void
     {
-        // Notificar nueva cuenta por pagar
-        NotificationService::notifyNewPayable($cuentaPorPagar);
-        
-        // Verificar total general
+        if (! $cuentaPorPagar->pagado) {
+            NotificationService::notifyNewPayable($cuentaPorPagar);
+        }
+
         NotificationService::checkAndNotifyPayables();
     }
-    
-    public function updated(CuentaPorPagar $cuentaPorPagar)
+
+    public function updated(CuentaPorPagar $cuentaPorPagar): void
     {
-        // Si cambió el estado 'pagado' de false a true
-        if ($cuentaPorPagar->wasChanged('pagado') && $cuentaPorPagar->pagado == true) {
+        // Solo cuando pasa de pendiente a pagada
+        if ($cuentaPorPagar->wasChanged('pagado') && $cuentaPorPagar->pagado) {
             NotificationService::notifyPayablePaid($cuentaPorPagar);
         }
-        
-        // Verificar total general después del cambio
-        NotificationService::checkAndNotifyPayables();
+
+        if ($cuentaPorPagar->wasChanged(['pagado', 'total'])) {
+            NotificationService::checkAndNotifyPayables();
+        }
     }
-    
-    public function deleted(CuentaPorPagar $cuentaPorPagar)
+
+    public function deleted(CuentaPorPagar $cuentaPorPagar): void
     {
         NotificationService::checkAndNotifyPayables();
     }

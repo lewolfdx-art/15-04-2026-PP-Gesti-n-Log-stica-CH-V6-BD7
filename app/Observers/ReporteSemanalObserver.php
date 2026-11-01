@@ -1,5 +1,4 @@
 <?php
-// app/Observers/ReporteSemanalObserver.php
 
 namespace App\Observers;
 
@@ -8,23 +7,24 @@ use App\Services\NotificationService;
 
 class ReporteSemanalObserver
 {
-    public function created(ReporteSemanal $reporteSemanal)
+    public function created(ReporteSemanal $reporteSemanal): void
     {
         NotificationService::notifyReporteSemanal($reporteSemanal);
         NotificationService::checkAndNotifyPayables();
     }
-    
-    public function updated(ReporteSemanal $reporteSemanal)
+
+    public function updated(ReporteSemanal $reporteSemanal): void
     {
-        // Si cambió el estado
         if ($reporteSemanal->wasChanged('estado')) {
             NotificationService::notifyReporteSemanal($reporteSemanal);
         }
-        
-        NotificationService::checkAndNotifyPayables();
+
+        if ($reporteSemanal->wasChanged(['estado', 'monto'])) {
+            NotificationService::checkAndNotifyPayables();
+        }
     }
-    
-    public function deleted(ReporteSemanal $reporteSemanal)
+
+    public function deleted(ReporteSemanal $reporteSemanal): void
     {
         NotificationService::checkAndNotifyPayables();
     }

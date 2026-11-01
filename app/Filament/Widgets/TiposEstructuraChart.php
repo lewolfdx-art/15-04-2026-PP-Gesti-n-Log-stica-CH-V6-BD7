@@ -7,8 +7,8 @@ use App\Models\Contrato;
 
 class TiposEstructuraChart extends ChartWidget
 {
-    protected static ?string $heading = 'Estructuras más Vendidas';
-    protected static ?string $maxHeight = '340px';
+    protected ?string $heading = 'Estructuras más Vendidas';
+    protected ?string $maxHeight = '340px';
 
     protected function getData(): array
     {

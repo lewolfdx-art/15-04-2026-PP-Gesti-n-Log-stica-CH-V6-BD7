@@ -2,6 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Widgets\TotalGeneralPagarWidget;
+use App\Filament\Widgets\VentasPorMesChart;
+use App\Filament\Widgets\ContratosPorVendedorChart;
+use App\Filament\Widgets\TiposEstructuraChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -13,6 +18,7 @@ use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -29,11 +35,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName('Concretera Mantaro')
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('favicon.ico'))
+            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.mapa-assets'))
             ->colors([
                 'primary' => Color::Orange,
             ])
@@ -62,15 +70,15 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                \App\Filament\Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 DatabaseBackupWidget::class,
-                \App\Filament\Widgets\TotalGeneralPagarWidget::class,
-                \App\Filament\Widgets\VentasPorMesChart::class,
-                \App\Filament\Widgets\ContratosPorVendedorChart::class,
-                \App\Filament\Widgets\TiposEstructuraChart::class,
+                TotalGeneralPagarWidget::class,
+                VentasPorMesChart::class,
+                ContratosPorVendedorChart::class,
+                TiposEstructuraChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -84,10 +92,11 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                // Igual que Authenticate de Filament, pero manda a los operadores a /operador
+                \App\Http\Middleware\RedirigirOperadoresAlPanel::class,
             ])
-            //->databaseNotifications()
-            ->databaseNotificationsPolling('5s')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->topbar(true);
     }
 }

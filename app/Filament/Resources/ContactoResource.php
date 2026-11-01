@@ -2,39 +2,55 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Resources\ContactoResource\Pages\ListContactos;
+use App\Filament\Resources\ContactoResource\Pages\CreateContacto;
+use App\Filament\Resources\ContactoResource\Pages\EditContacto;
 use App\Filament\Resources\ContactoResource\Pages;
 use App\Models\Contacto;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Forms\Components\Grid;
 
 class ContactoResource extends Resource
 {
     protected static ?string $model = Contacto::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-envelope';
-    protected static ?string $navigationGroup = 'Gestión de Contenido';
-    protected static ?int $navigationSort = 5;
-    protected static ?string $navigationLabel = 'Mensajes de Contacto';
+    protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-envelope';
+    protected static ?string $navigationLabel = 'Mensajes de contacto';
     protected static ?string $modelLabel = 'Mensaje';
-    protected static ?string $pluralModelLabel = 'Mensajes';
+    protected static ?string $pluralModelLabel = 'Mensajes de contacto';
+    protected static ?int $navigationSort = 5;
+    protected static ?string $slug = 'mensajes-contacto';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Grid::make(2)
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nombre completo')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ej: Andrés Rodríguez'),
                         
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->label('Correo electrónico')
                             ->required()
                             ->email()
@@ -44,26 +60,26 @@ class ContactoResource extends Resource
                 
                 Grid::make(2)
                     ->schema([
-                        Forms\Components\TextInput::make('phone')
+                        TextInput::make('phone')
                             ->label('Teléfono')
                             ->maxLength(255)
                             ->placeholder('Ej: 925 091 695'),
                         
-                        Forms\Components\TextInput::make('subject')
+                        TextInput::make('subject')
                             ->label('Asunto')
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Ej: Cotización de concreto'),
                     ]),
                 
-                Forms\Components\Textarea::make('message')
+                Textarea::make('message')
                     ->label('Mensaje')
                     ->required()
                     ->rows(5)
                     ->placeholder('Escribe tu mensaje aquí...')
                     ->columnSpanFull(),
                 
-                Forms\Components\Toggle::make('is_read')
+                Toggle::make('is_read')
                     ->label('Marcar como leído')
                     ->default(false),
             ]);
@@ -73,26 +89,26 @@ class ContactoResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->label('Email')
                     ->searchable()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->label('Teléfono')
                     ->searchable(),
                 
-                Tables\Columns\TextColumn::make('subject')
+                TextColumn::make('subject')
                     ->label('Asunto')
                     ->searchable()
                     ->limit(30),
                 
-                Tables\Columns\IconColumn::make('is_read')
+                IconColumn::make('is_read')
                     ->label('Leído')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
@@ -100,7 +116,7 @@ class ContactoResource extends Resource
                     ->trueColor('success')
                     ->falseColor('gray'),
                 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Fecha')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
@@ -108,18 +124,18 @@ class ContactoResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_read')
+                TernaryFilter::make('is_read')
                     ->label('Leído'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('marcar_leido')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('marcar_leido')
                         ->label('Marcar como leídos')
                         ->action(fn ($records) => $records->each->update(['is_read' => true]))
                         ->icon('heroicon-o-check-circle')
@@ -136,9 +152,9 @@ class ContactoResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListContactos::route('/'),
-            'create' => Pages\CreateContacto::route('/create'),
-            'edit' => Pages\EditContacto::route('/{record}/edit'),
+            'index' => ListContactos::route('/'),
+            'create' => CreateContacto::route('/create'),
+            'edit' => EditContacto::route('/{record}/edit'),
             
         ];
     }

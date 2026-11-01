@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ContratoResource\Pages;
 
 use App\Filament\Resources\ContratoResource;
+use App\Services\NotificationService;
 use Filament\Resources\Pages\EditRecord;
 
 class EditContrato extends EditRecord
@@ -24,6 +25,11 @@ class EditContrato extends EditRecord
 
         return $data;
     }
+    protected function afterSave(): void
+    {
+        NotificationService::notificarOperadores($this->record);
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
