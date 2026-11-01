@@ -37,6 +37,8 @@ use Illuminate\Support\HtmlString;
  */
 class PagoPersonalResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = PagoPersonal::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';

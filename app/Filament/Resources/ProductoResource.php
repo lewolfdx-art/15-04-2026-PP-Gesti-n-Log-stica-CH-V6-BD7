@@ -31,6 +31,8 @@ use Filament\Forms\Components\Repeater;
 
 class ProductoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Producto::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';

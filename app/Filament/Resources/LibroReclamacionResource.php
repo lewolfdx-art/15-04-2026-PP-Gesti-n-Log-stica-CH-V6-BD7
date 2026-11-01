@@ -28,6 +28,8 @@ use Throwable;
  */
 class LibroReclamacionResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = LibroReclamacion::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Comercial';

@@ -32,6 +32,8 @@ use Filament\Tables\Filters\Filter;
 
 class IngresoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Ingreso::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';

@@ -28,6 +28,8 @@ use Filament\Notifications\Notification;
 
 class CuentaPorPagarResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = CuentaPorPagar::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';

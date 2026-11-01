@@ -33,6 +33,11 @@ class MisObrasResource extends Resource
     protected static ?string $pluralModelLabel = 'Mis obras';
     protected static ?string $slug = 'obras';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['operador', 'super_admin', 'admin']) ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $usuario = auth()->user();

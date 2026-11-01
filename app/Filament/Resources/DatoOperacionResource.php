@@ -27,6 +27,8 @@ use Filament\Tables\Table;
 
 class DatoOperacionResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = DatoOperacion::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones';

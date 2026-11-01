@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ReporteSemanalResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = ReporteSemanal::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';

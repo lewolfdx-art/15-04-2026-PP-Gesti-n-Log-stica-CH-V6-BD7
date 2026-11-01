@@ -33,6 +33,9 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TrabajadoresResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+    use \App\Filament\Resources\Concerns\DarAccesoAlSistema;
+
     protected static ?string $model = Trabajador::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
@@ -177,45 +180,7 @@ class TrabajadoresResource extends Resource
                 TernaryFilter::make('activo'),
             ])
             ->recordActions([
-                // Crea el usuario con rol "operador" para que vea sus obras en /operador
-                Action::make('dar_acceso')
-                    ->label('Dar acceso')
-                    ->icon('heroicon-o-key')
-                    ->color('success')
-                    ->visible(fn (Trabajador $record): bool => $record->user_id === null)
-                    ->modalHeading(fn (Trabajador $record): string => "Acceso al sistema para {$record->nombre_completo}")
-                    ->modalDescription('Podrá entrar desde el celular a /operador y ver solo las obras que se le asignen.')
-                    ->schema([
-                        TextInput::make('email')
-                            ->label('Correo (usuario)')
-                            ->email()
-                            ->required()
-                            // Regla directa: unique() de Filament excluiría el id del trabajador de la fila
-                            ->rule('unique:users,email'),
-
-                        TextInput::make('password')
-                            ->label('Contraseña')
-                            ->password()
-                            ->revealable()
-                            ->required()
-                            ->minLength(8),
-                    ])
-                    ->action(function (Trabajador $record, array $data): void {
-                        $usuario = User::create([
-                            'name'      => $record->nombre_completo,
-                            'email'     => $data['email'],
-                            'password'  => $data['password'],
-                            'is_active' => true,
-                        ]);
-                        $usuario->assignRole('operador');
-                        $record->update(['user_id' => $usuario->getKey()]);
-
-                        Notification::make()
-                            ->title('Acceso creado')
-                            ->body("{$record->nombre_completo} ya puede entrar en " . url('/operador'))
-                            ->success()
-                            ->send();
-                    }),
+                static::accionDarAcceso('operador', 'Podrá entrar desde el celular y ver solo las obras que se le asignen.'),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

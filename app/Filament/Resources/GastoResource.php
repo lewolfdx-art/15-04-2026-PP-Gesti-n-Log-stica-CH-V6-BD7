@@ -30,6 +30,8 @@ use Filament\Tables\Table;
 
 class GastoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Gasto::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';

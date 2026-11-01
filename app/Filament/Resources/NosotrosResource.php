@@ -31,6 +31,8 @@ use Filament\Forms\Components\Grid;
 
 class NosotrosResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Nosotros::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';

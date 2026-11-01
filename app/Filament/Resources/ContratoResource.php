@@ -39,6 +39,8 @@ use Illuminate\Support\Collection;
 
 class ContratoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Contrato::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Comercial';

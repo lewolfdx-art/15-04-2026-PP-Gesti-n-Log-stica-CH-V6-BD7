@@ -11,6 +11,8 @@ use App\Filament\Widgets\DatabaseBackupWidget;
 
 class Dashboard extends BaseDashboard
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-squares-2x2';
     protected static ?string $title = 'Dashboard - Concretera Mantaro';
     protected static ?string $navigationLabel = 'Escritorio';

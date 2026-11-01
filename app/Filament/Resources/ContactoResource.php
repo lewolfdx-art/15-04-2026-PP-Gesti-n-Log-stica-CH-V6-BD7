@@ -28,6 +28,8 @@ use Filament\Tables\Table;
 
 class ContactoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Contacto::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
