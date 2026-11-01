@@ -6,7 +6,6 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
 use App\Filament\Widgets\VentasPorMesChart;
 use App\Filament\Widgets\ContratosPorVendedorChart;
-use App\Filament\Widgets\TiposEstructuraChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -78,7 +77,6 @@ class AdminPanelProvider extends PanelProvider
                 TotalGeneralPagarWidget::class,
                 VentasPorMesChart::class,
                 ContratosPorVendedorChart::class,
-                TiposEstructuraChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,

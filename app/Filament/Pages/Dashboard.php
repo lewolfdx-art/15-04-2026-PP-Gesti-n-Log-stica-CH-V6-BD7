@@ -5,7 +5,6 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
 use App\Filament\Widgets\VentasPorMesChart;
 use App\Filament\Widgets\ContratosPorVendedorChart;
-use App\Filament\Widgets\TiposEstructuraChart;
 use Filament\Pages\Dashboard as BaseDashboard;
 use App\Filament\Widgets\DatabaseBackupWidget;
 
@@ -32,7 +31,6 @@ class Dashboard extends BaseDashboard
         return [
             VentasPorMesChart::class,
             ContratosPorVendedorChart::class,
-            TiposEstructuraChart::class,
         ];
     }
 
