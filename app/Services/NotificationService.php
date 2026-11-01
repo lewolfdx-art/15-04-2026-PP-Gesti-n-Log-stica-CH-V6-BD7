@@ -165,7 +165,10 @@ class NotificationService
             $notificacion = Notification::make()
                 ->title('🚛 Nueva obra asignada')
                 ->body(collect([
-                    'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha') . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
+                    'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha')
+                        . ($contrato->horarioTexto() ? " · {$contrato->horarioTexto()}" : '')
+                        . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
+                    $contrato->vehiculos->isNotEmpty() ? '🚛 ' . $contrato->vehiculos->pluck('codigo')->implode(', ') : null,
                     $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
                     $contrato->viabilidad ? Contrato::VIABILIDADES[$contrato->viabilidad] ?? null : null,
                 ])->filter()->implode("\n"))
