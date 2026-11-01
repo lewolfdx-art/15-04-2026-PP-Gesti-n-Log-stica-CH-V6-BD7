@@ -68,14 +68,7 @@ class ContratoResource extends Resource
 
                                 Select::make('estructura')
                                     ->label('ESTRUCTURA')
-                                    ->options([
-                                        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
-                                        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
-                                        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
-                                        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
-                                        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
-                                        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
-                                    ])
+                                    ->options(Contrato::ESTRUCTURAS)
                                     ->required(),
 
                                 Textarea::make('nombre_cliente')
@@ -174,7 +167,7 @@ class ContratoResource extends Resource
 
                                 Select::make('tipo_concreto')
                                     ->label('TIPO DE CONCRETO')
-                                    ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280'])
+                                    ->options(Contrato::TIPOS_CONCRETO)
                                     ->required(),
                             ])
                             ->columns(2),
@@ -256,7 +249,7 @@ class ContratoResource extends Resource
                             ->schema([
                                 Select::make('bombeo')
                                     ->label('BOMBEO')
-                                    ->options(['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA']),
+                                    ->options(Contrato::BOMBEOS),
 
                                 TextInput::make('bomba')
                                     ->label('BOMBA')
@@ -519,18 +512,11 @@ class ContratoResource extends Resource
             ->filters([
                 SelectFilter::make('estructura')
                     ->label('Estructura')
-                    ->options([
-                        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
-                        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
-                        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
-                        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
-                        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
-                        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
-                    ]),
+                    ->options(Contrato::ESTRUCTURAS),
 
                 SelectFilter::make('tipo_concreto')
                     ->label('Tipo de Concreto')
-                    ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280']),
+                    ->options(Contrato::TIPOS_CONCRETO),
 
                 SelectFilter::make('estado_pago')
                     ->label('Estado de Pago')
@@ -538,7 +524,7 @@ class ContratoResource extends Resource
 
                 SelectFilter::make('bombeo')
                     ->label('Bombeo')
-                    ->options(['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA']),
+                    ->options(Contrato::BOMBEOS),
 
                 Filter::make('fecha')
                     ->schema([
