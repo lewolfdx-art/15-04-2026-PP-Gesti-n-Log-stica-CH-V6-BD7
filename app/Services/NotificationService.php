@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Filament\Operador\Resources\MisCotizacionesResource;
 use App\Filament\Operador\Resources\MisObrasResource;
+use App\Filament\Resources\CotizacionResource;
 use App\Filament\Resources\CuentaPorPagarResource;
+use App\Filament\Resources\ProgramacionResource;
 use App\Filament\Resources\LibroReclamacionResource;
 use App\Filament\Resources\ReporteSemanalResource;
 use App\Models\Contrato;
+use App\Models\Cotizacion;
 use App\Models\CuentaPorPagar;
 use App\Models\LibroReclamacion;
 use App\Models\ReporteSemanal;
@@ -200,6 +204,81 @@ class NotificationService
             ]);
 
         self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso a los administradores: un asesor envió una cotización desde la obra
+     */
+    public static function notificarNuevaCotizacion(Cotizacion $cotizacion): void
+    {
+        $notificacion = Notification::make()
+            ->title('📋 Nueva cotización por revisar')
+            ->body(collect([
+                "{$cotizacion->codigo} · {$cotizacion->asesor?->nombre_completo}",
+                "Cliente: {$cotizacion->cliente_nombre}",
+                $cotizacion->volumen_estimado ? "{$cotizacion->volumen_estimado} m³ · {$cotizacion->estructura}" : null,
+            ])->filter()->implode("\n"))
+            ->icon('heroicon-o-clipboard-document-list')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Revisar')
+                    ->url(CotizacionResource::getUrl('view', ['record' => $cotizacion], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso al asesor sobre el resultado de su cotización (adelanto, contrato o rechazo)
+     */
+    public static function notificarAsesor(Cotizacion $cotizacion, string $titulo, string $cuerpo): void
+    {
+        $usuario = $cotizacion->asesor?->user;
+
+        if (! $usuario || ! $usuario->is_active) {
+            return;
+        }
+
+        $usuario->notifyNow(Notification::make()
+            ->title($titulo)
+            ->body($cuerpo)
+            ->icon('heroicon-o-clipboard-document-check')
+            ->iconColor('info')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver cotización')
+                    ->url(MisCotizacionesResource::getUrl('view', ['record' => $cotizacion], isAbsolute: false, panel: 'operador'))
+                    ->button(),
+            ])
+            ->toDatabase());
+    }
+
+    /**
+     * Aviso a los programadores de vaciados: hay un contrato nuevo por programar
+     */
+    public static function notificarVaciadoPorProgramar(Contrato $contrato): void
+    {
+        $notificacion = Notification::make()
+            ->title('🗓️ Nuevo vaciado por programar')
+            ->body(collect([
+                "{$contrato->nombre_cliente} · {$contrato->volumen_guia} m³ · {$contrato->estructura}",
+                'Fecha pedida: ' . ($contrato->fecha?->format('d/m/Y') ?? '—'),
+                $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
+            ])->filter()->implode("\n"))
+            ->icon('heroicon-o-calendar-days')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('programar')
+                    ->label('Programar')
+                    ->url(ProgramacionResource::getUrl('index', isAbsolute: false))
+                    ->button(),
+            ]);
+
+        foreach (User::role('coordinador_de_vaciados')->where('is_active', true)->get() as $usuario) {
+            $usuario->notifyNow($notificacion->toDatabase());
+        }
     }
 
     /**
