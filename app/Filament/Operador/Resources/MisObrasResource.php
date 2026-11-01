@@ -93,8 +93,7 @@ class MisObrasResource extends Resource
                     ->queries(
                         true: fn (Builder $q) => $q->whereDate('fecha', '>=', today()),
                         false: fn (Builder $q) => $q->whereDate('fecha', '<', today()),
-                    )
-                    ->default(true),
+                    ),
             ])
             ->recordUrl(fn (Contrato $record): string => static::getUrl('view', ['record' => $record]))
             ->recordActions([
