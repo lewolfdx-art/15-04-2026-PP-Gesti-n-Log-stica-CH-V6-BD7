@@ -5,9 +5,12 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\AgendaVaciadosWidget;
 use App\Filament\Widgets\BalanceMesWidget;
 use App\Filament\Widgets\ContratosPorVendedorChart;
+use App\Filament\Widgets\CotizacionesEstadoChart;
 use App\Filament\Widgets\DatabaseBackupWidget;
+use App\Filament\Widgets\IngresosEgresosChart;
 use App\Filament\Widgets\ResumenHoyWidget;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
+use App\Filament\Widgets\UsoVehiculosChart;
 use App\Filament\Widgets\VentasPorMesChart;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -30,13 +33,16 @@ class Dashboard extends BaseDashboard
         ];
     }
 
-    // Cuerpo: agenda a todo el ancho y luego los gráficos en dos columnas
+    // Cuerpo: agenda y plata a todo el ancho, luego los gráficos en dos columnas
     public function getWidgets(): array
     {
         return [
             AgendaVaciadosWidget::class,
+            IngresosEgresosChart::class,
             VentasPorMesChart::class,
             ContratosPorVendedorChart::class,
+            CotizacionesEstadoChart::class,
+            UsoVehiculosChart::class,
         ];
     }
 
