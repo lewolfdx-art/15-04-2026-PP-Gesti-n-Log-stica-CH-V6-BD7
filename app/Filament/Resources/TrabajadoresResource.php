@@ -180,7 +180,12 @@ class TrabajadoresResource extends Resource
                 TernaryFilter::make('activo'),
             ])
             ->recordActions([
-                static::accionDarAcceso('operador', 'Podrá entrar desde el celular y ver solo las obras que se le asignen.'),
+                static::accionDarAcceso(
+                    fn (Trabajador $record): string => $record->rolDeAcceso(),
+                    fn (Trabajador $record): string => $record->rolDeAcceso() === 'coordinador_de_vaciados'
+                        ? 'Como programador de vaciados podrá entrar al panel, programar los vaciados y ver los vehículos.'
+                        : 'Podrá entrar desde el celular y ver solo las obras que se le asignen.',
+                ),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

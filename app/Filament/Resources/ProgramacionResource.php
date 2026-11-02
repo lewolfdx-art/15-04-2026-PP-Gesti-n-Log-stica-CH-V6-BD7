@@ -146,7 +146,7 @@ class ProgramacionResource extends Resource
                     ->columnSpanFull(),
                 Select::make('operadores')
                     ->label('Operadores')
-                    ->options(fn () => Trabajador::personal()->where('activo', true)->orderBy('nombre_completo')->get()
+                    ->options(fn () => Trabajador::paraObras()->where('activo', true)->orderBy('nombre_completo')->get()
                         ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · '
                             . Trabajador::cargoTexto($t->tipo_cargo)
                             . ($t->user_id ? '' : ' (sin acceso)')]))

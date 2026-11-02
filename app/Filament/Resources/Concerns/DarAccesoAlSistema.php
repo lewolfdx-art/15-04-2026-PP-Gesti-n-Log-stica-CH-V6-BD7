@@ -14,7 +14,11 @@ use Filament\Notifications\Notification;
  */
 trait DarAccesoAlSistema
 {
-    public static function accionDarAcceso(string $rol, string $descripcion): Action
+    /**
+     * @param  string|\Closure(Trabajador): string  $rol  rol fijo, o según el trabajador (p. ej. su cargo)
+     * @param  string|\Closure(Trabajador): string  $descripcion
+     */
+    public static function accionDarAcceso(string | \Closure $rol, string | \Closure $descripcion): Action
     {
         return Action::make('dar_acceso')
             ->label('Dar acceso')
@@ -45,7 +49,7 @@ trait DarAccesoAlSistema
                     'password'  => $data['password'],
                     'is_active' => true,
                 ]);
-                $usuario->assignRole($rol);
+                $usuario->assignRole($rol instanceof \Closure ? $rol($record) : $rol);
                 $record->update(['user_id' => $usuario->getKey()]);
 
                 Notification::make()

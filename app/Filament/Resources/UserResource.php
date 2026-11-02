@@ -97,7 +97,8 @@ class UserResource extends Resource
                             ->multiple()
                             ->preload()
                             ->relationship('roles', 'name')
-                            ->helperText('Solo "super_admin" y "admin" pueden acceder al panel.'),
+                            ->getOptionLabelFromRecordUsing(fn ($record): string => User::ETIQUETAS_ROL[$record->name] ?? $record->name)
+                            ->helperText('Administradores: todo el panel. Programador de vaciados: Programación y Vehículos. Asesor y Operador: su panel en el celular.'),
                     ]),
 
                 Section::make('Información de Sesión')
@@ -142,10 +143,13 @@ class UserResource extends Resource
                 TextColumn::make('roles.name')
                     ->label('Roles')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => User::ETIQUETAS_ROL[$state] ?? $state)
                     ->color(fn (string $state): string => match ($state) {
                         'super_admin' => 'danger',
                         'admin' => 'warning',
-                        'coordinador_de_vaciados' => 'info',
+                        'coordinador_de_vaciados' => 'indigo',
+                        'asesor' => 'violet',
+                        'operador' => 'teal',
                         default => 'gray',
                     })
                     ->separator(', '),
@@ -173,6 +177,7 @@ class UserResource extends Resource
                 SelectFilter::make('roles')
                     ->label('Roles')
                     ->relationship('roles', 'name')
+                    ->getOptionLabelFromRecordUsing(fn ($record): string => User::ETIQUETAS_ROL[$record->name] ?? $record->name)
                     ->multiple()
                     ->preload(),
             ])

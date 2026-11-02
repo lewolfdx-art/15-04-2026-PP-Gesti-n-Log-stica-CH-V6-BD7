@@ -249,7 +249,7 @@ class ContratoResource extends Resource
                                     ->relationship(
                                         'operadores',
                                         'nombre_completo',
-                                        fn ($query) => $query->personal()->where('activo', true)->orderBy('nombre_completo'),
+                                        fn ($query) => $query->paraObras()->where('activo', true)->orderBy('nombre_completo'),
                                     )
                                     ->getOptionLabelFromRecordUsing(fn (Trabajador $trabajador): string => $trabajador->nombre_completo
                                         . ' · ' . Trabajador::cargoTexto($trabajador->tipo_cargo)

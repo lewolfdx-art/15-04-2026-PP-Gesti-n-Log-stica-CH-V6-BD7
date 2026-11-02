@@ -15,6 +15,15 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasRoles;
 
+    /** Nombres de los roles para mostrar en el panel */
+    public const ETIQUETAS_ROL = [
+        'super_admin'             => 'Super administrador',
+        'admin'                   => 'Administrador',
+        'coordinador_de_vaciados' => 'Programador de vaciados',
+        'asesor'                  => 'Asesor de ventas',
+        'operador'                => 'Operador (sus obras)',
+    ];
+
     protected $fillable = [
         'name',
         'email',

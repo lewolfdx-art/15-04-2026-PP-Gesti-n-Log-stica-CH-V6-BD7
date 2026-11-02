@@ -85,7 +85,24 @@ class Trabajador extends Model
         'seguridad_noche'            => 'Seguridad de Noche',
         'contador'                   => 'Contador',
         'personal_curado'            => 'Personal de Curado',
+        self::CARGO_PROGRAMADOR      => 'Programador de Vaciados',
     ];
+
+    /** Programa los vaciados: su acceso al sistema es el rol coordinador_de_vaciados (panel → Programación) */
+    public const CARGO_PROGRAMADOR = 'programador_vaciados';
+
+    /**
+     * Rol que recibe al darle acceso al sistema: el programador entra al panel de Programación,
+     * el resto del personal al panel de operadores (sus obras).
+     */
+    public function rolDeAcceso(): string
+    {
+        return match ($this->tipo_cargo) {
+            self::CARGO_PROGRAMADOR => 'coordinador_de_vaciados',
+            self::CARGO_ASESOR      => 'asesor',
+            default                 => 'operador',
+        };
+    }
 
     public function scopeAsesores(Builder $query): Builder
     {
@@ -95,6 +112,12 @@ class Trabajador extends Model
     public function scopePersonal(Builder $query): Builder
     {
         return $query->where('tipo_cargo', '!=', self::CARGO_ASESOR);
+    }
+
+    /** Personal que se puede asignar a una obra (sin el programador de vaciados) */
+    public function scopeParaObras(Builder $query): Builder
+    {
+        return $query->personal()->where('tipo_cargo', '!=', self::CARGO_PROGRAMADOR);
     }
 
     public static function cargoTexto(?string $cargo): string
