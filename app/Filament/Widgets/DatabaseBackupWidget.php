@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Support\RespaldoAutomatico;
 use Exception;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Artisan;
@@ -20,6 +21,17 @@ class DatabaseBackupWidget extends Widget
         return auth()->user() && auth()->user()->hasRole('super_admin');
     }
 
+    protected function getViewData(): array
+    {
+        $ultimo = RespaldoAutomatico::ultimo();
+
+        return [
+            'ultimo'   => $ultimo,
+            'proximo'  => RespaldoAutomatico::proximo(),
+            'cadaDias' => RespaldoAutomatico::CADA_DIAS,
+        ];
+    }
+
     public function backup()
     {
         try {
@@ -28,8 +40,8 @@ class DatabaseBackupWidget extends Widget
             }
 
             Notification::make()
-                ->title('Backup completado exitosamente')
-                ->body('El backup de la base de datos se ha generado correctamente.')
+                ->title('Respaldo completado')
+                ->body('El respaldo de la base de datos se generó correctamente.')
                 ->success()
                 ->send();
 

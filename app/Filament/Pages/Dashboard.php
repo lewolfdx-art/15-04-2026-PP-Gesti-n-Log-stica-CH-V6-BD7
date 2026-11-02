@@ -12,6 +12,7 @@ use App\Filament\Widgets\ResumenHoyWidget;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
 use App\Filament\Widgets\UsoVehiculosChart;
 use App\Filament\Widgets\VentasPorMesChart;
+use App\Support\RespaldoAutomatico;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -21,6 +22,11 @@ class Dashboard extends BaseDashboard
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-squares-2x2';
     protected static ?string $title = 'Escritorio';
     protected static ?string $navigationLabel = 'Escritorio';
+
+    public function mount(): void
+    {
+        RespaldoAutomatico::generarSiToca();
+    }
 
     // Arriba, a todo el ancho: lo del día y la plata del mes
     protected function getHeaderWidgets(): array
