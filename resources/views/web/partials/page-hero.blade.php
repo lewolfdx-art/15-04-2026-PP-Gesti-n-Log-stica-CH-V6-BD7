@@ -5,7 +5,6 @@
 --}}
 @php
     $config ??= App\Models\Inicio::getActiveContent();
-    $telefonoLlamar = $config->oficina_celular ?? $config->oficina_telefono ?? null;
 @endphp
 
 <section class="cm-page-hero" @if(! empty($imagen)) style="background-image: url('{{ Storage::url($imagen) }}')" @endif>
@@ -22,9 +21,6 @@
         @if($acciones ?? false)
             <div class="cm-page-hero__actions">
                 <a href="{{ route('home') }}#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> Cotiza tu obra</a>
-                @if($telefonoLlamar)
-                    <a href="tel:{{ preg_replace('/\D/', '', $telefonoLlamar) }}" class="cm-btn cm-btn--ghost"><i class="bi bi-telephone"></i> Llámanos</a>
-                @endif
             </div>
         @endif
     </div>

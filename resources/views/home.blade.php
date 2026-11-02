@@ -13,7 +13,6 @@
     $operaciones = collect($inicio?->nuestras_operaciones ?? [])->filter(fn ($o) => filled($o['title'] ?? null));
     $cifras = collect($inicio?->cifras ?? [])->filter(fn ($c) => filled($c['valor'] ?? null))->take(6);
     $zonas = collect($inicio?->zonas_cobertura ?? [])->filter();
-    $telefonoLlamar = $inicio->oficina_celular ?? $inicio->oficina_telefono ?? null;
     $iconosOperacion = ['bi-buildings', 'bi-truck', 'bi-clipboard2-pulse', 'bi-bricks', 'bi-people'];
 @endphp
 
@@ -31,9 +30,6 @@
             @endif
             <div class="cm-hero__buttons">
                 <a href="#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> {{ $inicio->cta_text ?? 'Cotiza tu obra' }}</a>
-                @if($telefonoLlamar)
-                    <a href="tel:{{ preg_replace('/\D/', '', $telefonoLlamar) }}" class="cm-btn cm-btn--ghost"><i class="bi bi-telephone"></i> Llámanos</a>
-                @endif
             </div>
             <ul class="cm-hero__checks">
                 <li><i class="bi bi-patch-check-fill"></i> Visita técnica sin costo</li>
