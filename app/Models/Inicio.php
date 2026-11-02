@@ -37,4 +37,30 @@ class Inicio extends Model
     {
         return self::where('is_active', true)->first();
     }
+
+    /**
+     * wa.me necesita solo dígitos con código de país: "957 924 586" → "51957924586"
+     */
+    public static function normalizarWhatsapp(?string $numero): ?string
+    {
+        $digitos = preg_replace('/\D/', '', (string) $numero);
+
+        if ($digitos === '') {
+            return null;
+        }
+
+        // Celular peruano de 9 dígitos sin código de país
+        return strlen($digitos) === 9 ? '51' . $digitos : $digitos;
+    }
+
+    public static function enlaceWhatsapp(?string $numero, ?string $mensaje = null): ?string
+    {
+        $numero = static::normalizarWhatsapp($numero);
+
+        if (! $numero) {
+            return null;
+        }
+
+        return "https://wa.me/{$numero}" . ($mensaje ? '?text=' . rawurlencode($mensaje) : '');
+    }
 }

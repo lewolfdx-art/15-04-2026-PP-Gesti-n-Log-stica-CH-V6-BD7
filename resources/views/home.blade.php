@@ -202,29 +202,6 @@
         .proyecto-card p {
             color: #4b5563;
         }
-        /* WhatsApp Float Button */
-        .whatsapp-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background-color: #25D366;
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            text-decoration: none;
-        }
-        .whatsapp-float:hover {
-            transform: scale(1.1);
-            background-color: #128C7E;
-        }
 
         /* ========== CARRUSEL INFINITO DE EQUIPOS ========== */
         .carousel-equipos {
@@ -283,13 +260,6 @@
             .operaciones-grid { grid-template-columns: 1fr; }
             .beneficios-grid { grid-template-columns: 1fr; }
             .proyectos-grid { grid-template-columns: 1fr; }
-            .whatsapp-float {
-                width: 50px;
-                height: 50px;
-                font-size: 1.5rem;
-                bottom: 20px;
-                right: 20px;
-            }
             .section-title { font-size: 1.5rem; }
             .carousel-equipos__grupo {
                 gap: 50px;
@@ -398,15 +368,6 @@
             </div>
         </div>
 
-        <!-- Botón WhatsApp Flotante -->
-        @if($inicio->whatsapp_number)
-            <a href="https://wa.me/{{ $inicio->whatsapp_number }}" 
-               class="whatsapp-float" 
-               target="_blank"
-               title="Chatea con nosotros">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-        @endif
 
     @else
         <div style="text-align: center; padding: 3rem;">

@@ -316,6 +316,36 @@
         AOS.init();
     </script>
 
+    <style>
+        /* Botón flotante de WhatsApp */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #25D366;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            background-color: #128C7E;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
+        }
+    </style>
+
     @yield('styles')
 </head>
 <body>
@@ -447,7 +477,10 @@
             <p><strong>Ubicación de planta:</strong> 
                 <a href="{{ $config->planta_maps_url ?? '#' }}" target="_blank" class="underline" style="color: #da914f;">Ver en Google Maps</a>
             </p>
-            <p><strong>WhatsApp:</strong> {{ $config->planta_whatsapp ?? '+51 982 337 770' }}</p>
+            @php($whatsappPlanta = $config->planta_whatsapp ?? '+51 982 337 770')
+            <p><strong>WhatsApp:</strong>
+                <a href="{{ App\Models\Inicio::enlaceWhatsapp($whatsappPlanta) }}" target="_blank" rel="noopener" class="underline" style="color: #da914f;">{{ $whatsappPlanta }}</a>
+            </p>
         </div>
 
         <div>
@@ -507,6 +540,14 @@
     });
     @endif
 </script>
+
+<!-- Botón flotante de WhatsApp en todas las páginas (número editable en Página de Inicio) -->
+@php($enlaceWhatsapp = App\Models\Inicio::enlaceWhatsapp($config->whatsapp_number ?? null, 'Hola Concretera Mantaro, quiero información sobre concreto premezclado.'))
+@if($enlaceWhatsapp)
+    <a href="{{ $enlaceWhatsapp }}" class="whatsapp-float" target="_blank" rel="noopener" title="Escríbenos por WhatsApp" aria-label="Escríbenos por WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+    </a>
+@endif
 
 @yield('scripts')
 </body>

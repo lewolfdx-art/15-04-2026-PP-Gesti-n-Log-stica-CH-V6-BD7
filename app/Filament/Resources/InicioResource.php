@@ -182,10 +182,11 @@ class InicioResource extends Resource
                         Tab::make('WhatsApp Flotante')
                             ->schema([
                                 TextInput::make('whatsapp_number')
-                                    ->label('Número de WhatsApp (con código de país)')
-                                    ->placeholder('Ej: 51982337770')
-                                    ->helperText('Formato: código de país + número sin símbolos. Ej: 51982337770')
-                                    ->default('51982337770'),
+                                    ->label('Número de WhatsApp del botón flotante')
+                                    ->placeholder('Ej: 957 924 586')
+                                    ->helperText('Aparece en todas las páginas de la web. Puedes escribirlo con espacios; si es un celular peruano se agrega el 51 solo.')
+                                    ->dehydrateStateUsing(fn (?string $state) => \App\Models\Inicio::normalizarWhatsapp($state))
+                                    ->default('51957924586'),
                             ]),
                         
                         // ===================== LOGO Y MARCA + FAVICON =====================
