@@ -119,5 +119,14 @@ class Trabajador extends Model
                 }
             }
         });
+
+        // Si se corrige el nombre de un asesor, sus contratos lo siguen mostrando bien
+        static::updated(function (Trabajador $trabajador) {
+            if ($trabajador->wasChanged('nombre_completo') && $trabajador->tipo_cargo === self::CARGO_ASESOR) {
+                Contrato::where('vendedor_id', $trabajador->getKey())
+                    ->orWhere(fn ($query) => $query->whereNull('vendedor_id')->where('nombre_vendedor', $trabajador->getOriginal('nombre_completo')))
+                    ->update(['nombre_vendedor' => $trabajador->nombre_completo, 'vendedor_id' => $trabajador->getKey()]);
+            }
+        });
     }
 }

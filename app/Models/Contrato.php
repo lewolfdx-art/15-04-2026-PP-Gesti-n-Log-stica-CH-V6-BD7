@@ -128,6 +128,24 @@ class Contrato extends Model
             ->withTimestamps();
     }
 
+    protected static function booted(): void
+    {
+        // El formulario elige al vendedor por nombre; aquí se guarda también su id,
+        // que es lo que usan las comisiones (el nombre puede corregirse después)
+        static::saving(function (Contrato $contrato) {
+            if ($contrato->isDirty('nombre_vendedor') || ! $contrato->vendedor_id) {
+                $contrato->vendedor_id = Trabajador::asesores()
+                    ->where('nombre_completo', $contrato->nombre_vendedor)
+                    ->value('id') ?? $contrato->vendedor_id;
+            }
+        });
+    }
+
+    public function vendedor(): BelongsTo
+    {
+        return $this->belongsTo(Trabajador::class, 'vendedor_id');
+    }
+
     public function cotizacion(): BelongsTo
     {
         return $this->belongsTo(Cotizacion::class);

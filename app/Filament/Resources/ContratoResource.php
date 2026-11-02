@@ -32,6 +32,7 @@ use App\Filament\Resources\ContratoResource\Pages\EditContrato;
 use App\Filament\Resources\ContratoResource\Pages\ViewContrato;
 use App\Models\Contrato;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Support\HtmlString;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Maatwebsite\Excel\Facades\Excel;
@@ -161,11 +162,24 @@ class ContratoResource extends Resource
                                 TextInput::make('numero_contrato')
                                     ->label('N° DE CONTRATO')
                                     ->prefix('C-')
-                                    ->numeric()
+                                    // Texto, no numeric(): numeric() convierte "C-901" en 0 al abrir y al guardar se perdía el número
+                                    ->inputMode('numeric')
+                                    ->regex('/^\d+$/')
+                                    ->validationMessages(['regex' => 'Escribe solo los números del contrato, sin "C-".'])
                                     ->required()
                                     ->placeholder('296')
                                     ->maxLength(10)
                                     ->default('')
+                                    // En la BD se guarda "C-901"; en el campo se muestra solo "901"
+                                    ->formatStateUsing(fn ($state) => filled($state) ? preg_replace('/^C-/i', '', (string) $state) : $state)
+                                    ->rule(fn (?Contrato $record) => function (string $attribute, $value, \Closure $fail) use ($record) {
+                                        $existe = Contrato::where('numero_contrato', 'C-' . $value)
+                                            ->when($record, fn ($query) => $query->whereKeyNot($record->getKey()))
+                                            ->exists();
+                                        if ($existe) {
+                                            $fail("Ya existe el contrato C-{$value}.");
+                                        }
+                                    })
                                     ->dehydrateStateUsing(fn ($state) => $state ? 'C-' . $state : null),
 
                                 Select::make('tipo_concreto')
@@ -283,6 +297,9 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
+                                    ->helperText(fn (Get $get): ?HtmlString => (float) $get('volumen_real') > (float) $get('volumen_guia')
+                                        ? new HtmlString('<span style="color:#dc2626">El volumen REAL es mayor que la GUÍA. Revisa si están invertidos: la comisión queda en 0.</span>')
+                                        : null)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
@@ -317,6 +334,11 @@ class ContratoResource extends Resource
                                 Toggle::make('aplicar_comision')
                                     ->label('Aplicar Comisión')
                                     ->default(true)
+                                    // No es columna: al editar se enciende si el contrato ya tiene comisión
+                                    ->afterStateHydrated(fn (Toggle $component, ?Contrato $record) => $record
+                                        ? $component->state((float) $record->comision != 0)
+                                        : null)
+                                    ->dehydrated(false)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
@@ -324,8 +346,12 @@ class ContratoResource extends Resource
                                     ->label('COMISION')
                                     ->numeric()
                                     ->step(0.01)
+                                    ->minValue(0)
+                                    ->validationMessages(['min' => 'La comisión no puede ser negativa. Revisa los volúmenes GUÍA y REAL (pestaña Volúmenes y Bombeo).'])
                                     ->default(0)
-                                    ->disabled(fn (Get $get) => !$get('aplicar_comision')),
+                                    ->disabled(fn (Get $get) => !$get('aplicar_comision'))
+                                    // Aunque esté bloqueado se guarda, así al apagar la comisión queda en 0
+                                    ->dehydrated(),
 
                                 TextInput::make('comision_igv')
                                     ->label('COMISION DE IGV')
@@ -390,6 +416,8 @@ class ContratoResource extends Resource
                                     ->options([
                                         'EFECTIVO' => 'EFECTIVO',
                                         'DEPOSITO' => 'DEPOSITO',
+                                        'TRANSFERENCIA' => 'TRANSFERENCIA',
+                                        'CHEQUE' => 'CHEQUE',
                                         'DEBE' => 'DEBE',
                                         'PAGADO EN VALORIZACION' => 'PAGADO EN VALORIZACION',
                                         'SE PASO PARA CEMENTO' => 'SE PASO PARA CEMENTO',
@@ -426,7 +454,8 @@ class ContratoResource extends Resource
         $montoTotal = ($volGuia * $pu) + $bombaAdicional + $bomba - $descGuias;
         $set('monto_total', round($montoTotal, 2));
 
-        $comision = $aplicarComision ? ($volGuia - $volReal) * $pu : 0;
+        // Si el REAL supera a la GUÍA no hay comisión (nunca negativa)
+        $comision = $aplicarComision ? max(0, ($volGuia - $volReal) * $pu) : 0;
         $set('comision', round($comision, 2));
 
         $ventaNeta = $montoTotal - $comision - $descuentos - $gastosAlimentos - $comisionIgv;

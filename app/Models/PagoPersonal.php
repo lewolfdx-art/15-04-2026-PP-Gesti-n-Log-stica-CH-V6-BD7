@@ -89,12 +89,13 @@ class PagoPersonal extends Model
     /**
      * Contratos del asesor hasta el fin del período cuya comisión aún no se pagó,
      * incluidas las de quincenas anteriores que quedaron pendientes.
-     * Los contratos guardan el nombre del vendedor como texto.
+     * Se busca por vendedor_id; los contratos viejos sin id, por el nombre.
      */
     public static function contratosPendientesDeComision(Trabajador $asesor, Carbon $hasta): Collection
     {
         return Contrato::query()
-            ->where('nombre_vendedor', $asesor->nombre_completo)
+            ->where(fn ($query) => $query->where('vendedor_id', $asesor->getKey())
+                ->orWhere(fn ($query) => $query->whereNull('vendedor_id')->where('nombre_vendedor', $asesor->nombre_completo)))
             ->whereDate('fecha', '<=', $hasta->toDateString())
             ->whereNull('pago_comision_id')
             ->where('comision', '>', 0)
