@@ -2211,6 +2211,24 @@ a.cm-resource:hover {
     70%, 100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* Cursor de mixer (solo con mouse). Imágenes en public/img/cursor; el punto de clic es el frente de la cabina */
+@media (pointer: fine) {
+    .cm-page {
+        cursor: url('/img/cursor/mixer.png') 2 4, auto;
+        cursor: image-set(url('/img/cursor/mixer.png') 1x, url('/img/cursor/mixer@2x.png') 2x) 2 4, auto;
+    }
+
+    .cm-page :is(a, button, summary, select, label[for], [role='button'], input[type='submit'], input[type='checkbox'], input[type='radio'], .cm-btn) {
+        cursor: url('/img/cursor/mixer-clic.png') 2 4, pointer;
+        cursor: image-set(url('/img/cursor/mixer-clic.png') 1x, url('/img/cursor/mixer-clic@2x.png') 2x) 2 4, pointer;
+    }
+
+    /* Para escribir se mantiene el cursor de texto de siempre */
+    .cm-page :is(input:not([type='submit']):not([type='checkbox']):not([type='radio']), textarea) {
+        cursor: text;
+    }
+}
+
 /* Laptops con poca altura (1366×768, Windows al 125 %): la portada completa entra en la primera pantalla */
 @media (min-width: 961px) and (max-height: 900px) {
     .cm-hero .cm-hero__inner {
