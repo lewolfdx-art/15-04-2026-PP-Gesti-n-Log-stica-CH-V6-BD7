@@ -12,6 +12,7 @@ class ListVehiculos extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()];
+        // El programador de vaciados solo consulta la flota: sin botón de crear
+        return [CreateAction::make()->visible(fn (): bool => VehiculoResource::canCreate())];
     }
 }

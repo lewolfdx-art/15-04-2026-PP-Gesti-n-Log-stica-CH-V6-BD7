@@ -127,7 +127,9 @@ class VehiculoResource extends Resource
                 DeleteAction::make(),
             ])
             ->emptyStateHeading('Sin vehículos registrados')
-            ->emptyStateDescription('Registra tus mixers y bombas para asignarlos al programar los vaciados.');
+            ->emptyStateDescription(fn (): string => static::esAdministrador()
+                ? 'Registra tus mixers y bombas para asignarlos al programar los vaciados.'
+                : 'Todavía no hay mixers ni bombas registrados. Pídele al administrador que los registre.');
     }
 
     public static function getPages(): array
