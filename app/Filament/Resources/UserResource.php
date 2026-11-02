@@ -98,7 +98,7 @@ class UserResource extends Resource
                             ->preload()
                             ->relationship('roles', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record): string => User::ETIQUETAS_ROL[$record->name] ?? $record->name)
-                            ->helperText('Administradores: todo el panel. Programador de vaciados: Programación y Vehículos. Asesor y Operador: su panel en el celular.'),
+                            ->helperText('Administradores: todo el panel. Programador de vaciados: solo Programación. Asesor y Operador: su panel en el celular.'),
                     ]),
 
                 Section::make('Información de Sesión')

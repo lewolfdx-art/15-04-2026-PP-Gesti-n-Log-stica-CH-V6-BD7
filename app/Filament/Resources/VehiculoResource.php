@@ -25,33 +25,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class VehiculoResource extends Resource
 {
+    // Solo administradores; el programador elige los vehículos desde el formulario de Programación
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Vehiculo::class;
-
-    // El programador de vaciados consulta la flota; solo los administradores la modifican
-    public static function canAccess(): bool
-    {
-        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'coordinador_de_vaciados']) ?? false;
-    }
-
-    private static function esAdministrador(): bool
-    {
-        return auth()->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
-    }
-
-    public static function canCreate(): bool
-    {
-        return static::esAdministrador();
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return static::esAdministrador();
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        return static::esAdministrador();
-    }
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-truck';
@@ -116,7 +93,7 @@ class VehiculoResource extends Resource
                 TextColumn::make('placa')->label('Placa')->searchable()->placeholder('—'),
                 TextColumn::make('capacidad_m3')->label('Capacidad')->suffix(' m³')->placeholder('—'),
                 TextColumn::make('contratos_count')->label('Vaciados')->counts('contratos')->badge()->alignCenter(),
-                ToggleColumn::make('activo')->label('Activo')->disabled(fn (): bool => ! static::esAdministrador()),
+                ToggleColumn::make('activo')->label('Activo'),
             ])
             ->defaultSort('codigo')
             ->filters([
@@ -127,9 +104,7 @@ class VehiculoResource extends Resource
                 DeleteAction::make(),
             ])
             ->emptyStateHeading('Sin vehículos registrados')
-            ->emptyStateDescription(fn (): string => static::esAdministrador()
-                ? 'Registra tus mixers y bombas para asignarlos al programar los vaciados.'
-                : 'Todavía no hay mixers ni bombas registrados. Pídele al administrador que los registre.');
+            ->emptyStateDescription('Registra tus mixers y bombas para asignarlos al programar los vaciados.');
     }
 
     public static function getPages(): array
