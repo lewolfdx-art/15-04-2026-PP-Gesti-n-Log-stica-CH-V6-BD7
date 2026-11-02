@@ -59,7 +59,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
 
             Stat::make('Cotizaciones por revisar', $porRevisar)
                 ->extraAttributes(self::acento('violet'), merge: true)
-                ->description("{$enEspera} en espera con adelanto")
+                ->description("{$enEspera} con fecha separada (adelanto)")
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->icon('heroicon-o-clipboard-document-list')
                 ->color($porRevisar > 0 ? 'warning' : 'gray')

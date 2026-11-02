@@ -52,6 +52,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             AgendaVaciadosWidget::class,
+            \App\Filament\Widgets\FechasSeparadasWidget::class,
             IngresosEgresosChart::class,
             VentasPorMesChart::class,
             ContratosPorVendedorChart::class,

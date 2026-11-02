@@ -269,6 +269,11 @@ class ProgramacionResource extends Resource
             ]);
     }
 
+    public static function getWidgets(): array
+    {
+        return [\App\Filament\Widgets\FechasSeparadasWidget::class];
+    }
+
     public static function getPages(): array
     {
         return [

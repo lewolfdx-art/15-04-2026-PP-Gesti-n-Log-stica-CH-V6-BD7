@@ -34,4 +34,15 @@ class EditContrato extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function getHeaderActions(): array
+    {
+        return [ContratoResource::accionRegistrarPago()];
+    }
+
+    // Total, pagado, saldo y lista de pagos arriba del formulario
+    protected function getHeaderWidgets(): array
+    {
+        return [\App\Filament\Resources\ContratoResource\Widgets\PagosContratoWidget::class];
+    }
 }

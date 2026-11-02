@@ -169,6 +169,53 @@ class Contrato extends Model
     }
 
     /**
+     * Abono del cliente: se registra en Ingresos (ADEL-CONTRATO si es parcial, CAN-CONTRATO si completa el total).
+     * Cuando el saldo llega a cero, el contrato pasa a PAGADO.
+     */
+    public function registrarPago(float $monto, string $fecha, ?string $formaPago = null, ?string $observacion = null): Ingreso
+    {
+        if (blank($this->numero_contrato)) {
+            throw new \InvalidArgumentException('El contrato necesita un N.° para registrar pagos.');
+        }
+
+        $monto = round($monto, 2);
+        $saldo = $this->saldoPorCobrar();
+
+        if ($monto <= 0) {
+            throw new \InvalidArgumentException('El pago debe ser mayor que cero.');
+        }
+
+        if ($monto - $saldo > 0.009) {
+            throw new \InvalidArgumentException('El pago (S/ ' . number_format($monto, 2) . ') es mayor que el saldo (S/ ' . number_format($saldo, 2) . ').');
+        }
+
+        $completa = $saldo - $monto < 0.01;
+
+        $ingreso = Ingreso::create([
+            'fecha'           => $fecha,
+            'modo_pago'       => $completa ? 'CAN-CONTRATO' : 'ADEL-CONTRATO',
+            'numero_contrato' => $this->numero_contrato,
+            'asesor'          => $this->nombre_vendedor,
+            'detalle'         => ($completa ? 'Cancelación' : 'Abono') . " del contrato {$this->numero_contrato} · {$this->nombre_cliente}",
+            'monto'           => $monto,
+            'obs'             => collect([$formaPago, $observacion])->filter()->implode(' · ') ?: null,
+        ]);
+
+        if ($completa && $this->estado_pago !== 'PAGADO') {
+            // El saldo ya es cero: registrarCancelacion() del evento saved no agrega nada más
+            $this->update(['estado_pago' => 'PAGADO']);
+        }
+
+        return $ingreso;
+    }
+
+    /** Pagos registrados del contrato, del más antiguo al más reciente */
+    public function pagos(): \Illuminate\Support\Collection
+    {
+        return $this->ingresos()->orderBy('fecha')->orderBy('id')->get();
+    }
+
+    /**
      * Registra el saldo pendiente como ingreso CAN-CONTRATO (cancelación del contrato).
      * Si ya está todo cobrado (por ejemplo, adelanto + otros pagos) no registra nada.
      */

@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
@@ -540,6 +541,17 @@ class ContratoResource extends Resource
                     })
                     ->toggleable(),
 
+                TextColumn::make('saldo')
+                    ->label('Saldo')
+                    ->state(fn (Contrato $record): float => $record->saldoPorCobrar())
+                    ->formatStateUsing(fn (float $state): string => $state > 0 ? 'S/ ' . number_format($state, 2) : 'Pagado')
+                    ->badge()
+                    ->color(fn (float $state): string => $state > 0 ? 'danger' : 'success')
+                    ->description(fn (Contrato $record): ?string => (float) $record->monto_total > 0
+                        ? 'Pagó S/ ' . number_format($record->totalCobrado(), 2)
+                        : null)
+                    ->toggleable(),
+
                 TextColumn::make('estado_comision')
                     ->label('Comisión')
                     ->badge()
@@ -586,6 +598,15 @@ class ContratoResource extends Resource
                     ->label('Bombeo')
                     ->options(Contrato::BOMBEOS),
 
+                Filter::make('con_deuda')
+                    ->label('Con saldo por cobrar')
+                    ->toggle()
+                    // Suma de ingresos del contrato (el N.° puede estar escrito con o sin "C-")
+                    ->query(fn (Builder $query) => $query->whereRaw(
+                        "contratos.monto_total - (SELECT COALESCE(SUM(i.monto), 0) FROM ingresos i
+                          WHERE i.numero_contrato IN (contratos.numero_contrato, REPLACE(contratos.numero_contrato, 'C-', ''))) > 0.009"
+                    )),
+
                 SelectFilter::make('estado_comision')
                     ->label('Comisión del asesor')
                     ->options(['pendiente' => 'Pendiente', 'pagada' => 'Pagada'])
@@ -608,6 +629,7 @@ class ContratoResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make()->label('Ver'),
+                static::accionRegistrarPago(),
                 EditAction::make()->label('Editar'),
                 DeleteAction::make()
                     ->label('Eliminar')
@@ -695,6 +717,61 @@ class ContratoResource extends Resource
             
             ]);
             
+    }
+
+    /**
+     * Abono del cliente: monto (por defecto el saldo), fecha y forma de pago. Se registra en Ingresos
+     * y, si completa el total, el contrato pasa a PAGADO.
+     */
+    public static function accionRegistrarPago(): Action
+    {
+        return Action::make('registrar_pago')
+            ->label('Registrar pago')
+            ->icon('heroicon-o-banknotes')
+            ->color('success')
+            ->visible(fn (Contrato $record): bool => filled($record->numero_contrato) && $record->saldoPorCobrar() > 0)
+            ->modalHeading(fn (Contrato $record): string => "Pago del contrato {$record->numero_contrato}")
+            ->modalDescription(fn (Contrato $record): string => 'Total S/ ' . number_format((float) $record->monto_total, 2)
+                . ' · pagado S/ ' . number_format($record->totalCobrado(), 2)
+                . ' · saldo S/ ' . number_format($record->saldoPorCobrar(), 2))
+            ->schema([
+                TextInput::make('monto')
+                    ->label('Monto que paga')
+                    ->prefix('S/')
+                    ->numeric()
+                    ->minValue(0.01)
+                    ->required()
+                    ->default(fn (Contrato $record): float => $record->saldoPorCobrar())
+                    ->helperText('Si paga todo el saldo, el contrato pasa a PAGADO.'),
+                DatePicker::make('fecha')->label('Fecha del pago')->default(today())->required()->native(false)->displayFormat('d/m/Y'),
+                Select::make('forma_pago')->label('Forma de pago')->options(\App\Models\PagoPersonal::FORMAS_PAGO)->default('EFECTIVO')->required(),
+                TextInput::make('observacion')->label('Observación')->placeholder('Ej: N.° de operación del depósito')->maxLength(255),
+            ])
+            ->action(function (Contrato $record, array $data, $livewire): void {
+                try {
+                    $record->registrarPago((float) $data['monto'], $data['fecha'], \App\Models\PagoPersonal::FORMAS_PAGO[$data['forma_pago']] ?? $data['forma_pago'], $data['observacion'] ?? null);
+                } catch (\InvalidArgumentException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                $saldo = $record->fresh()->saldoPorCobrar();
+                Notification::make()
+                    ->title('Pago registrado')
+                    ->body($saldo > 0 ? 'Saldo pendiente: S/ ' . number_format($saldo, 2) : 'El contrato quedó PAGADO completo.')
+                    ->success()
+                    ->send();
+
+                $livewire->dispatch('pago-registrado');
+            });
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\ContratoResource\Widgets\PagosContratoWidget::class,
+        ];
     }
 
     public static function getPages(): array

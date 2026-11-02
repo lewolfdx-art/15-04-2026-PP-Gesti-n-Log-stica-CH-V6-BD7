@@ -74,26 +74,99 @@ class CotizacionResource extends Resource
         return 'Cotizaciones por revisar o en espera';
     }
 
+    /**
+     * Confirmar el adelanto (el que anotó el asesor o uno que llegó a la oficina): la fecha queda separada.
+     * Avisa si ese día y hora ya hay otra fecha separada o un vaciado programado.
+     */
     public static function accionAdelanto(): Action
     {
         return Action::make('registrar_adelanto')
-            ->label('Registrar adelanto')
+            ->label(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'Confirmar adelanto' : 'Registrar adelanto')
             ->icon('heroicon-o-banknotes')
-            ->color('info')
+            ->color(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'warning' : 'info')
             ->visible(fn (Cotizacion $record): bool => $record->puedeModificarse())
-            ->modalDescription('La cotización queda "En espera" hasta pasarla a contrato. El adelanto se registrará como ingreso al crear el contrato.')
+            ->modalHeading(fn (Cotizacion $record): string => "Adelanto de {$record->cliente_nombre}")
+            ->modalDescription('Al confirmarlo, la fecha y hora quedan separadas para este cliente y se avisa al programador de vaciados. El adelanto entra a Ingresos cuando la cotización pasa a contrato.')
             ->schema([
-                TextInput::make('monto')->label('Monto del adelanto')->prefix('S/')->numeric()->minValue(0.01)->required()
-                    ->default(fn (Cotizacion $record) => $record->adelanto_monto),
-                Select::make('forma_pago')->label('Forma de pago')->options(PagoPersonal::FORMAS_PAGO)->default('EFECTIVO')->required(),
+                TextEntry::make('declarado')
+                    ->label('Lo que anotó el asesor')
+                    ->state(fn (Cotizacion $record): string => 'S/ ' . number_format((float) $record->adelanto_declarado_monto, 2)
+                        . ' · ' . (PagoPersonal::FORMAS_PAGO[$record->adelanto_declarado_forma_pago] ?? $record->adelanto_declarado_forma_pago ?? '—')
+                        . ' · ' . $record->adelanto_declarado_at?->format('d/m/Y H:i'))
+                    ->visible(fn (Cotizacion $record): bool => (float) $record->adelanto_declarado_monto > 0),
+                ImageEntry::make('adelanto_voucher')
+                    ->label('Voucher')
+                    ->disk('public')
+                    ->imageHeight(220)
+                    ->visible(fn (Cotizacion $record): bool => filled($record->adelanto_voucher)),
+                TextInput::make('monto')->label('Monto recibido')->prefix('S/')->numeric()->minValue(0.01)->required()
+                    ->default(fn (Cotizacion $record) => $record->adelanto_monto ?? $record->adelanto_declarado_monto),
+                Select::make('forma_pago')->label('Forma de pago')->options(PagoPersonal::FORMAS_PAGO)->required()
+                    ->default(fn (Cotizacion $record) => $record->adelanto_forma_pago ?? $record->adelanto_declarado_forma_pago ?? 'EFECTIVO'),
+                DatePicker::make('fecha_tentativa')->label('Fecha que separa')->native(false)->displayFormat('d/m/Y')->required()
+                    ->default(fn (Cotizacion $record) => $record->fecha_tentativa),
+                \Filament\Forms\Components\TimePicker::make('hora_tentativa')->label('Hora')->seconds(false)->required()
+                    ->default(fn (Cotizacion $record) => $record->horaTexto()),
+                TextEntry::make('cruces')
+                    ->label('Ojo con el horario')
+                    ->state(fn (Cotizacion $record): string => implode("\n", $record->cruces()))
+                    ->color('danger')
+                    ->visible(fn (Cotizacion $record): bool => $record->cruces() !== []),
             ])
             ->action(function (Cotizacion $record, array $data): void {
+                $record->forceFill([
+                    'fecha_tentativa' => $data['fecha_tentativa'],
+                    'hora_tentativa'  => $data['hora_tentativa'],
+                ])->save();
+
+                $cruces = $record->cruces();
                 $record->registrarAdelanto((float) $data['monto'], $data['forma_pago'], auth()->user());
 
-                NotificationService::notificarAsesor($record, "Adelanto registrado · {$record->codigo}",
-                    "El cliente {$record->cliente_nombre} dio un adelanto de S/ " . number_format((float) $record->adelanto_monto, 2) . '.');
+                NotificationService::notificarAsesor($record, "Adelanto confirmado · {$record->codigo}",
+                    "La fecha de {$record->cliente_nombre} quedó separada para el {$record->fecha_tentativa->format('d/m/Y')} a las {$record->horaTexto()}.");
+                NotificationService::notificarFechaSeparada($record);
 
-                Notification::make()->title("Adelanto registrado. {$record->codigo} queda en espera.")->success()->send();
+                Notification::make()
+                    ->title("Adelanto confirmado. {$record->codigo} tiene la fecha separada.")
+                    ->body($cruces ? "Ojo, ese horario se cruza con:\n" . implode("\n", $cruces) : null)
+                    ->status($cruces ? 'warning' : 'success')
+                    ->persistent($cruces !== [])
+                    ->send();
+            });
+    }
+
+    /**
+     * El cliente desiste después de separar: se libera la fecha y se registra la devolución del adelanto.
+     */
+    public static function accionCancelar(): Action
+    {
+        return Action::make('cancelar')
+            ->label('Cancelar y devolver adelanto')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('danger')
+            ->visible(fn (Cotizacion $record): bool => $record->estado === 'en_espera')
+            ->modalHeading(fn (Cotizacion $record): string => "Cancelar la separación de {$record->cliente_nombre}")
+            ->modalDescription(fn (Cotizacion $record): string => 'Se libera la fecha y se registra que se le devolvió el adelanto de S/ '
+                . number_format((float) $record->adelanto_monto, 2) . '. Esta acción no se puede deshacer.')
+            ->schema([
+                Textarea::make('motivo')->label('Motivo de la cancelación')->required()->rows(2),
+                Select::make('forma_devolucion')->label('¿Cómo se le devolvió?')->options(PagoPersonal::FORMAS_PAGO)->required()
+                    ->default(fn (Cotizacion $record) => $record->adelanto_forma_pago),
+            ])
+            ->action(function (Cotizacion $record, array $data): void {
+                try {
+                    $record->cancelarConDevolucion($data['motivo'], $data['forma_devolucion'], auth()->user());
+                } catch (InvalidArgumentException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                NotificationService::notificarAsesor($record, "{$record->codigo} cancelada",
+                    "{$record->cliente_nombre} canceló. Se le devolvió el adelanto de S/ " . number_format((float) $record->adelanto_monto, 2) . '.');
+                NotificationService::notificarFechaSeparada($record, liberada: true);
+
+                Notification::make()->title("{$record->codigo} cancelada. La fecha quedó libre.")->success()->send();
             });
     }
 
@@ -121,7 +194,19 @@ class CotizacionResource extends Resource
                     ->displayFormat('d/m/Y')
                     ->required()
                     ->default(fn (Cotizacion $record) => $record->fecha_tentativa ?? today()),
-                TextInput::make('numero_contrato')->label('N.° de contrato')->maxLength(50),
+                // Obligatorio: liga el adelanto y los pagos al contrato. Se guarda como "C-123", igual que en Contratos
+                TextInput::make('numero_contrato')
+                    ->label('N.° de contrato')
+                    ->prefix('C-')
+                    ->required()
+                    ->regex('/^\d+$/')
+                    ->validationMessages(['regex' => 'Escribe solo los números del contrato, sin "C-".'])
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        if (Contrato::where('numero_contrato', 'C-' . $value)->exists()) {
+                            $fail("Ya existe el contrato C-{$value}.");
+                        }
+                    })
+                    ->maxLength(10),
             ])
             ->action(function (Cotizacion $record, array $data, $livewire): void {
                 try {
@@ -178,7 +263,27 @@ class CotizacionResource extends Resource
                 TextColumn::make('monto')->label('Monto estimado')
                     ->state(fn (Cotizacion $record): ?float => $record->montoEstimado())
                     ->money('PEN'),
-                TextColumn::make('adelanto_monto')->label('Adelanto')->money('PEN')->placeholder('—'),
+                TextColumn::make('adelanto')
+                    ->label('Adelanto')
+                    ->state(fn (Cotizacion $record): ?string => match (true) {
+                        (float) $record->adelanto_monto > 0 => 'S/ ' . number_format((float) $record->adelanto_monto, 2),
+                        $record->tieneAdelantoPorConfirmar() => 'S/ ' . number_format((float) $record->adelanto_declarado_monto, 2),
+                        default => null,
+                    })
+                    ->description(fn (Cotizacion $record): ?string => match (true) {
+                        $record->estado === 'cancelada' => 'Devuelto',
+                        (float) $record->adelanto_monto > 0 => 'Confirmado',
+                        $record->tieneAdelantoPorConfirmar() => 'Por confirmar',
+                        default => null,
+                    })
+                    ->color(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'warning' : 'gray')
+                    ->placeholder('—'),
+                TextColumn::make('fecha_tentativa')
+                    ->label('Fecha pedida')
+                    ->date('d/m/Y')
+                    ->description(fn (Cotizacion $record): ?string => $record->horaTexto())
+                    ->placeholder('—')
+                    ->sortable(),
                 TextColumn::make('estado')->label('Estado')->badge()
                     ->formatStateUsing(fn (string $state): string => Cotizacion::ESTADOS[$state] ?? $state)
                     ->color(fn (string $state): string => Cotizacion::ESTADO_COLORES[$state] ?? 'gray'),
@@ -192,6 +297,7 @@ class CotizacionResource extends Resource
                 ViewAction::make()->label('Revisar'),
                 static::accionAdelanto(),
                 static::accionPasarAContrato(),
+                static::accionCancelar(),
             ])
             ->emptyStateHeading('Sin cotizaciones')
             ->emptyStateDescription('Las cotizaciones que los asesores registren desde la obra aparecerán aquí.');
@@ -209,8 +315,22 @@ class CotizacionResource extends Resource
                             ->color(fn (string $state): string => Cotizacion::ESTADO_COLORES[$state] ?? 'gray'),
                         TextEntry::make('enviada_at')->label('Enviada')->dateTime('d/m/Y H:i'),
                         TextEntry::make('asesor.nombre_completo')->label('Asesor'),
-                        TextEntry::make('adelanto_monto')->label('Adelanto')->money('PEN')->placeholder('—')
+                        TextEntry::make('adelanto_monto')->label('Adelanto confirmado')->money('PEN')->placeholder('—')
                             ->helperText(fn (Cotizacion $record): ?string => $record->adelanto_at?->format('d/m/Y H:i')),
+                        TextEntry::make('adelanto_declarado_monto')->label('Adelanto que anotó el asesor')->money('PEN')
+                            ->color(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'warning' : 'gray')
+                            ->helperText(fn (Cotizacion $record): ?string => collect([
+                                PagoPersonal::FORMAS_PAGO[$record->adelanto_declarado_forma_pago] ?? null,
+                                $record->tieneAdelantoPorConfirmar() ? 'por confirmar' : null,
+                            ])->filter()->implode(' · ') ?: null)
+                            ->visible(fn (Cotizacion $record): bool => (float) $record->adelanto_declarado_monto > 0),
+                        ImageEntry::make('adelanto_voucher')->label('Voucher del adelanto')->disk('public')->imageHeight(160)
+                            ->visible(fn (Cotizacion $record): bool => filled($record->adelanto_voucher)),
+                        TextEntry::make('motivo_cancelacion')->label('Cancelada')->color('danger')
+                            ->helperText(fn (Cotizacion $record): ?string => $record->devolucion_at
+                                ? 'Adelanto devuelto el ' . $record->devolucion_at->format('d/m/Y') . ' · ' . (PagoPersonal::FORMAS_PAGO[$record->devolucion_forma_pago] ?? $record->devolucion_forma_pago)
+                                : null)
+                            ->visible(fn (Cotizacion $record): bool => $record->estado === 'cancelada')->columnSpanFull(),
                         TextEntry::make('contrato.numero_contrato')->label('Contrato')->placeholder('—')
                             ->url(fn (Cotizacion $record): ?string => $record->contrato ? ContratoResource::getUrl('edit', ['record' => $record->contrato]) : null),
                         TextEntry::make('motivo_rechazo')->label('Motivo del rechazo')->color('danger')
