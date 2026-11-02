@@ -2211,6 +2211,62 @@ a.cm-resource:hover {
     70%, 100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* Laptops con poca altura (1366×768, Windows al 125 %): la portada completa entra en la primera pantalla */
+@media (min-width: 961px) and (max-height: 900px) {
+    .cm-hero .cm-hero__inner {
+        padding-top: 36px;
+        padding-bottom: 76px;
+        gap: 48px;
+    }
+
+    .cm-hero__badge {
+        margin-bottom: 16px;
+    }
+
+    .cm-hero h1 {
+        font-size: clamp(32px, 3.4vw, 46px);
+        margin-bottom: 16px;
+    }
+
+    .cm-hero__text {
+        font-size: 17px;
+        margin-bottom: 24px;
+    }
+
+    .cm-hero__buttons {
+        margin-bottom: 24px;
+    }
+
+    .cm-quote {
+        padding: 24px 26px;
+    }
+
+    .cm-quote__title {
+        font-size: 20px;
+    }
+
+    .cm-quote__sub {
+        margin-bottom: 14px;
+    }
+
+    .cm-quote .cm-form-grid {
+        gap: 10px 14px;
+    }
+
+    .cm-quote .cm-field {
+        gap: 4px;
+    }
+
+    .cm-quote .cm-field input,
+    .cm-quote .cm-field select {
+        padding: 10px 12px;
+    }
+
+    .cm-quote__foot {
+        margin-top: 10px;
+    }
+}
+
 /* Movimiento reducido: sin animaciones */
 @media (prefers-reduced-motion: reduce) {
     .cm-page *,
