@@ -11,7 +11,7 @@ use Filament\Widgets\TableWidget;
 
 /**
  * Clientes que separaron fecha con adelanto y aún no son contrato: ese horario ya está comprometido.
- * Se muestra en el Escritorio y en Programación de vaciados.
+ * Se muestra en el Escritorio y en Programación de vaciados, solo cuando hay alguna.
  */
 class FechasSeparadasWidget extends TableWidget
 {
@@ -21,7 +21,9 @@ class FechasSeparadasWidget extends TableWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['super_admin', 'admin', 'coordinador_de_vaciados']) ?? false;
+        // Solo aparece cuando hay alguna fecha separada: vacía no aporta nada
+        return (auth()->user()?->hasAnyRole(['super_admin', 'admin', 'coordinador_de_vaciados']) ?? false)
+            && Cotizacion::separadas()->whereDate('fecha_tentativa', '>=', today())->exists();
     }
 
     public function table(Table $table): Table

@@ -53,6 +53,22 @@ class AgendaVaciadosWidget extends TableWidget
             ->recordUrl(fn (Contrato $record): string => ProgramacionResource::getUrl('view', ['record' => $record]))
             ->paginated(false)
             ->emptyStateIcon('heroicon-o-calendar')
-            ->emptyStateHeading('No hay vaciados en los próximos 7 días');
+            ->emptyStateHeading('No hay vaciados en los próximos 7 días')
+            ->emptyStateDescription(fn (): string => $this->textoProximoVaciado());
+    }
+
+    private function textoProximoVaciado(): string
+    {
+        $proximo = Contrato::query()
+            ->whereDate('fecha', '>', today()->addDays(6))
+            ->orderBy('fecha')
+            ->first();
+
+        if (! $proximo) {
+            return 'Tampoco hay vaciados más adelante.';
+        }
+
+        return 'El siguiente es el ' . $proximo->fecha->locale('es')->isoFormat('dddd D [de] MMMM')
+            . " ({$proximo->nombre_cliente}).";
     }
 }

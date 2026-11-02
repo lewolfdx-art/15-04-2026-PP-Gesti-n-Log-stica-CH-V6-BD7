@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Widgets\AgendaVaciadosWidget;
+use App\Filament\Widgets\FechasSeparadasWidget;
 use App\Models\Cotizacion;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,5 +39,46 @@ class EscritorioWidgetsTest extends TestCase
         foreach ($widgets as $widget) {
             Livewire::test($widget)->assertOk();
         }
+    }
+
+    public function test_la_agenda_muestra_solo_los_vaciados_de_los_proximos_7_dias(): void
+    {
+        $this->actingAs($this->usuarioConRol('super_admin'));
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $dentro = $this->contrato(['fecha' => today()->addDays(3), 'nombre_cliente' => 'Cliente esta semana']);
+        $fuera = $this->contrato(['fecha' => today()->addDays(17), 'nombre_cliente' => 'Cliente fin de mes']);
+        $pasado = $this->contrato(['fecha' => today()->subDay(), 'nombre_cliente' => 'Cliente de ayer']);
+
+        Livewire::test(AgendaVaciadosWidget::class)
+            ->assertCanSeeTableRecords([$dentro])
+            ->assertCanNotSeeTableRecords([$fuera, $pasado]);
+
+        $dentro->delete();
+        Livewire::test(AgendaVaciadosWidget::class)
+            ->assertSee('No hay vaciados en los próximos 7 días')
+            ->assertSee('Cliente fin de mes');
+    }
+
+    public function test_fechas_separadas_muestra_solo_las_que_aun_no_son_contrato(): void
+    {
+        $this->actingAs($this->usuarioConRol('super_admin'));
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $asesor = $this->asesor();
+        $nueva = fn (string $cliente) => Cotizacion::create(['asesor_id' => $asesor->id, 'cliente_nombre' => $cliente, 'volumen_estimado' => 20, 'precio_unitario_propuesto' => 300, 'fecha_tentativa' => today()->addDays(10), 'hora_tentativa' => '08:00']);
+
+        $this->assertFalse(FechasSeparadasWidget::canView(), 'Sin fechas separadas no se muestra');
+
+        $separada = $nueva('Separó fecha');
+        $separada->registrarAdelanto(300, 'YAPE_PLIN');
+        $sinAdelanto = $nueva('Solo cotizó');
+        $convertida = $nueva('Ya es contrato');
+        $convertida->forceFill(['estado' => 'convertida', 'adelanto_monto' => 300])->save();
+
+        $this->assertTrue(FechasSeparadasWidget::canView());
+        Livewire::test(FechasSeparadasWidget::class)
+            ->assertCanSeeTableRecords([$separada])
+            ->assertCanNotSeeTableRecords([$sinAdelanto, $convertida]);
     }
 }
