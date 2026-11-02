@@ -139,6 +139,56 @@ class Contrato extends Model
                     ->value('id') ?? $contrato->vendedor_id;
             }
         });
+
+        // Al quedar PAGADO se registra en Ingresos lo que faltaba cobrar
+        static::saved(function (Contrato $contrato) {
+            if ($contrato->estado_pago === 'PAGADO' && ($contrato->wasRecentlyCreated || $contrato->wasChanged('estado_pago'))) {
+                $contrato->registrarCancelacion();
+            }
+        });
+    }
+
+    /**
+     * Ingresos de este contrato. En Ingresos el número a veces se escribió sin "C-".
+     */
+    public function ingresos(): Builder
+    {
+        $numero = (string) $this->numero_contrato;
+
+        return Ingreso::query()->whereIn('numero_contrato', array_unique([$numero, preg_replace('/^C-/i', '', $numero)]));
+    }
+
+    public function totalCobrado(): float
+    {
+        return round((float) $this->ingresos()->sum('monto'), 2);
+    }
+
+    public function saldoPorCobrar(): float
+    {
+        return round(max(0, (float) $this->monto_total - $this->totalCobrado()), 2);
+    }
+
+    /**
+     * Registra el saldo pendiente como ingreso CAN-CONTRATO (cancelación del contrato).
+     * Si ya está todo cobrado (por ejemplo, adelanto + otros pagos) no registra nada.
+     */
+    public function registrarCancelacion(?string $fecha = null): ?Ingreso
+    {
+        $saldo = $this->saldoPorCobrar();
+
+        if ($saldo < 0.01 || blank($this->numero_contrato)) {
+            return null;
+        }
+
+        return Ingreso::create([
+            'fecha'           => $fecha ?? today()->toDateString(),
+            'modo_pago'       => 'CAN-CONTRATO',
+            'numero_contrato' => $this->numero_contrato,
+            'asesor'          => $this->nombre_vendedor,
+            'detalle'         => "Cancelación del contrato {$this->numero_contrato} · {$this->nombre_cliente}",
+            'monto'           => $saldo,
+            'obs'             => $this->forma_pago ? "Registrado automáticamente · {$this->forma_pago}" : 'Registrado automáticamente',
+        ]);
     }
 
     public function vendedor(): BelongsTo
