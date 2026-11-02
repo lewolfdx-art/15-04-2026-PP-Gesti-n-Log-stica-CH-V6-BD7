@@ -9,12 +9,14 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 /**
- * Vaciados de hoy y los próximos 6 días, en orden de fecha y hora.
+ * Los próximos vaciados desde hoy, en orden de fecha y hora (aunque falten semanas).
  * Al tocar uno se abre en la Programación.
  */
 class AgendaVaciadosWidget extends TableWidget
 {
     protected static ?int $sort = 3;
+
+    private const CUANTOS = 8;
 
     protected int | string | array $columnSpan = 'full';
 
@@ -26,9 +28,11 @@ class AgendaVaciadosWidget extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Agenda de vaciados · próximos 7 días')
+            ->heading('Próximos vaciados')
+            ->description(fn (): string => $this->textoSemana())
             ->query(fn () => Contrato::query()
-                ->whereBetween('fecha', [today()->toDateString(), today()->addDays(6)->toDateString()])
+                ->whereDate('fecha', '>=', today())
+                ->limit(self::CUANTOS)
                 ->with(['vehiculos', 'operadores'])
                 ->orderBy('fecha')
                 ->orderByRaw('hora_inicio IS NULL, hora_inicio'))
@@ -53,6 +57,17 @@ class AgendaVaciadosWidget extends TableWidget
             ->recordUrl(fn (Contrato $record): string => ProgramacionResource::getUrl('view', ['record' => $record]))
             ->paginated(false)
             ->emptyStateIcon('heroicon-o-calendar')
-            ->emptyStateHeading('No hay vaciados en los próximos 7 días');
+            ->emptyStateHeading('No hay vaciados de hoy en adelante');
+    }
+
+    private function textoSemana(): string
+    {
+        $semana = Contrato::whereBetween('fecha', [today()->toDateString(), today()->addDays(6)->toDateString()])->count();
+
+        return match ($semana) {
+            0       => 'Esta semana no hay vaciados. Se muestran los siguientes.',
+            1       => '1 vaciado en los próximos 7 días.',
+            default => "{$semana} vaciados en los próximos 7 días.",
+        };
     }
 }

@@ -28,7 +28,7 @@ class CreateMiCotizacion extends CreateRecord
 
         $data['asesor_id'] = $asesorId;
 
-        return $data;
+        return MisCotizacionesResource::limpiarAdelantoSiNoHay($data, $this->data);
     }
 
     protected function afterCreate(): void

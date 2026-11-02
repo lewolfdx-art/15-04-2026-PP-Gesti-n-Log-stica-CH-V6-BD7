@@ -8,16 +8,26 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            // Hacer NULL las columnas antiguas que ya no usamos
-            $table->string('name')->nullable()->change();
-            $table->string('slug')->nullable()->change();
-            $table->text('description')->nullable()->change();
-            $table->decimal('price', 10, 2)->nullable()->change();
-            $table->integer('stock')->nullable()->change();
-            $table->string('category')->nullable()->change();
-            $table->string('type')->nullable()->change();
-            $table->text('technical_specs')->nullable()->change();
+        // Columnas antiguas que ya no se usan: quedan opcionales. create_productos_table se reescribió sin ellas,
+        // así que en una base nueva no existen: se crean opcionales para que el esquema sea el mismo que en producción.
+        $columnas = [
+            'name'            => fn (Blueprint $t) => $t->string('name')->nullable(),
+            'slug'            => fn (Blueprint $t) => $t->string('slug')->nullable(),
+            'description'     => fn (Blueprint $t) => $t->text('description')->nullable(),
+            'price'           => fn (Blueprint $t) => $t->decimal('price', 10, 2)->nullable(),
+            'stock'           => fn (Blueprint $t) => $t->integer('stock')->nullable(),
+            'category'        => fn (Blueprint $t) => $t->string('category')->nullable(),
+            'type'            => fn (Blueprint $t) => $t->string('type')->nullable(),
+            'technical_specs' => fn (Blueprint $t) => $t->text('technical_specs')->nullable(),
+        ];
+
+        Schema::table('productos', function (Blueprint $table) use ($columnas) {
+            foreach ($columnas as $nombre => $definir) {
+                $columna = $definir($table);
+                if (Schema::hasColumn('productos', $nombre)) {
+                    $columna->change();
+                }
+            }
         });
     }
 

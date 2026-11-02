@@ -227,6 +227,131 @@
     border-color: rgb(255 255 255 / 0.12);
 }
 
+/* Pagos del contrato (ContratoResource\Widgets\PagosContratoWidget) */
+.cm-pagos {
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.875rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+}
+
+:is(.dark) .cm-pagos {
+    background: var(--gray-900);
+    border-color: rgb(255 255 255 / 0.1);
+}
+
+.cm-pagos__cifras {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.cm-pagos__etiqueta {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+}
+
+.cm-pagos__monto {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--gray-950);
+}
+
+:is(.dark) .cm-pagos__monto {
+    color: white;
+}
+
+.cm-pagos__monto--pagado {
+    color: var(--success-600);
+}
+
+.cm-pagos__monto--debe {
+    color: var(--danger-600);
+}
+
+.cm-pagos__barra {
+    height: 0.5rem;
+    margin: 1rem 0 0.75rem;
+    border-radius: 999px;
+    background: var(--gray-100);
+    overflow: hidden;
+}
+
+:is(.dark) .cm-pagos__barra {
+    background: rgb(255 255 255 / 0.08);
+}
+
+.cm-pagos__barra span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--success-500), var(--success-400));
+}
+
+.cm-pagos__lista {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+}
+
+.cm-pagos__lista li {
+    display: grid;
+    grid-template-columns: 6rem 9rem 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem;
+    background: var(--gray-50);
+    color: var(--gray-700);
+}
+
+:is(.dark) .cm-pagos__lista li {
+    background: rgb(255 255 255 / 0.04);
+    color: var(--gray-300);
+}
+
+.cm-pagos__tipo {
+    font-weight: 600;
+}
+
+.cm-pagos__detalle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--gray-500);
+}
+
+.cm-pagos__vacio,
+.cm-pagos__aviso {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+
+.cm-pagos__aviso {
+    color: var(--warning-700);
+}
+
+@media (max-width: 640px) {
+    .cm-pagos__cifras {
+        grid-template-columns: 1fr;
+    }
+
+    .cm-pagos__lista li {
+        grid-template-columns: 1fr auto;
+    }
+
+    .cm-pagos__tipo,
+    .cm-pagos__detalle {
+        display: none;
+    }
+}
+
 /* Tarjetas de estadísticas con color de acento (App\Filament\Widgets\Concerns\ConAcento) */
 .fi-wi-stats-overview-stat.cm-kpi {
     position: relative;

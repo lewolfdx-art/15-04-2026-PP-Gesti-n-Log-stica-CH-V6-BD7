@@ -42,6 +42,8 @@ class ResumenHoyWidget extends StatsOverviewWidget
 
         $porProgramar = Contrato::whereNull('programado_at')->whereDate('fecha', '>=', today())->count();
         $porProgramarSemana = Contrato::whereNull('programado_at')->whereBetween('fecha', [today(), today()->addDays(6)])->count();
+        $proximos = Contrato::whereDate('fecha', '>=', today())->count();
+        $proximo = Contrato::whereDate('fecha', '>', today())->orderBy('fecha')->orderBy('hora_inicio')->first();
 
         $reclamos = LibroReclamacion::pending()->count();
         $reclamosUrgentes = LibroReclamacion::pending()->whereDate('fecha_limite', '<=', today()->addWeekdays(3))->count();
@@ -51,7 +53,9 @@ class ResumenHoyWidget extends StatsOverviewWidget
                 ->extraAttributes(self::acento('teal'), merge: true)
                 ->description($vaciadosHoy > 0
                     ? number_format($m3Hoy, 1) . " m³ · {$programadosHoy} programado(s)"
-                    : 'Sin vaciados para hoy')
+                    : ($proximo
+                        ? 'Próximo: ' . $proximo->fecha->locale('es')->isoFormat('ddd D/MM') . " · {$proximo->nombre_cliente}"
+                        : 'Sin vaciados para hoy'))
                 ->descriptionIcon('heroicon-m-cube')
                 ->icon('heroicon-o-truck')
                 ->color($vaciadosHoy > $programadosHoy ? 'warning' : 'success')
@@ -59,7 +63,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
 
             Stat::make('Cotizaciones por revisar', $porRevisar)
                 ->extraAttributes(self::acento('violet'), merge: true)
-                ->description("{$enEspera} en espera con adelanto")
+                ->description("{$enEspera} con fecha separada (adelanto)")
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->icon('heroicon-o-clipboard-document-list')
                 ->color($porRevisar > 0 ? 'warning' : 'gray')
@@ -67,7 +71,12 @@ class ResumenHoyWidget extends StatsOverviewWidget
 
             Stat::make('Vaciados por programar', $porProgramar)
                 ->extraAttributes(self::acento('indigo'), merge: true)
-                ->description("{$porProgramarSemana} en los próximos 7 días")
+                ->description(match (true) {
+                    $porProgramar > 0 => "{$porProgramarSemana} en los próximos 7 días",
+                    $proximos === 1   => 'El próximo ya está programado',
+                    $proximos > 1     => "Los {$proximos} próximos ya están programados",
+                    default           => 'No hay vaciados por delante',
+                })
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->icon('heroicon-o-calendar')
                 ->color($porProgramarSemana > 0 ? 'danger' : ($porProgramar > 0 ? 'warning' : 'success'))

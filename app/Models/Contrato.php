@@ -169,6 +169,53 @@ class Contrato extends Model
     }
 
     /**
+     * Abono del cliente: se registra en Ingresos (ADEL-CONTRATO si es parcial, CAN-CONTRATO si completa el total).
+     * Cuando el saldo llega a cero, el contrato pasa a PAGADO.
+     */
+    public function registrarPago(float $monto, string $fecha, ?string $formaPago = null, ?string $observacion = null): Ingreso
+    {
+        if (blank($this->numero_contrato)) {
+            throw new \InvalidArgumentException('El contrato necesita un N.° para registrar pagos.');
+        }
+
+        $monto = round($monto, 2);
+        $saldo = $this->saldoPorCobrar();
+
+        if ($monto <= 0) {
+            throw new \InvalidArgumentException('El pago debe ser mayor que cero.');
+        }
+
+        if ($monto - $saldo > 0.009) {
+            throw new \InvalidArgumentException('El pago (S/ ' . number_format($monto, 2) . ') es mayor que el saldo (S/ ' . number_format($saldo, 2) . ').');
+        }
+
+        $completa = $saldo - $monto < 0.01;
+
+        $ingreso = Ingreso::create([
+            'fecha'           => $fecha,
+            'modo_pago'       => $completa ? 'CAN-CONTRATO' : 'ADEL-CONTRATO',
+            'numero_contrato' => $this->numero_contrato,
+            'asesor'          => $this->nombre_vendedor,
+            'detalle'         => ($completa ? 'Cancelación' : 'Abono') . " del contrato {$this->numero_contrato} · {$this->nombre_cliente}",
+            'monto'           => $monto,
+            'obs'             => collect([$formaPago, $observacion])->filter()->implode(' · ') ?: null,
+        ]);
+
+        if ($completa && $this->estado_pago !== 'PAGADO') {
+            // El saldo ya es cero: registrarCancelacion() del evento saved no agrega nada más
+            $this->update(['estado_pago' => 'PAGADO']);
+        }
+
+        return $ingreso;
+    }
+
+    /** Pagos registrados del contrato, del más antiguo al más reciente */
+    public function pagos(): \Illuminate\Support\Collection
+    {
+        return $this->ingresos()->orderBy('fecha')->orderBy('id')->get();
+    }
+
+    /**
      * Registra el saldo pendiente como ingreso CAN-CONTRATO (cancelación del contrato).
      * Si ya está todo cobrado (por ejemplo, adelanto + otros pagos) no registra nada.
      */
@@ -233,30 +280,42 @@ class Contrato extends Model
             return null;
         }
 
-        return substr($this->hora_inicio, 0, 5) . ($this->hora_fin ? ' – ' . substr($this->hora_fin, 0, 5) : '');
+        // Solo la hora de inicio: el término depende de imprevistos y del concreto que se use en obra
+        return substr($this->hora_inicio, 0, 5);
     }
 
     /**
-     * Otros vaciados del mismo día cuyo horario se cruza y que usan alguno de esos vehículos.
-     * Dos horarios se cruzan si uno empieza antes de que el otro termine.
+     * Sin hora de término, un vaciado se considera "en curso" durante estas horas desde su inicio.
+     * Dos vaciados del mismo vehículo que empiezan con menos diferencia son un cruce probable.
+     */
+    public const HORAS_ESTIMADAS_VACIADO = 3;
+
+    /**
+     * Otros vaciados del mismo día que usan alguno de esos vehículos.
+     * Cada uno trae ->esCruce = true si empieza a menos de HORAS_ESTIMADAS_VACIADO de $inicio
+     * (cruce probable); los demás son informativos (el vehículo tiene otra obra ese día).
      *
      * @return Collection<int, Contrato>
      */
-    public static function conflictosDeVehiculos(?int $excluirId, string $fecha, string $inicio, string $fin, array $vehiculoIds): Collection
+    public static function conflictosDeVehiculos(?int $excluirId, string $fecha, string $inicio, array $vehiculoIds): Collection
     {
         if ($vehiculoIds === []) {
             return new Collection();
         }
 
+        $minutos = fn (?string $hora): int => $hora ? ((int) substr($hora, 0, 2)) * 60 + (int) substr($hora, 3, 2) : 0;
+
         return static::query()
             ->when($excluirId, fn (Builder $q) => $q->whereKeyNot($excluirId))
             ->whereDate('fecha', $fecha)
             ->whereNotNull('hora_inicio')
-            ->where('hora_inicio', '<', $fin)
-            ->where('hora_fin', '>', $inicio)
             ->whereHas('vehiculos', fn (Builder $q) => $q->whereIn('vehiculos.id', $vehiculoIds))
             ->with(['vehiculos' => fn ($q) => $q->whereIn('vehiculos.id', $vehiculoIds)])
-            ->get();
+            ->orderBy('hora_inicio')
+            ->get()
+            ->each(function (Contrato $otro) use ($inicio, $minutos) {
+                $otro->esCruce = abs($minutos($otro->hora_inicio) - $minutos($inicio)) < self::HORAS_ESTIMADAS_VACIADO * 60;
+            });
     }
 
     public function tieneUbicacion(): bool

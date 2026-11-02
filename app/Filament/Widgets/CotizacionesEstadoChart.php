@@ -22,6 +22,7 @@ class CotizacionesEstadoChart extends ChartWidget
         'en_espera'  => '#3b82f6',
         'convertida' => '#22c55e',
         'rechazada'  => '#9ca3af',
+        'cancelada'  => '#f43f5e',
     ];
 
     public static function canView(): bool
@@ -67,7 +68,8 @@ class CotizacionesEstadoChart extends ChartWidget
                 [
                     'label'           => 'Cotizaciones',
                     'data'            => array_map(fn (string $estado) => (int) ($conteo[$estado] ?? 0), array_keys(Cotizacion::ESTADOS)),
-                    'backgroundColor' => array_map(fn (string $estado) => self::COLORES[$estado], array_keys(Cotizacion::ESTADOS)),
+                    // Un estado nuevo sin color asignado sale en gris en vez de romper el gráfico
+                    'backgroundColor' => array_map(fn (string $estado) => self::COLORES[$estado] ?? '#cbd5e1', array_keys(Cotizacion::ESTADOS)),
                     'borderWidth'     => 0,
                 ],
             ],

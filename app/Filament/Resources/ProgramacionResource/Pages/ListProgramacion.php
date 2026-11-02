@@ -12,6 +12,12 @@ class ListProgramacion extends ListRecords
 {
     protected static string $resource = ProgramacionResource::class;
 
+    // Arriba de la lista: horarios ya comprometidos por clientes que dejaron adelanto
+    protected function getHeaderWidgets(): array
+    {
+        return [\App\Filament\Widgets\FechasSeparadasWidget::class];
+    }
+
     public function getTabs(): array
     {
         return [

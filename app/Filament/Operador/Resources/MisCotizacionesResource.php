@@ -8,6 +8,8 @@ use App\Filament\Operador\Resources\MisCotizacionesResource\Pages\ListMisCotizac
 use App\Filament\Operador\Resources\MisCotizacionesResource\Pages\ViewMiCotizacion;
 use App\Models\Contrato;
 use App\Models\Cotizacion;
+use App\Models\PagoPersonal;
+use Filament\Forms\Components\Toggle;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -60,6 +62,21 @@ class MisCotizacionesResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('asesor_id', static::asesorId() ?? 0);
+    }
+
+    /**
+     * Si el asesor apaga "El cliente dejó un adelanto", se borra lo que había anotado
+     * (los campos ocultos no se envían y quedaría el valor anterior).
+     */
+    public static function limpiarAdelantoSiNoHay(array $data, array $estadoFormulario): array
+    {
+        if (empty($estadoFormulario['dejo_adelanto'])) {
+            $data['adelanto_declarado_monto'] = null;
+            $data['adelanto_declarado_forma_pago'] = null;
+            $data['adelanto_voucher'] = null;
+        }
+
+        return $data;
     }
 
     public static function canEdit(Model $record): bool
@@ -139,6 +156,50 @@ class MisCotizacionesResource extends Resource
                         Textarea::make('observaciones')->label('Observaciones para la oficina')->rows(2)->columnSpanFull(),
                     ])
                     ->columns(2),
+
+                // El cliente separa su fecha con un adelanto; la oficina lo confirma al revisar
+                Section::make('Adelanto del cliente')
+                    ->icon('heroicon-o-banknotes')
+                    ->description('Si el cliente te dejó un adelanto para separar su fecha, anótalo aquí. La oficina lo confirma y separa el horario.')
+                    ->schema([
+                        Toggle::make('dejo_adelanto')
+                            ->label('El cliente dejó un adelanto')
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(fn (Toggle $component, ?Cotizacion $record) => $component->state((float) $record?->adelanto_declarado_monto > 0))
+                            ->columnSpanFull(),
+                        TextInput::make('adelanto_declarado_monto')
+                            ->label('Monto del adelanto')
+                            ->prefix('S/')
+                            ->numeric()
+                            ->minValue(1)
+                            ->visible(fn (Get $get): bool => (bool) $get('dejo_adelanto'))
+                            ->required(fn (Get $get): bool => (bool) $get('dejo_adelanto')),
+                        Select::make('adelanto_declarado_forma_pago')
+                            ->label('¿Cómo pagó?')
+                            ->options(PagoPersonal::FORMAS_PAGO)
+                            ->native(false)
+                            ->visible(fn (Get $get): bool => (bool) $get('dejo_adelanto'))
+                            ->required(fn (Get $get): bool => (bool) $get('dejo_adelanto')),
+                        FileUpload::make('adelanto_voucher')
+                            ->label('Foto del voucher (Yape, Plin o depósito)')
+                            ->image()
+                            ->maxSize(5120)
+                            ->automaticallyResizeImagesMode('contain')
+                            ->automaticallyResizeImagesToWidth('1400')
+                            ->automaticallyResizeImagesToHeight('1400')
+                            ->directory('cotizaciones/vouchers')
+                            ->visible(fn (Get $get): bool => (bool) $get('dejo_adelanto'))
+                            ->helperText('Si pagó en efectivo, puedes dejarlo vacío.')
+                            ->columnSpanFull(),
+                        TextEntry::make('aviso_fecha')
+                            ->hiddenLabel()
+                            ->state('Para separar el horario, completa la fecha y la hora tentativa en "Medición y vaciado".')
+                            ->color('warning')
+                            ->visible(fn (Get $get): bool => (bool) $get('dejo_adelanto') && (! $get('fecha_tentativa') || ! $get('hora_tentativa')))
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -177,7 +238,17 @@ class MisCotizacionesResource extends Resource
                             ->formatStateUsing(fn (string $state): string => Cotizacion::ESTADOS[$state] ?? $state)
                             ->color(fn (string $state): string => Cotizacion::ESTADO_COLORES[$state] ?? 'gray'),
                         TextEntry::make('enviada_at')->label('Enviada')->dateTime('d/m/Y H:i'),
-                        TextEntry::make('adelanto_monto')->label('Adelanto del cliente')->money('PEN')->placeholder('—'),
+                        TextEntry::make('adelanto_monto')->label('Adelanto confirmado')->money('PEN')->placeholder('—')
+                            ->helperText(fn (Cotizacion $record): ?string => $record->estaSeparada()
+                                ? 'Fecha separada: ' . $record->fecha_tentativa->format('d/m/Y') . ($record->horaTexto() ? " {$record->horaTexto()}" : '')
+                                : null),
+                        TextEntry::make('adelanto_declarado_monto')->label('Adelanto que anotaste')->money('PEN')
+                            ->helperText(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'La oficina aún no lo confirma' : 'Confirmado por la oficina')
+                            ->color(fn (Cotizacion $record): string => $record->tieneAdelantoPorConfirmar() ? 'warning' : 'success')
+                            ->visible(fn (Cotizacion $record): bool => (float) $record->adelanto_declarado_monto > 0),
+                        TextEntry::make('motivo_cancelacion')->label('Cancelada')->color('danger')
+                            ->helperText(fn (Cotizacion $record): ?string => $record->devolucion_at ? 'Se le devolvió el adelanto el ' . $record->devolucion_at->format('d/m/Y') : null)
+                            ->visible(fn (Cotizacion $record): bool => $record->estado === 'cancelada'),
                         TextEntry::make('precio_unitario_aprobado')->label('Precio aprobado por m³')->money('PEN')->placeholder('Pendiente'),
                         TextEntry::make('motivo_rechazo')->label('Motivo del rechazo')->color('danger')
                             ->visible(fn (Cotizacion $record): bool => $record->estado === 'rechazada'),

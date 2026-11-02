@@ -243,6 +243,9 @@ class NotificationService
                 "{$cotizacion->codigo} · {$cotizacion->asesor?->nombre_completo}",
                 "Cliente: {$cotizacion->cliente_nombre}",
                 $cotizacion->volumen_estimado ? "{$cotizacion->volumen_estimado} m³ · {$cotizacion->estructura}" : null,
+                $cotizacion->tieneAdelantoPorConfirmar()
+                    ? 'Adelanto por confirmar: S/ ' . number_format((float) $cotizacion->adelanto_declarado_monto, 2) . ' para separar el ' . ($cotizacion->fecha_tentativa?->format('d/m/Y') ?? 'día por definir')
+                    : null,
             ])->filter()->implode("\n"))
             ->icon('heroicon-o-clipboard-document-list')
             ->iconColor('warning')
@@ -284,6 +287,36 @@ class NotificationService
     /**
      * Aviso a los programadores de vaciados: hay un contrato nuevo por programar
      */
+    /**
+     * Aviso al programador de vaciados: un cliente separó su fecha con adelanto
+     * (o la liberó porque canceló), para que no comprometa ese horario con otro cliente.
+     */
+    public static function notificarFechaSeparada(Cotizacion $cotizacion, bool $liberada = false): void
+    {
+        $cuando = ($cotizacion->fecha_tentativa?->format('d/m/Y') ?? 'fecha por definir')
+            . ($cotizacion->horaTexto() ? " a las {$cotizacion->horaTexto()}" : '');
+
+        $notificacion = Notification::make()
+            ->title($liberada ? 'Fecha liberada: el cliente canceló' : 'Fecha separada con adelanto')
+            ->body(collect([
+                "{$cotizacion->cliente_nombre} · {$cuando}",
+                $cotizacion->volumen_estimado ? "{$cotizacion->volumen_estimado} m³ · {$cotizacion->estructura}" : null,
+                $liberada ? 'Ese horario vuelve a estar libre.' : 'Adelanto: S/ ' . number_format((float) $cotizacion->adelanto_monto, 2),
+            ])->filter()->implode("\n"))
+            ->icon($liberada ? 'heroicon-o-calendar' : 'heroicon-o-lock-closed')
+            ->iconColor($liberada ? 'gray' : 'info')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver programación')
+                    ->url(ProgramacionResource::getUrl('index', isAbsolute: false))
+                    ->button(),
+            ]);
+
+        foreach (self::usuariosActivosConRol(['coordinador_de_vaciados']) as $usuario) {
+            $usuario->notifyNow($notificacion->toDatabase());
+        }
+    }
+
     public static function notificarVaciadoPorProgramar(Contrato $contrato): void
     {
         $notificacion = Notification::make()
@@ -302,7 +335,7 @@ class NotificationService
                     ->button(),
             ]);
 
-        foreach (User::role('coordinador_de_vaciados')->where('is_active', true)->get() as $usuario) {
+        foreach (self::usuariosActivosConRol(['coordinador_de_vaciados']) as $usuario) {
             $usuario->notifyNow($notificacion->toDatabase());
         }
     }
@@ -323,7 +356,18 @@ class NotificationService
      */
     private static function destinatarios(): Collection
     {
-        return User::role(['super_admin', 'admin'])->where('is_active', true)->get();
+        return self::usuariosActivosConRol(['super_admin', 'admin']);
+    }
+
+    /**
+     * Usuarios activos con alguno de esos roles. No usa User::role() porque esa consulta lanza un error
+     * si el rol todavía no existe (instalación nueva), y eso tumbaba los formularios públicos.
+     */
+    private static function usuariosActivosConRol(array $roles): Collection
+    {
+        return User::whereHas('roles', fn ($query) => $query->whereIn('name', $roles))
+            ->where('is_active', true)
+            ->get();
     }
 
     private static function soles(float|string|null $monto): string

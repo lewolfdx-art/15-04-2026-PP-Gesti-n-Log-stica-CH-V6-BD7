@@ -20,6 +20,7 @@ class ViewCotizacion extends ViewRecord
             CotizacionResource::accionAdelanto(),
             CotizacionResource::accionPasarAContrato(),
             CotizacionResource::accionRechazar(),
+            CotizacionResource::accionCancelar(),
         ];
     }
 }

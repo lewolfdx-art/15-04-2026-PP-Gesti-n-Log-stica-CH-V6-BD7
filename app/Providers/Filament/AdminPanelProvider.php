@@ -50,8 +50,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()->label('Gestión de Contenido'),
                 NavigationGroup::make()->label('Usuarios'), // USUARIOS AQUÍ
                 NavigationGroup::make()->label('Gestión de Operaciones'),
-                NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Comercial'),
+                NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Finanzas'),
             ])
             
@@ -92,7 +92,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Http\Middleware\RedirigirOperadoresAlPanel::class,
             ])
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling(config('panel.notificaciones_cada'))
             ->topbar(true);
     }
 }
