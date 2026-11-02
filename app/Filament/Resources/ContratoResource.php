@@ -321,6 +321,12 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->required()
+                                    // Si viene de una cotización: precio que propuso el asesor y el que se aprobó
+                                    ->helperText(fn (?Contrato $record): ?string => $record?->cotizacion
+                                        ? "Cotización {$record->cotizacion->codigo}: el asesor propuso S/ "
+                                            . number_format((float) $record->cotizacion->precio_unitario_propuesto, 2)
+                                            . ' por m³ y se aprobó S/ ' . number_format((float) $record->cotizacion->precio_unitario_aprobado, 2) . '.'
+                                        : null)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
