@@ -76,33 +76,54 @@ class ProgramacionResource extends Resource
         return 'Vaciados por programar';
     }
 
+    /** Otros vaciados de ese día con los mismos vehículos, para los datos que se están ingresando */
+    private static function conflictosDelFormulario(Get $get, Contrato $record): \Illuminate\Support\Collection
+    {
+        $vehiculos = array_map('intval', (array) $get('vehiculos'));
+
+        if (! $get('fecha') || ! $get('hora_inicio') || $vehiculos === []) {
+            return collect();
+        }
+
+        return Contrato::conflictosDeVehiculos($record->getKey(), Carbon::parse($get('fecha'))->toDateString(), $get('hora_inicio'), $vehiculos);
+    }
+
     /**
-     * Texto con los choques de vehículos para los datos que se están ingresando
+     * Disponibilidad de los vehículos. Como no hay hora de término, un mismo vehículo que empieza otro
+     * vaciado a menos de Contrato::HORAS_ESTIMADAS_VACIADO horas es un "cruce probable"; si es más tarde
+     * ese día, solo se informa.
      */
     private static function textoConflictos(Get $get, Contrato $record): HtmlString
     {
-        $fecha = $get('fecha');
-        $inicio = $get('hora_inicio');
-        $fin = $get('hora_fin');
-        $vehiculos = array_map('intval', (array) $get('vehiculos'));
-
-        if (! $fecha || ! $inicio || ! $fin || $vehiculos === []) {
-            return new HtmlString('<span style="color:#6b7280">Completa fecha, horario y vehículos para revisar disponibilidad.</span>');
+        if (! $get('fecha') || ! $get('hora_inicio') || (array) $get('vehiculos') === []) {
+            return new HtmlString('<span style="color:#6b7280">Completa fecha, hora de inicio y vehículos para revisar disponibilidad.</span>');
         }
 
-        $conflictos = Contrato::conflictosDeVehiculos($record->getKey(), Carbon::parse($fecha)->toDateString(), $inicio, $fin, $vehiculos);
+        $conflictos = static::conflictosDelFormulario($get, $record);
+        $linea = fn (Contrato $c) => '<li><b>' . e($c->vehiculos->pluck('codigo')->implode(', ')) . '</b> en '
+            . e($c->nombre_cliente) . ' desde las ' . e($c->horarioTexto()) . '</li>';
+
+        $cruces = $conflictos->where('esCruce', true);
+        $mismoDia = $conflictos->where('esCruce', false);
 
         if ($conflictos->isEmpty()) {
             return new HtmlString('<span style="color:#16a34a;font-weight:600;display:inline-flex;align-items:center;gap:6px">'
-                . svg('heroicon-o-check-circle', 'h-5 w-5')->toHtml() . 'Vehículos libres en ese horario.</span>');
+                . svg('heroicon-o-check-circle', 'h-5 w-5')->toHtml() . 'Vehículos libres ese día.</span>');
         }
 
-        $lineas = $conflictos->map(fn (Contrato $c) => '<li><b>' . e($c->vehiculos->pluck('codigo')->implode(', ')) . '</b> ocupado en '
-            . e($c->nombre_cliente) . ' (' . e($c->horarioTexto()) . ')</li>')->implode('');
+        $html = '';
+        if ($cruces->isNotEmpty()) {
+            $html .= '<div style="color:#dc2626"><b style="display:inline-flex;align-items:center;gap:6px">'
+                . svg('heroicon-o-exclamation-triangle', 'h-5 w-5')->toHtml() . 'Cruce probable (empiezan con menos de '
+                . Contrato::HORAS_ESTIMADAS_VACIADO . ' h de diferencia):</b>'
+                . '<ul style="margin:4px 0 0 18px;list-style:disc">' . $cruces->map($linea)->implode('') . '</ul></div>';
+        }
+        if ($mismoDia->isNotEmpty()) {
+            $html .= '<div style="color:#b45309;margin-top:6px"><b>También tienen otra obra ese día:</b>'
+                . '<ul style="margin:4px 0 0 18px;list-style:disc">' . $mismoDia->map($linea)->implode('') . '</ul></div>';
+        }
 
-        return new HtmlString('<div style="color:#dc2626"><b style="display:inline-flex;align-items:center;gap:6px">'
-            . svg('heroicon-o-exclamation-triangle', 'h-5 w-5')->toHtml() . 'Choque de vehículos:</b>'
-            . "<ul style=\"margin:4px 0 0 18px;list-style:disc\">{$lineas}</ul></div>");
+        return new HtmlString($html);
     }
 
     public static function accionProgramar(): Action
@@ -116,23 +137,18 @@ class ProgramacionResource extends Resource
             ->fillForm(fn (Contrato $record): array => [
                 'fecha'       => $record->fecha,
                 'hora_inicio' => $record->hora_inicio,
-                'hora_fin'    => $record->hora_fin,
                 'vehiculos'   => $record->vehiculos()->pluck('vehiculos.id')->all(),
                 'operadores'  => $record->operadores()->pluck('trabajadores.id')->all(),
             ])
             ->schema([
                 DatePicker::make('fecha')->label('Fecha de vaciado')->native(false)->displayFormat('d/m/Y')->required()->live(),
-                TimePicker::make('hora_inicio')->label('Hora de inicio')->seconds(false)->required()->live(onBlur: true),
-                TimePicker::make('hora_fin')
-                    ->label('Hora de término')
+                // Solo la hora de inicio: el término depende de imprevistos y del concreto que realmente se use
+                TimePicker::make('hora_inicio')
+                    ->label('Hora de inicio')
                     ->seconds(false)
                     ->required()
                     ->live(onBlur: true)
-                    ->rule(fn (Get $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
-                        if ($get('hora_inicio') && $value <= $get('hora_inicio')) {
-                            $fail('La hora de término debe ser después de la hora de inicio.');
-                        }
-                    }),
+                    ->helperText('No se pide hora de término: depende de la obra y del concreto que se use.'),
                 Select::make('vehiculos')
                     ->label('Mixers y bombas')
                     ->options(fn () => Vehiculo::activos()->orderBy('codigo')->get()->mapWithKeys(fn (Vehiculo $v) => [$v->id => $v->etiqueta()]))
@@ -143,6 +159,11 @@ class ProgramacionResource extends Resource
                 TextEntry::make('disponibilidad')
                     ->hiddenLabel()
                     ->state(fn (Get $get, Contrato $record): HtmlString => static::textoConflictos($get, $record))
+                    ->columnSpanFull(),
+                // Con cruce probable hay que confirmarlo a conciencia (la primera obra podría terminar antes)
+                \Filament\Forms\Components\Checkbox::make('confirmar_cruce')
+                    ->label('Revisé el cruce y quiero programarlo igual')
+                    ->visible(fn (Get $get, Contrato $record): bool => static::conflictosDelFormulario($get, $record)->contains('esCruce', true))
                     ->columnSpanFull(),
                 Select::make('operadores')
                     ->label('Operadores')
@@ -159,13 +180,16 @@ class ProgramacionResource extends Resource
                 $fecha = Carbon::parse($data['fecha'])->toDateString();
                 $vehiculos = array_map('intval', $data['vehiculos'] ?? []);
 
-                // Se vuelve a revisar al guardar: otro programador pudo ocupar el vehículo mientras tanto
-                $conflictos = Contrato::conflictosDeVehiculos($record->getKey(), $fecha, $data['hora_inicio'], $data['hora_fin'], $vehiculos);
+                // Se vuelve a revisar al guardar: otro programador pudo ocupar el vehículo mientras tanto.
+                // Un cruce probable solo pasa si el programador lo confirmó con la casilla.
+                $cruces = Contrato::conflictosDeVehiculos($record->getKey(), $fecha, $data['hora_inicio'], $vehiculos)
+                    ->where('esCruce', true);
 
-                if ($conflictos->isNotEmpty()) {
+                if ($cruces->isNotEmpty() && empty($data['confirmar_cruce'])) {
                     Notification::make()
-                        ->title('No se puede programar: hay vehículos ocupados')
-                        ->body($conflictos->map(fn (Contrato $c) => $c->vehiculos->pluck('codigo')->implode(', ') . " en {$c->nombre_cliente} ({$c->horarioTexto()})")->implode("\n"))
+                        ->title('Cruce probable de vehículos')
+                        ->body($cruces->map(fn (Contrato $c) => $c->vehiculos->pluck('codigo')->implode(', ') . " en {$c->nombre_cliente} desde las {$c->horarioTexto()}")->implode("\n")
+                            . "\nRevísalo y marca \"Revisé el cruce y quiero programarlo igual\" si corresponde.")
                         ->danger()
                         ->persistent()
                         ->send();
@@ -179,7 +203,7 @@ class ProgramacionResource extends Resource
                 $record->forceFill([
                     'fecha'          => $fecha,
                     'hora_inicio'    => $data['hora_inicio'],
-                    'hora_fin'       => $data['hora_fin'],
+                    'hora_fin'       => null,
                     'programado_at'  => now(),
                     'programado_por' => auth()->id(),
                 ])->save();

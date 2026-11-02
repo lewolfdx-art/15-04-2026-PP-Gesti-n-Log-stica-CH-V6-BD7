@@ -19,8 +19,8 @@ class Cotizacion extends Model
 {
     protected $table = 'cotizaciones';
 
-    /** Dos vaciados a menos de estas horas de diferencia el mismo día se consideran cruzados */
-    public const HORAS_CRUCE = 2;
+    /** Dos vaciados a menos de estas horas de diferencia el mismo día se consideran cruzados (mismo criterio que Programación) */
+    public const HORAS_CRUCE = Contrato::HORAS_ESTIMADAS_VACIADO;
 
     protected $fillable = [
         'asesor_id', 'cliente_nombre', 'cliente_documento', 'cliente_telefono',
