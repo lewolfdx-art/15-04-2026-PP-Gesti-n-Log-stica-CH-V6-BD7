@@ -92,7 +92,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Http\Middleware\RedirigirOperadoresAlPanel::class,
             ])
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling(config('panel.notificaciones_cada'))
             ->topbar(true);
     }
 }

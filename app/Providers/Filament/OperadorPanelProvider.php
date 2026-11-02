@@ -57,6 +57,6 @@ class OperadorPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s');
+            ->databaseNotificationsPolling(config('panel.notificaciones_cada'));
     }
 }
