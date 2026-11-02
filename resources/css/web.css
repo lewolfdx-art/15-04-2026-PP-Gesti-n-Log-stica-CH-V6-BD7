@@ -53,28 +53,21 @@ body.cm-page > main {
     box-sizing: border-box;
 }
 
-.cm-page img,
-.cm-page svg,
-.cm-page video {
+/* :where() deja estas reglas base sin prioridad, para que cualquier componente (.cm-nav__link, .cm-btn...) les gane */
+:where(.cm-page) :where(img, svg, video) {
     max-width: 100%;
 }
 
-.cm-page a {
+:where(.cm-page) :where(a) {
     color: inherit;
 }
 
-.cm-page h1,
-.cm-page h2,
-.cm-page h3,
-.cm-page h4 {
+:where(.cm-page) :where(h1, h2, h3, h4) {
     margin-top: 0;
     line-height: 1.2;
 }
 
-.cm-page button,
-.cm-page input,
-.cm-page select,
-.cm-page textarea {
+:where(.cm-page) :where(button, input, select, textarea) {
     font: inherit;
 }
 
@@ -1923,5 +1916,320 @@ a.cm-resource:hover {
     .cm-footer__bottom .cm-container {
         justify-content: center;
         text-align: center;
+    }
+}
+
+/* =========================================================
+   Pulido y transiciones (solo opacity/transform: livianas)
+   ========================================================= */
+
+::selection {
+    background: var(--cm-orange);
+    color: var(--cm-white);
+}
+
+.cm-page :focus-visible {
+    outline: 3px solid rgba(245, 129, 30, 0.6);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+/* Sin flechitas de subir/bajar en los campos numéricos */
+.cm-page input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.cm-page input[type='number']::-webkit-outer-spin-button,
+.cm-page input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Encabezado: se compacta y toma sombra al bajar */
+.cm-header,
+.cm-header__inner {
+    transition: height 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.cm-header.is-scrolled {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.cm-header.is-scrolled .cm-header__inner {
+    height: 66px;
+}
+
+/* Barra de progreso de lectura */
+.cm-progress {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--cm-orange), #ffb066);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+    pointer-events: none;
+}
+
+/* Enlaces del menú: subrayado que crece */
+.cm-nav__link:not(.is-active)::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 4px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--cm-orange);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.25s ease;
+}
+
+.cm-nav__link:not(.is-active):hover::after {
+    transform: scaleX(1);
+}
+
+/* Botón principal: brillo que cruza al pasar el mouse */
+.cm-btn--primary,
+.cm-btn--dark {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.cm-btn--primary::after,
+.cm-btn--dark::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+    z-index: -1;
+}
+
+.cm-btn--primary:hover::after,
+.cm-btn--dark:hover::after {
+    left: 130%;
+}
+
+.cm-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Portada: fondo con acercamiento suave y entrada escalonada */
+.cm-hero::before {
+    z-index: 1;
+}
+
+.cm-hero .cm-hero__inner {
+    z-index: 2;
+}
+
+.cm-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    animation: cm-zoom 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.cm-hero__inner > div,
+.cm-page-hero .cm-container > * {
+    animation: cm-subir 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.cm-hero__inner > div:nth-child(2) {
+    animation-name: cm-entrar-derecha;
+    animation-delay: 0.15s;
+}
+
+.cm-page-hero .cm-container > :nth-child(2) { animation-delay: 0.08s; }
+.cm-page-hero .cm-container > :nth-child(3) { animation-delay: 0.16s; }
+.cm-page-hero .cm-container > :nth-child(4) { animation-delay: 0.24s; }
+
+@keyframes cm-zoom {
+    from { transform: scale(1.08); }
+    to { transform: scale(1); }
+}
+
+@keyframes cm-subir {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes cm-entrar-derecha {
+    from { opacity: 0; transform: translateX(32px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Aparición escalonada en las grillas */
+.cm-grid-3 > .cm-reveal:nth-child(3n + 2),
+.cm-gallery > .cm-reveal:nth-child(3n + 2),
+.cm-features > .cm-reveal:nth-child(2n),
+.cm-grid-2 > .cm-reveal:nth-child(2n),
+.cm-steps > .cm-reveal:nth-child(2) {
+    transition-delay: 0.1s;
+}
+
+.cm-grid-3 > .cm-reveal:nth-child(3n),
+.cm-gallery > .cm-reveal:nth-child(3n),
+.cm-steps > .cm-reveal:nth-child(3) {
+    transition-delay: 0.2s;
+}
+
+.cm-steps > .cm-reveal:nth-child(4) {
+    transition-delay: 0.3s;
+}
+
+/* Variante: entrada con leve escala para tarjetas con foto */
+.cm-tile.cm-reveal,
+.cm-product.cm-reveal {
+    transform: translateY(24px) scale(0.97);
+}
+
+.cm-tile.cm-reveal.is-visible,
+.cm-product.cm-reveal.is-visible {
+    transform: none;
+}
+
+/* Imágenes de bloques: se descubren al aparecer */
+.cm-media.cm-reveal .cm-media__img img {
+    transform: scale(1.12);
+    transition: transform 1.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.cm-media.cm-reveal.is-visible .cm-media__img img {
+    transform: scale(1);
+}
+
+.cm-media__img::after {
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.9s 0.3s ease;
+}
+
+.cm-reveal.is-visible .cm-media__img::after,
+.cm-media__img:not(.cm-reveal .cm-media__img)::after {
+    transform: scaleX(1);
+}
+
+/* Línea del subtítulo que crece */
+.cm-reveal .cm-eyebrow::before {
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.6s 0.2s ease;
+}
+
+.cm-reveal.is-visible .cm-eyebrow::before {
+    transform: scaleX(1);
+}
+
+/* Tarjetas: elevación y color al pasar el mouse */
+.cm-feature,
+.cm-card,
+.cm-place,
+.cm-tip,
+.cm-resource {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.7s ease;
+}
+
+.cm-feature:hover,
+.cm-place:hover,
+.cm-tip:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--cm-shadow-lg);
+    border-color: rgba(245, 129, 30, 0.35);
+}
+
+.cm-feature__icon,
+.cm-card__icon,
+.cm-step__icon {
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.cm-feature:hover .cm-feature__icon {
+    background: var(--cm-orange);
+    color: var(--cm-white);
+    transform: rotate(-6deg) scale(1.06);
+}
+
+.cm-step:hover .cm-step__icon,
+.cm-card:hover .cm-card__icon {
+    transform: rotate(-6deg) scale(1.06);
+}
+
+.cm-step {
+    transition: transform 0.25s ease, border-color 0.25s ease, opacity 0.7s ease;
+}
+
+.cm-step:hover {
+    transform: translateY(-4px);
+    border-color: rgba(245, 129, 30, 0.45);
+}
+
+/* Galería: el texto sube un poco al pasar el mouse */
+.cm-tile__caption {
+    transition: padding-bottom 0.3s ease;
+}
+
+.cm-tile:hover .cm-tile__caption {
+    padding-bottom: 28px;
+}
+
+/* Chips de zonas */
+.cm-chip {
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cm-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--cm-orange);
+    background: var(--cm-orange-l);
+}
+
+/* Botón flotante de WhatsApp: pulso suave cada pocos segundos */
+.whatsapp-float::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #25d366;
+    z-index: -1;
+    animation: cm-pulso 3s ease-out infinite;
+}
+
+@keyframes cm-pulso {
+    0% { transform: scale(1); opacity: 0.55; }
+    70%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Movimiento reducido: sin animaciones */
+@media (prefers-reduced-motion: reduce) {
+    .cm-page *,
+    .cm-page *::before,
+    .cm-page *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .cm-reveal,
+    .cm-tile.cm-reveal,
+    .cm-product.cm-reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .cm-media.cm-reveal .cm-media__img img,
+    .cm-media__img::after,
+    .cm-reveal .cm-eyebrow::before {
+        transform: none;
     }
 }

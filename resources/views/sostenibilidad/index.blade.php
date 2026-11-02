@@ -112,7 +112,7 @@
                             <strong>{{ $recurso['title'] }}</strong>
                             @if(! empty($recurso['source']))<small>{{ $recurso['source'] }}</small>@endif
                         </div>
-                        @if(! empty($recurso['link']))<i class="bi bi-box-arrow-up-right" style="margin-left: auto; color: var(--cm-muted)"></i>@endif
+                        @if(! empty($recurso['link']))@endif
                     @if(! empty($recurso['link']))
                         </a>
                     @else
@@ -131,13 +131,13 @@
             <div class="cm-card__icon"><i class="bi bi-buildings"></i></div>
             <h3>Nuestra experiencia</h3>
             <p style="margin: 0 0 18px">Obras de vivienda, salud e infraestructura que llevan nuestro concreto.</p>
-            <span class="cm-link-arrow">Ver proyectos <i class="bi bi-arrow-right"></i></span>
+            <span class="cm-link-arrow">Ver proyectos</span>
         </a>
         <a href="{{ route('concretips') }}" class="cm-card cm-reveal" style="text-decoration: none">
             <div class="cm-card__icon"><i class="bi bi-lightbulb"></i></div>
             <h3>Concretips</h3>
             <p style="margin: 0 0 18px; color: var(--cm-text)">Recomendaciones técnicas para que tu vaciado salga perfecto.</p>
-            <span class="cm-link-arrow">Ver recomendaciones <i class="bi bi-arrow-right"></i></span>
+            <span class="cm-link-arrow">Ver recomendaciones</span>
         </a>
     </div>
 </section>

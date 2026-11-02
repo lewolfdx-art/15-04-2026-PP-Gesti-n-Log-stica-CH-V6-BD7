@@ -120,6 +120,22 @@
             });
         }, { threshold: 0.15 });
         document.querySelectorAll('.cm-reveal').forEach(function (el) { observer.observe(el); });
+
+        // Encabezado compacto y barra de progreso al bajar (un solo cálculo por cuadro)
+        var header = document.querySelector('.cm-header');
+        var barra = document.querySelector('.cm-progress');
+        var pendiente = false;
+        var actualizar = function () {
+            var y = window.scrollY;
+            var alto = document.documentElement.scrollHeight - window.innerHeight;
+            if (header) header.classList.toggle('is-scrolled', y > 20);
+            if (barra) barra.style.transform = 'scaleX(' + (alto > 0 ? Math.min(y / alto, 1) : 0) + ')';
+            pendiente = false;
+        };
+        window.addEventListener('scroll', function () {
+            if (!pendiente) { pendiente = true; requestAnimationFrame(actualizar); }
+        }, { passive: true });
+        actualizar();
     });
 </script>
 

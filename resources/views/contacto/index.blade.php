@@ -7,7 +7,6 @@
 @section('content')
 @php
     $config = App\Models\Inicio::getActiveContent();
-    $enlaceWa = App\Models\Inicio::enlaceWhatsapp($config->whatsapp_number ?? null, 'Hola, quiero información sobre concreto premezclado.');
     $telefonos = collect([$config?->oficina_telefono, $config?->oficina_celular, $config?->atencion_asesora_comercial])->filter()->unique();
 @endphp
 
@@ -69,15 +68,7 @@
 
         {{-- Datos de contacto --}}
         <div class="cm-places">
-            @if($enlaceWa)
-                <a href="{{ $enlaceWa }}" target="_blank" rel="noopener" class="cm-place cm-reveal" style="text-decoration: none; background: var(--cm-wa)">
-                    <div class="cm-place__icon" style="background: rgba(255,255,255,.18); color: #fff"><i class="bi bi-whatsapp"></i></div>
-                    <div>
-                        <h3 style="color: #fff">Escríbenos por WhatsApp</h3>
-                        <p style="color: rgba(255,255,255,.9); margin: 0">Te respondemos al toque</p>
-                    </div>
-                </a>
-            @endif
+            {{-- WhatsApp: lo cubre el botón verde flotante, presente en todas las páginas --}}
             @if($telefonos->isNotEmpty())
                 <div class="cm-place cm-reveal">
                     <div class="cm-place__icon"><i class="bi bi-telephone"></i></div>
@@ -104,7 +95,7 @@
                     <div>
                         <h3>{{ $config->oficina_titulo ?? 'Oficina' }}</h3>
                         <p>{{ $config->oficina_direccion }}</p>
-                        @if($config->oficina_maps_url)<a href="{{ $config->oficina_maps_url }}" target="_blank" rel="noopener">Cómo llegar <i class="bi bi-arrow-up-right"></i></a>@endif
+                        @if($config->oficina_maps_url)<a href="{{ $config->oficina_maps_url }}" target="_blank" rel="noopener">Cómo llegar</a>@endif
                     </div>
                 </div>
             @endif

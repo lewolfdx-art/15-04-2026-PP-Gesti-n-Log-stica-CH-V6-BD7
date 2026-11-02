@@ -9,16 +9,19 @@
 @php
     $marca = trim($inicio->logo_text ?? '') ?: 'Concretera Mantaro';
     $beneficios = $inicio?->beneficios ?? [];
-    $obras = collect($inicio?->proyectos_recientes ?? [])->filter(fn ($o) => filled($o['title'] ?? null));
+    $obras = App\Models\Inicio::obrasRealizadas()->take(3);
     $operaciones = collect($inicio?->nuestras_operaciones ?? [])->filter(fn ($o) => filled($o['title'] ?? null));
     $cifras = collect($inicio?->cifras ?? [])->filter(fn ($c) => filled($c['valor'] ?? null))->take(6);
     $zonas = collect($inicio?->zonas_cobertura ?? [])->filter();
-    $whatsapp = App\Models\Inicio::enlaceWhatsapp($inicio->whatsapp_number ?? null, 'Hola, quiero cotizar concreto premezclado para mi obra.');
+    $telefonoLlamar = $inicio->oficina_celular ?? $inicio->oficina_telefono ?? null;
     $iconosOperacion = ['bi-buildings', 'bi-truck', 'bi-clipboard2-pulse', 'bi-bricks', 'bi-people'];
 @endphp
 
 {{-- ============ PORTADA ============ --}}
-<section class="cm-hero" @if($inicio?->hero_image) style="background-image: url('{{ Storage::url($inicio->hero_image) }}')" @endif>
+<section class="cm-hero">
+    @if($inicio?->hero_image)
+        <div class="cm-hero__bg" style="background-image: url('{{ Storage::url($inicio->hero_image) }}')" aria-hidden="true"></div>
+    @endif
     <div class="cm-container cm-hero__inner">
         <div>
             <div class="cm-hero__badge"><b>Valle del Mantaro</b> Concreto premezclado para tu obra</div>
@@ -28,8 +31,8 @@
             @endif
             <div class="cm-hero__buttons">
                 <a href="#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> {{ $inicio->cta_text ?? 'Cotiza tu obra' }}</a>
-                @if($whatsapp)
-                    <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="cm-btn cm-btn--ghost"><i class="bi bi-whatsapp"></i> Escríbenos por WhatsApp</a>
+                @if($telefonoLlamar)
+                    <a href="tel:{{ preg_replace('/\D/', '', $telefonoLlamar) }}" class="cm-btn cm-btn--ghost"><i class="bi bi-telephone"></i> Llámanos</a>
                 @endif
             </div>
             <ul class="cm-hero__checks">
@@ -137,13 +140,13 @@
                     <div class="cm-product__body">
                         <h3 class="cm-product__name">{{ $producto['name'] }}</h3>
                         <div class="cm-product__desc">{{ Str::limit(strip_tags($producto['description'] ?? ''), 160) }}</div>
-                        <span class="cm-link-arrow">Ver detalle <i class="bi bi-arrow-right"></i></span>
+                        <span class="cm-link-arrow">Ver detalle</span>
                     </div>
                 </a>
             @endforeach
         </div>
         <div class="cm-center">
-            <a href="{{ route('productos.index') }}" class="cm-btn cm-btn--dark">Ver todos los productos y servicios <i class="bi bi-arrow-right"></i></a>
+            <a href="{{ route('productos.index') }}" class="cm-btn cm-btn--dark">Ver todos los productos y servicios</a>
         </div>
     </div>
 </section>
@@ -227,7 +230,7 @@
             @endforeach
         </div>
         <div class="cm-center">
-            <a href="{{ route('experiencia') }}" class="cm-btn cm-btn--dark">Ver nuestra experiencia <i class="bi bi-arrow-right"></i></a>
+            <a href="{{ route('experiencia') }}" class="cm-btn cm-btn--dark">Ver nuestra experiencia</a>
         </div>
     </div>
 </section>
@@ -283,7 +286,7 @@
                     <div>
                         <h3>{{ $inicio->planta_titulo ?? 'Planta de producción' }}</h3>
                         @if($inicio->planta_ubicacion)<p>{{ $inicio->planta_ubicacion }}</p>@endif
-                        @if($inicio->planta_maps_url)<a href="{{ $inicio->planta_maps_url }}" target="_blank" rel="noopener">Cómo llegar <i class="bi bi-arrow-up-right"></i></a>@endif
+                        @if($inicio->planta_maps_url)<a href="{{ $inicio->planta_maps_url }}" target="_blank" rel="noopener">Cómo llegar</a>@endif
                     </div>
                 </div>
             @endif
@@ -293,7 +296,7 @@
                     <div>
                         <h3>{{ $inicio->oficina_titulo ?? 'Oficina' }}</h3>
                         <p>{{ $inicio->oficina_direccion }}</p>
-                        @if($inicio->oficina_maps_url)<a href="{{ $inicio->oficina_maps_url }}" target="_blank" rel="noopener">Cómo llegar <i class="bi bi-arrow-up-right"></i></a>@endif
+                        @if($inicio->oficina_maps_url)<a href="{{ $inicio->oficina_maps_url }}" target="_blank" rel="noopener">Cómo llegar</a>@endif
                     </div>
                 </div>
             @endif

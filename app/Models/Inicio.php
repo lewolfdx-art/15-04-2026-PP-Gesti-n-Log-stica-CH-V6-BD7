@@ -57,6 +57,21 @@ class Inicio extends Model
         return strlen($digitos) === 9 ? '51' . $digitos : $digitos;
     }
 
+    /**
+     * Obras de la portada (Proyectos recientes) y de Experiencia (Sostenibilidad) en una sola lista.
+     * Si la misma obra está en las dos, se queda la versión con foto. Primero las que tienen foto.
+     */
+    public static function obrasRealizadas(): \Illuminate\Support\Collection
+    {
+        return collect(static::getActiveContent()?->proyectos_recientes ?? [])
+            ->merge(Sostenibilidad::getActiveContent()?->proyectos_realizados ?? [])
+            ->filter(fn ($obra) => filled($obra['title'] ?? null))
+            ->groupBy(fn ($obra) => mb_strtolower(trim($obra['title'])))
+            ->map(fn ($iguales) => $iguales->first(fn ($obra) => ! empty($obra['image'])) ?? $iguales->first())
+            ->sortBy(fn ($obra) => empty($obra['image']) ? 1 : 0)
+            ->values();
+    }
+
     public static function enlaceWhatsapp(?string $numero, ?string $mensaje = null): ?string
     {
         $numero = static::normalizarWhatsapp($numero);

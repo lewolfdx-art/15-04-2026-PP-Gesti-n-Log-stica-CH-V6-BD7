@@ -9,7 +9,7 @@
     $productos = App\Models\Producto::getActiveContent();
     $tiposConcreto = collect($productos?->tipos_concreto ?? [])->filter(fn ($p) => filled($p['name'] ?? null));
     $servicios = collect($productos?->servicios_complementarios ?? [])->filter(fn ($s) => filled($s['name'] ?? null));
-    $iconosServicio = ['bi-box-seam', 'bi-truck', 'bi-arrow-up-right-circle', 'bi-tools'];
+    $iconosServicio = ['bi-box-seam', 'bi-truck', 'bi-water', 'bi-tools'];
 @endphp
 
 @include('web.partials.page-hero', [
@@ -42,7 +42,7 @@
                                 <span class="cm-price">Desde S/ {{ number_format($producto['price'], 2) }} por m³</span>
                             @endif
                             <div class="cm-prose" style="font-size: 15px; line-height: 1.65; margin-bottom: 18px">{!! str($producto['description'] ?? '')->sanitizeHtml() !!}</div>
-                            <a href="{{ route('home') }}#cotizar" class="cm-link-arrow" style="text-decoration: none">Cotizar este concreto <i class="bi bi-arrow-right"></i></a>
+                            <a href="{{ route('home') }}#cotizar" class="cm-link-arrow" style="text-decoration: none">Cotizar este concreto</a>
                         </div>
                     </article>
                 @endforeach

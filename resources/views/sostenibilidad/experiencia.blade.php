@@ -6,7 +6,7 @@
 
 @section('content')
 @php
-    $obras = collect($proyectos ?? [])->filter(fn ($p) => filled($p['title'] ?? null));
+    $obras = App\Models\Inicio::obrasRealizadas();
     $iconos = ['bi-hospital', 'bi-buildings', 'bi-water', 'bi-house', 'bi-bricks', 'bi-signpost-split'];
 @endphp
 

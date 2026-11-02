@@ -13,6 +13,7 @@
 @endphp
 
 <header class="cm-header" x-data="{ menu: false }">
+    <div class="cm-progress" aria-hidden="true"></div>
     <div class="cm-container cm-header__inner">
         <a href="{{ route('home') }}" class="cm-brand" aria-label="{{ $nombreMarca }}, ir al inicio">
             @if($config && $config->logo_image)
