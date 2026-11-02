@@ -87,14 +87,15 @@ class PagoPersonal extends Model
     }
 
     /**
-     * Contratos del asesor en el período cuya comisión aún no se pagó.
+     * Contratos del asesor hasta el fin del período cuya comisión aún no se pagó,
+     * incluidas las de quincenas anteriores que quedaron pendientes.
      * Los contratos guardan el nombre del vendedor como texto.
      */
-    public static function contratosPendientesDeComision(Trabajador $asesor, Carbon $desde, Carbon $hasta): Collection
+    public static function contratosPendientesDeComision(Trabajador $asesor, Carbon $hasta): Collection
     {
         return Contrato::query()
             ->where('nombre_vendedor', $asesor->nombre_completo)
-            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->whereDate('fecha', '<=', $hasta->toDateString())
             ->whereNull('pago_comision_id')
             ->where('comision', '>', 0)
             ->orderBy('fecha')
@@ -110,9 +111,9 @@ class PagoPersonal extends Model
             return round(((float) $trabajador->sueldo_mensual) / 2, 2);
         }
 
-        [$desde, $hasta] = static::periodo($anio, $mes, $quincena);
+        [, $hasta] = static::periodo($anio, $mes, $quincena);
 
-        return round((float) static::contratosPendientesDeComision($trabajador, $desde, $hasta)->sum('comision'), 2);
+        return round((float) static::contratosPendientesDeComision($trabajador, $hasta)->sum('comision'), 2);
     }
 
     /**
@@ -139,9 +140,12 @@ class PagoPersonal extends Model
 
             $contratos = collect();
             if ($tipo === 'comision') {
-                $contratos = static::contratosPendientesDeComision($trabajador, $desde, $hasta);
+                $contratos = static::contratosPendientesDeComision($trabajador, $hasta);
                 Contrato::whereKey($contratos->modelKeys())->lockForUpdate()->get();
-                $montoBase = round((float) $contratos->sum('comision'), 2);
+                // Sin contratos pendientes se acepta un monto a mano (comisión acordada fuera del sistema)
+                $montoBase = $contratos->isNotEmpty()
+                    ? round((float) $contratos->sum('comision'), 2)
+                    : round((float) ($datos['monto_base'] ?? 0), 2);
             } else {
                 // El sueldo de la quincena se puede ajustar (días no trabajados, ingreso a mitad de mes, etc.)
                 $montoBase = round((float) ($datos['monto_base'] ?? static::montoBase($trabajador, $anio, $mes, $quincena)), 2);
@@ -153,7 +157,7 @@ class PagoPersonal extends Model
 
             if ($montoBase <= 0) {
                 throw new InvalidArgumentException($tipo === 'comision'
-                    ? 'El asesor no tiene comisiones pendientes en esta quincena.'
+                    ? 'El asesor no tiene comisiones pendientes. Ingresa el monto a pagar.'
                     : 'El trabajador no tiene sueldo registrado. Ingresa el monto o regístralo en su ficha.');
             }
 

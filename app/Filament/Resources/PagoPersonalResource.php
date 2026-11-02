@@ -97,6 +97,16 @@ class PagoPersonalResource extends Resource
         $recalcular = fn (Get $get, Set $set) => static::recalcularMonto($get, $set);
         $trabajador = fn (Get $get): ?Trabajador => Trabajador::find($get('trabajador_id'));
         $esComision = fn (Get $get): bool => ($t = $trabajador($get)) && PagoPersonal::tipoPara($t) === 'comision';
+        // Con contratos pendientes el total sale de ellos; sin contratos se escribe a mano
+        $comisionCalculada = function (Get $get) use ($trabajador, $esComision): bool {
+            if (! $esComision($get) || ! $get('anio') || ! $get('mes') || ! $get('quincena')) {
+                return false;
+            }
+
+            [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
+
+            return PagoPersonal::contratosPendientesDeComision($trabajador($get), $hasta)->isNotEmpty();
+        };
 
         return $schema
             ->components([
@@ -154,7 +164,7 @@ class PagoPersonalResource extends Resource
                                 $icono = svg($esComision ? 'heroicon-o-briefcase' : 'heroicon-o-user', 'h-5 w-5 shrink-0 text-primary-500')->toHtml();
 
                                 return new HtmlString('<span style="display:inline-flex;align-items:flex-start;gap:6px">' . $icono . '<span>' . ($esComision
-                                    ? '<b>Asesor de ventas</b>: se paga la comisión de sus contratos de la quincena que aún no fueron pagados.'
+                                    ? '<b>Asesor de ventas</b>: se paga la comisión de sus contratos que aún no fueron pagados, incluidos los de quincenas anteriores.'
                                     : '<b>Sueldo fijo</b>: ' . ($t->sueldo_mensual
                                         ? 'sueldo mensual S/ ' . number_format((float) $t->sueldo_mensual, 2) . ', la quincena es la mitad. Puedes ajustarla.'
                                         : '<span style="color:#dc2626">no tiene sueldo registrado en su ficha</span>; ingresa el monto de la quincena.')) . '</span></span>');
@@ -162,7 +172,7 @@ class PagoPersonalResource extends Resource
                             ->columnSpanFull(),
 
                         TextEntry::make('contratos_preview')
-                            ->label('Contratos de la quincena')
+                            ->label('Contratos con comisión pendiente')
                             ->visible($esComision)
                             ->state(function (Get $get) use ($trabajador): HtmlString {
                                 $t = $trabajador($get);
@@ -170,12 +180,12 @@ class PagoPersonalResource extends Resource
                                     return new HtmlString('');
                                 }
 
-                                [$desde, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
-                                $contratos = PagoPersonal::contratosPendientesDeComision($t, $desde, $hasta);
+                                [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
+                                $contratos = PagoPersonal::contratosPendientesDeComision($t, $hasta);
 
                                 if ($contratos->isEmpty()) {
-                                    return new HtmlString('<span style="color:#6b7280">No hay contratos con comisión pendiente entre el '
-                                        . $desde->format('d/m') . ' y el ' . $hasta->format('d/m/Y') . '.</span>');
+                                    return new HtmlString('<span style="color:#6b7280">No tiene contratos con comisión pendiente hasta el '
+                                        . $hasta->format('d/m/Y') . '. Si se le debe algo, escribe el monto abajo.</span>');
                                 }
 
                                 $filas = $contratos->map(fn ($c) => '<tr><td style="padding:4px 8px">' . e($c->fecha?->format('d/m/Y'))
@@ -194,11 +204,12 @@ class PagoPersonalResource extends Resource
 
                         TextInput::make('monto_base')
                             ->label(fn (Get $get) => $esComision($get) ? 'Total de comisiones' : 'Sueldo de la quincena')
+                            ->helperText(fn (Get $get): ?string => $comisionCalculada($get) ? 'Suma de los contratos de arriba.' : null)
                             ->prefix('S/')
                             ->numeric()
                             ->minValue(0)
                             ->required()
-                            ->readOnly($esComision)
+                            ->readOnly($comisionCalculada)
                             ->live(onBlur: true),
 
                         TextInput::make('adicionales')
