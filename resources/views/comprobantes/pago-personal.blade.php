@@ -82,8 +82,6 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
 
 .d-obs { margin-top: 14px; font-size: 11px; color: #4b5563; }
 
-.d-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin: 60px 30px 10px; text-align: center; font-size: 11px; }
-.d-firmas div { border-top: 1px solid #1b2430; padding-top: 6px; }
 
 .d-foot { display: flex; justify-content: space-between; align-items: stretch; margin-top: 16px; }
 .d-foot .l { padding: 0 16px 14px; align-self: flex-end; font-size: 10px; color: #6b7280; }
@@ -231,11 +229,6 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
         @if ($pago->observacion)
             <div class="d-obs"><b>Observación:</b> {{ $pago->observacion }}</div>
         @endif
-
-        <div class="d-firmas">
-            <div>Recibí conforme<br><b>{{ $t->nombre_completo }}</b><br>DNI {{ $t->dni ?: '________' }}</div>
-            <div>Entregado por<br><b>{{ $pago->registradoPor?->name ?? $empresa['razon_social'] }}</b><br>{{ $pago->pagado_at?->format('d/m/Y') ?? 'Pendiente de entrega' }}</div>
-        </div>
     </div>
 
     <div class="d-foot">
