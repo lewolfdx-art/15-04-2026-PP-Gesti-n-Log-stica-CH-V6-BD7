@@ -53,7 +53,7 @@ class IngresoResource extends Resource
                         Tab::make('Información Principal')
                             ->schema([
                                 DatePicker::make('fecha')
-                                ->label('FECHA A VACIAR')
+                                ->label('Fecha del ingreso')
                                 ->default(now())
                                 ->required(),
 
@@ -66,10 +66,14 @@ class IngresoResource extends Resource
                                         'IN-OTROS'     => 'IN-OTROS',
                                     ]),
 
+                                // Igual que en Contratos: se escribe "1857" y se guarda "C-1857", así el ingreso se liga a su contrato
                                 TextInput::make('numero_contrato')
                                     ->label('N° Contrato')
                                     ->prefix('C-')
-                                    ->placeholder('S/C1857'),
+                                    ->placeholder('1857')
+                                    ->helperText('Déjalo vacío si el ingreso no es de un contrato.')
+                                    ->formatStateUsing(fn ($state) => filled($state) ? preg_replace('/^C-/i', '', (string) $state) : $state)
+                                    ->dehydrateStateUsing(fn ($state) => filled($state) ? 'C-' . preg_replace('/^C-/i', '', trim((string) $state)) : null),
 
                                 Select::make('asesor')
                                     ->label('Asesor')
