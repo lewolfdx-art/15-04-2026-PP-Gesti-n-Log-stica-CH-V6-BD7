@@ -1,181 +1,92 @@
 @extends('layouts.app')
 
-@section('title', 'Productos - Concretera Mantaro')
+@section('title', 'Productos y servicios | Concretera Mantaro')
+
+@section('pagina_completa', true)
 
 @section('content')
-    @php
-        $productos = App\Models\Producto::getActiveContent();
-        
-        $tiposConcreto = [];
-        $servicios = [];
-        
-        if ($productos) {
-            if ($productos->tipos_concreto) {
-                $tiposConcreto = is_array($productos->tipos_concreto) 
-                    ? $productos->tipos_concreto 
-                    : json_decode($productos->tipos_concreto, true);
-            }
-            if ($productos->servicios_complementarios) {
-                $servicios = is_array($productos->servicios_complementarios) 
-                    ? $productos->servicios_complementarios 
-                    : json_decode($productos->servicios_complementarios, true);
-            }
-        }
-    @endphp
+@php
+    $productos = App\Models\Producto::getActiveContent();
+    $tiposConcreto = collect($productos?->tipos_concreto ?? [])->filter(fn ($p) => filled($p['name'] ?? null));
+    $servicios = collect($productos?->servicios_complementarios ?? [])->filter(fn ($s) => filled($s['name'] ?? null));
+    $iconosServicio = ['bi-box-seam', 'bi-truck', 'bi-arrow-up-right-circle', 'bi-tools'];
+@endphp
 
-    <style>
-        .hero-products {
-            background: linear-gradient(135deg, var(--color-dark) 0%, #0f1a24 100%);
-            border-radius: 1rem;
-            padding: 3rem 2rem;
-            margin-bottom: 3rem;
-            text-align: center;
-            color: var(--color-white);
-            border-bottom: 3px solid var(--color-primary);
-        }
-        .hero-products h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-        .hero-products h1 span {
-            color: var(--color-primary);
-        }
-        .hero-products p {
-            font-size: 1.1rem;
-            max-width: 800px;
-            margin: 0 auto;
-            color: #e2e2e2;
-        }
-        .section-title {
-            font-size: 2rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-        .section-title span {
-            color: var(--color-primary);
-        }
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 3px;
-            background: var(--color-primary);
-            margin: 0.5rem auto 0;
-            border-radius: 2px;
-        }
-        .productos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        /* Enlace directo a un producto (/productos/lanzado → /productos#lanzado) */
-        .producto-card[id] {
-            scroll-margin-top: 110px;
-        }
-        .producto-card:target {
-            box-shadow: 0 0 0 3px var(--color-primary), 0 10px 25px rgba(0,0,0,0.12);
-        }
+@include('web.partials.page-hero', [
+    'titulo' => strip_tags($productos->page_title ?? 'Nuestros productos y servicios'),
+    'texto' => strip_tags($productos->page_description ?? 'Concreto premezclado y servicios complementarios para cada etapa de tu obra.'),
+    'miga' => 'Productos',
+    'acciones' => true,
+])
 
-        .producto-card {
-            background: white;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            border: 1px solid #eef2f5;
-        }
-        .producto-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-        .producto-card img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-        }
-        .producto-info {
-            padding: 1.5rem;
-        }
-        .producto-info h3 {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--color-dark);
-            margin-bottom: 0.75rem;
-        }
-        .producto-info .description {
-            color: #4b5563;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-        @media (max-width: 768px) {
-            .hero-products h1 { font-size: 1.8rem; }
-            .productos-grid { grid-template-columns: 1fr; }
-            .section-title { font-size: 1.5rem; }
-        }
-    </style>
-
-    @if($productos)
-        <!-- Hero -->
-        <div class="hero-products">
-            <h1>{{ $productos->page_title ?? 'Nuestros <span>Productos y Servicios</span>' }}</h1>
-            <p>{!! str($productos->page_description ?? 'Ofrecemos concreto premezclado y servicios complementarios para garantizar la excelencia en cada obra.')->sanitizeHtml() !!}</p>
-        </div>
-
-        <!-- ===================== TIPOS DE CONCRETO ===================== -->
-        @if(!empty($tiposConcreto) && count($tiposConcreto) > 0)
-            <h2 class="section-title">Tipos de <span>Concreto</span></h2>
-            <div class="productos-grid">
+{{-- Tipos de concreto. Cada tarjeta tiene id = slug: /productos/{slug} lleva aquí --}}
+@if($tiposConcreto->isNotEmpty())
+    <section class="cm-section">
+        <div class="cm-container">
+            <div class="cm-head cm-reveal">
+                <div class="cm-eyebrow">Tipos de concreto</div>
+                <h2 class="cm-h2">La mezcla correcta <span>para tu estructura</span></h2>
+                <p class="cm-lead">Diseñamos y controlamos cada mezcla en laboratorio según la resistencia y las condiciones de tu obra.</p>
+            </div>
+            <div class="cm-grid-3">
                 @foreach($tiposConcreto as $producto)
-                    <div class="producto-card" id="{{ Str::slug($producto['name'] ?? '') }}">
-                        @if(!empty($producto['image']))
-                            <img src="{{ Storage::url($producto['image']) }}" alt="{{ $producto['name'] }}">
+                    <article class="cm-product cm-reveal" id="{{ Str::slug($producto['name']) }}" style="scroll-margin-top: 110px">
+                        @if(! empty($producto['image']))
+                            <div class="cm-product__img"><img src="{{ Storage::url($producto['image']) }}" alt="Concreto {{ $producto['name'] }}" loading="lazy"></div>
                         @else
-                            <img src="{{ asset('img/placeholder-concreto.jpg') }}" alt="{{ $producto['name'] }}">
+                            <div class="cm-product__img cm-product__img--empty"><i class="bi bi-box-seam"></i></div>
                         @endif
-                        <div class="producto-info">
-                            <h3>{{ $producto['name'] }}</h3>
-                            <div class="description">{!! str($producto['description'])->sanitizeHtml() !!}</div>
-                            @if(!empty($producto['price']))
-                                <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($producto['price'], 2) }}</div>
+                        <div class="cm-product__body">
+                            <h3 class="cm-product__name">{{ $producto['name'] }}</h3>
+                            @if(! empty($producto['price']))
+                                <span class="cm-price">Desde S/ {{ number_format($producto['price'], 2) }} por m³</span>
                             @endif
+                            <div class="cm-prose" style="font-size: 15px; line-height: 1.65; margin-bottom: 18px">{!! str($producto['description'] ?? '')->sanitizeHtml() !!}</div>
+                            <a href="{{ route('home') }}#cotizar" class="cm-link-arrow" style="text-decoration: none">Cotizar este concreto <i class="bi bi-arrow-right"></i></a>
                         </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
-        @endif
-
-        <!-- ===================== SERVICIOS COMPLEMENTARIOS ===================== -->
-        @if(!empty($servicios) && count($servicios) > 0)
-            <h2 class="section-title">Servicios <span>Complementarios</span></h2>
-            <div class="productos-grid">
-                @foreach($servicios as $servicio)
-                    <div class="producto-card" id="{{ Str::slug($servicio['name'] ?? '') }}">
-                        @if(!empty($servicio['image']))
-                            <img src="{{ Storage::url($servicio['image']) }}" alt="{{ $servicio['name'] }}">
-                        @else
-                            <img src="{{ asset('img/placeholder-servicio.jpg') }}" alt="{{ $servicio['name'] }}">
-                        @endif
-                        <div class="producto-info">
-                            <h3>{{ $servicio['name'] }}</h3>
-                            <div class="description">{!! str($servicio['description'])->sanitizeHtml() !!}</div>
-                            @if(!empty($servicio['price']))
-                                <div class="text-[#f5811e] font-bold mt-2">S/ {{ number_format($servicio['price'], 2) }}</div>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @endif
-    @else
-        <div style="text-align: center; padding: 3rem;">
-            <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
-            <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
-            <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar los productos.</p>
-            <a href="{{ \App\Filament\Resources\ProductoResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
-    @endif
+    </section>
+@endif
+
+{{-- Servicios --}}
+@if($servicios->isNotEmpty())
+    <section class="cm-section cm-section--sand">
+        <div class="cm-container">
+            <div class="cm-head cm-reveal">
+                <div class="cm-eyebrow">Servicios</div>
+                <h2 class="cm-h2">Todo para tu vaciado <span>en un solo lugar</span></h2>
+            </div>
+            @foreach($servicios as $i => $servicio)
+                <div class="cm-media {{ $i % 2 ? 'cm-media--flip' : '' }} cm-reveal" id="{{ Str::slug($servicio['name']) }}" style="scroll-margin-top: 110px">
+                    <div>
+                        <div class="cm-card__icon"><i class="bi {{ $iconosServicio[$i % count($iconosServicio)] }}"></i></div>
+                        <h2 class="cm-h2" style="font-size: clamp(26px, 3vw, 34px)">{{ $servicio['name'] }}</h2>
+                        @if(! empty($servicio['price']))
+                            <span class="cm-price">Desde S/ {{ number_format($servicio['price'], 2) }}</span>
+                        @endif
+                        <div class="cm-prose" style="margin-bottom: 26px">{!! str($servicio['description'] ?? '')->sanitizeHtml() !!}</div>
+                        <a href="{{ route('home') }}#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> Solicitar este servicio</a>
+                    </div>
+                    @if(! empty($servicio['image']))
+                        <div class="cm-media__img"><img src="{{ Storage::url($servicio['image']) }}" alt="{{ $servicio['name'] }}" loading="lazy"></div>
+                    @else
+                        <div class="cm-media__img cm-media__img--empty"><i class="bi {{ $iconosServicio[$i % count($iconosServicio)] }}"></i></div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+@endif
+
+@if($tiposConcreto->isEmpty() && $servicios->isEmpty())
+    <section class="cm-section"><div class="cm-container cm-head"><p class="cm-lead">Pronto publicaremos nuestros productos.</p></div></section>
+@endif
+
+@include('web.partials.cta-final', [
+    'tituloCta' => '¿No sabes qué concreto necesitas?',
+    'textoCta' => 'Un asesor visita tu obra sin costo y te recomienda la mezcla ideal.',
+])
 @endsection

@@ -309,23 +309,5 @@
 </section>
 
 {{-- ============ LLAMADO FINAL ============ --}}
-<section class="cm-section" style="padding-top: 0">
-    <div class="cm-container">
-        <div class="cm-cta cm-reveal">
-            <div>
-                <h2>¿Listo para vaciar tu obra?</h2>
-                <p>Cuéntanos tu proyecto y te enviamos una cotización a la medida.</p>
-                <div class="cm-cta__buttons">
-                    <a href="#cotizar" class="cm-btn cm-btn--dark"><i class="bi bi-calculator"></i> Solicitar cotización</a>
-                    @if($whatsapp)
-                        <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="cm-btn cm-btn--ghost"><i class="bi bi-whatsapp"></i> WhatsApp</a>
-                    @endif
-                </div>
-            </div>
-            <div class="cm-cta__art" aria-hidden="true">
-                <img src="{{ asset('img/mixer.png') }}" alt="">
-            </div>
-        </div>
-    </div>
-</section>
+@include('web.partials.cta-final', ['config' => $inicio])
 @endsection

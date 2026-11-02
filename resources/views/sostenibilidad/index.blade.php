@@ -1,304 +1,146 @@
 @extends('layouts.app')
 
-@section('title', 'Sostenibilidad - Concretera Mantaro')
+@section('title', 'Sostenibilidad | Concretera Mantaro')
+
+@section('pagina_completa', true)
 
 @section('content')
-    @php
-        $sostenibilidad = App\Models\Sostenibilidad::getActiveContent();
-        
-        $politicaList = $sostenibilidad ? ($sostenibilidad->politica_ambiental_list ?? []) : [];
-        $seguridadList = $sostenibilidad ? ($sostenibilidad->seguridad_salud_list ?? []) : [];
-        $responsabilidadList = $sostenibilidad ? ($sostenibilidad->responsabilidad_social_list ?? []) : [];
-        $eppList = $sostenibilidad ? ($sostenibilidad->epp_list ?? []) : [];
-        $protocolosList = $sostenibilidad ? ($sostenibilidad->protocolos_list ?? []) : [];
-        $submodulosList = $sostenibilidad ? ($sostenibilidad->submodulos_list ?? []) : [];
-        $recursosAcademicos = $sostenibilidad ? ($sostenibilidad->recursos_academicos ?? []) : [];
-        $proyectos = $sostenibilidad ? ($sostenibilidad->proyectos_realizados ?? []) : [];
-        $recomendaciones = $sostenibilidad ? ($sostenibilidad->recomendaciones_tecnicas ?? []) : [];
-    @endphp
+@php
+    $s = $sostenibilidad;
+    $lista = fn ($valor) => collect($valor ?? [])->map(fn ($i) => is_array($i) ? ($i['item'] ?? null) : $i)->filter()->values();
+    $politicas = collect([
+        ['politica_ambiental', 'Política ambiental', 'bi-tree'],
+        ['seguridad_salud', 'Seguridad y salud ocupacional', 'bi-shield-check'],
+        ['responsabilidad_social', 'Responsabilidad social', 'bi-people'],
+    ])->map(fn ($p) => [
+        'titulo' => $s?->{$p[0] . '_title'} ?: $p[1],
+        'imagen' => $s?->{$p[0] . '_image'},
+        'icono'  => $p[2],
+        'items'  => $lista($s?->{$p[0] . '_list'}),
+    ])->filter(fn ($p) => $p['items']->isNotEmpty());
+    $epp = $lista($s?->epp_list);
+    $protocolos = $lista($s?->protocolos_list);
+    $submodulos = $lista($s?->submodulos_list);
+    $recursos = collect($s?->recursos_academicos ?? [])->filter(fn ($r) => filled($r['title'] ?? null));
+@endphp
 
-    <style>
-        .hero-sostenibilidad {
-            background: linear-gradient(135deg, var(--color-dark) 0%, #0f1a24 100%);
-            border-radius: 1rem;
-            padding: 3rem 2rem;
-            margin-bottom: 3rem;
-            text-align: center;
-            color: var(--color-white);
-            border-bottom: 3px solid var(--color-primary);
-        }
-        .hero-sostenibilidad h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-        .hero-sostenibilidad h1 span {
-            color: var(--color-primary);
-        }
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-        .section-title span {
-            color: var(--color-primary);
-        }
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 3px;
-            background: var(--color-primary);
-            margin: 0.5rem auto 0;
-            border-radius: 2px;
-        }
-        .tres-bloques {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        .bloque-card {
-            background: white;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        .bloque-card img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-        }
-        .bloque-card .content {
-            padding: 1.5rem;
-        }
-        .bloque-card h3 {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--color-primary);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        .bloque-card ul {
-            list-style: none;
-            padding: 0;
-        }
-        .bloque-card li {
-            padding: 0.5rem 0;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-        .bloque-card li::before {
-            content: "✓";
-            color: var(--color-primary);
-            position: absolute;
-            left: 0;
-            font-weight: bold;
-        }
-        .grid-2cols {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-        .lista-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        .lista-card h3 {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--color-primary);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        .lista-card ul {
-            list-style: none;
-            padding: 0;
-        }
-        .lista-card li {
-            padding: 0.5rem 0;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-        .lista-card li::before {
-            content: "•";
-            color: var(--color-primary);
-            position: absolute;
-            left: 0;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-        .recursos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        .recurso-item {
-            background: #f8f9fa;
-            border-radius: 0.75rem;
-            padding: 1rem;
-            border-left: 4px solid var(--color-primary);
-        }
-        .proyectos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        @media (max-width: 768px) {
-            .hero-sostenibilidad h1 { font-size: 1.8rem; }
-            .section-title { font-size: 1.4rem; }
-        }
-    </style>
+@include('web.partials.page-hero', [
+    'titulo' => 'Compromiso con la',
+    'resaltado' => 'sostenibilidad',
+    'texto' => strip_tags((string) ($s?->hero_description ?? '')) ?: 'Producimos concreto cuidando el ambiente, la seguridad de nuestro equipo y a las comunidades donde trabajamos.',
+    'imagen' => $s?->hero_image,
+    'miga' => 'Sostenibilidad',
+])
 
-    @if($sostenibilidad)
-        <!-- Hero -->
-        <div class="hero-sostenibilidad">
-            <h1>{{ $sostenibilidad->hero_title ?? 'COMPROMISO CON LA <span>SOSTENIBILIDAD</span>' }}</h1>
-            @if($sostenibilidad->hero_image)
-                <img src="{{ Storage::url($sostenibilidad->hero_image) }}" alt="Sostenibilidad" class="rounded-lg mb-4 max-h-96 w-full object-cover">
-            @endif
-            <div>{!! str($sostenibilidad->hero_description)->sanitizeHtml() !!}</div>
-        </div>
-
-        <!-- Tres Bloques Temáticos -->
-        <div class="tres-bloques">
-            <!-- Política Ambiental -->
-            <div class="bloque-card">
-                @if($sostenibilidad->politica_ambiental_image)
-                    <img src="{{ Storage::url($sostenibilidad->politica_ambiental_image) }}" alt="Política Ambiental">
-                @endif
-                <div class="content">
-                    <h3>{{ $sostenibilidad->politica_ambiental_title ?? 'Política Ambiental' }}</h3>
-                    <ul>
-                        @foreach($politicaList as $item)
-                            <li>{{ $item['item'] ?? $item }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+{{-- Políticas --}}
+@if($politicas->isNotEmpty())
+    <section class="cm-section">
+        <div class="cm-container">
+            <div class="cm-head cm-reveal">
+                <div class="cm-eyebrow">Nuestras políticas</div>
+                <h2 class="cm-h2">Cómo trabajamos <span>de forma responsable</span></h2>
             </div>
-
-            <!-- Seguridad y Salud -->
-            <div class="bloque-card">
-                @if($sostenibilidad->seguridad_salud_image)
-                    <img src="{{ Storage::url($sostenibilidad->seguridad_salud_image) }}" alt="Seguridad y Salud">
-                @endif
-                <div class="content">
-                    <h3>{{ $sostenibilidad->seguridad_salud_title ?? 'Seguridad y Salud Ocupacional' }}</h3>
-                    <ul>
-                        @foreach($seguridadList as $item)
-                            <li>{{ $item['item'] ?? $item }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Responsabilidad Social -->
-            <div class="bloque-card">
-                @if($sostenibilidad->responsabilidad_social_image)
-                    <img src="{{ Storage::url($sostenibilidad->responsabilidad_social_image) }}" alt="Responsabilidad Social">
-                @endif
-                <div class="content">
-                    <h3>{{ $sostenibilidad->responsabilidad_social_title ?? 'Responsabilidad Social' }}</h3>
-                    <ul>
-                        @foreach($responsabilidadList as $item)
-                            <li>{{ $item['item'] ?? $item }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Seguridad en el Trabajo -->
-        <h2 class="section-title">SEGURIDAD EN EL <span>TRABAJO</span></h2>
-        <div class="grid-2cols">
-            <div class="lista-card">
-                <h3>Equipos de Protección Personal (EPP)</h3>
-                <ul>
-                    @foreach($eppList as $item)
-                        <li>{{ $item['item'] ?? $item }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            <div class="lista-card">
-                <h3>Otros Protocolos</h3>
-                <ul>
-                    @foreach($protocolosList as $item)
-                        <li>{{ $item['item'] ?? $item }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-
-        <!-- Submódulos ERP -->
-        <h2 class="section-title">SUBMÓDULOS DE GESTIÓN DE <span>SEGURIDAD (ERP)</span></h2>
-        <div class="grid-2cols">
-            @foreach($submodulosList as $item)
-                <div class="lista-card">
-                    <h3>{{ $item['item'] ?? $item }}</h3>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Recursos Académicos y Normativos -->
-        <h2 class="section-title">RECURSOS ACADÉMICOS Y <span>NORMATIVOS</span></h2>
-        <div class="recursos-grid">
-            @foreach($recursosAcademicos as $recurso)
-                <div class="recurso-item">
-                    <strong>{{ $recurso['title'] ?? '' }}</strong><br>
-                    <small>Fuente: {{ $recurso['source'] ?? '' }}</small>
-                    @if(!empty($recurso['link']))
-                        <br><a href="{{ $recurso['link'] }}" target="_blank" class="text-[#f5811e] text-sm">Ver documento →</a>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Proyectos Realizados -->
-        @if(!empty($proyectos))
-            <h2 class="section-title">PROYECTOS <span>REALIZADOS</span></h2>
-            <div class="proyectos-grid">
-                @foreach($proyectos as $proyecto)
-                    <div class="bloque-card">
-                        @if(!empty($proyecto['image']))
-                            <img src="{{ Storage::url($proyecto['image']) }}" alt="{{ $proyecto['title'] }}">
+            <div class="cm-grid-3">
+                @foreach($politicas as $i => $politica)
+                    <div class="cm-card {{ $i === 1 ? 'cm-card--dark' : '' }} cm-reveal">
+                        @if($politica['imagen'])
+                            <div class="cm-card__img"><img src="{{ Storage::url($politica['imagen']) }}" alt="{{ $politica['titulo'] }}" loading="lazy"></div>
+                        @else
+                            <div class="cm-card__icon"><i class="bi {{ $politica['icono'] }}"></i></div>
                         @endif
-                        <div class="content">
-                            <h3>{{ $proyecto['title'] }}</h3>
-                            <p>{{ $proyecto['description'] ?? '' }}</p>
-                        </div>
+                        <h3>{{ $politica['titulo'] }}</h3>
+                        <ul class="cm-list">
+                            @foreach($politica['items'] as $item)
+                                <li><i class="bi bi-check-circle-fill"></i> {{ $item }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endforeach
             </div>
-        @endif
-
-        <!-- Recomendaciones Técnicas -->
-        @if(!empty($recomendaciones))
-            <h2 class="section-title">RECOMENDACIONES TÉCNICAS PARA <span>CONSTRUCCIÓN</span></h2>
-            @foreach($recomendaciones as $recomendacion)
-                <div class="bloque-card" style="margin-bottom: 1.5rem;">
-                    @if(!empty($recomendacion['image']))
-                        <img src="{{ Storage::url($recomendacion['image']) }}" alt="{{ $recomendacion['title'] }}">
-                    @endif
-                    <div class="content">
-                        <h3>{{ $recomendacion['title'] }}</h3>
-                        <div>{!! str($recomendacion['description'])->sanitizeHtml() !!}</div>
-                    </div>
-                </div>
-            @endforeach
-        @endif
-
-    @else
-        <div style="text-align: center; padding: 3rem;">
-            <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
-            <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
-            <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar el contenido de Sostenibilidad.</p>
-            <a href="{{ \App\Filament\Resources\SostenibilidadResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
         </div>
-    @endif
+    </section>
+@endif
+
+{{-- Seguridad en obra --}}
+@if($epp->isNotEmpty() || $protocolos->isNotEmpty() || $submodulos->isNotEmpty())
+    <section class="cm-section cm-section--sand">
+        <div class="cm-container cm-split">
+            <div class="cm-sticky cm-reveal">
+                <div class="cm-eyebrow">Seguridad en obra</div>
+                <h2 class="cm-h2">Cada vaciado, <span>sin accidentes</span></h2>
+                <p class="cm-lead">Nuestro personal trabaja con equipo de protección completo y protocolos claros en planta y en obra.</p>
+            </div>
+            <div style="display: grid; gap: 26px">
+                @foreach([
+                    ['Equipo de protección personal', 'bi-cone-striped', $epp],
+                    ['Protocolos de seguridad', 'bi-clipboard-check', $protocolos],
+                    ['Programas de gestión', 'bi-diagram-3', $submodulos],
+                ] as [$titulo, $icono, $items])
+                    @if($items->isNotEmpty())
+                        <div class="cm-reveal">
+                            <h3 style="font-size: 18px; font-weight: 800; color: var(--cm-ink); margin: 0 0 14px">{{ $titulo }}</h3>
+                            <div class="cm-tags">
+                                @foreach($items as $item)
+                                    <span class="cm-tag"><i class="bi {{ $icono }}"></i> {{ $item }}</span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    </section>
+@endif
+
+{{-- Normas y recursos --}}
+@if($recursos->isNotEmpty())
+    <section class="cm-section">
+        <div class="cm-container">
+            <div class="cm-head cm-reveal">
+                <div class="cm-eyebrow">Normas y referencias</div>
+                <h2 class="cm-h2">Trabajamos <span>bajo norma</span></h2>
+            </div>
+            <div class="cm-grid-2">
+                @foreach($recursos as $recurso)
+                    @if(! empty($recurso['link']))
+                        <a href="{{ $recurso['link'] }}" target="_blank" rel="noopener" class="cm-resource cm-reveal">
+                    @else
+                        <div class="cm-resource cm-reveal">
+                    @endif
+                        <div class="cm-resource__icon"><i class="bi bi-journal-bookmark"></i></div>
+                        <div>
+                            <strong>{{ $recurso['title'] }}</strong>
+                            @if(! empty($recurso['source']))<small>{{ $recurso['source'] }}</small>@endif
+                        </div>
+                        @if(! empty($recurso['link']))<i class="bi bi-box-arrow-up-right" style="margin-left: auto; color: var(--cm-muted)"></i>@endif
+                    @if(! empty($recurso['link']))
+                        </a>
+                    @else
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+    </section>
+@endif
+
+{{-- Más de la sección --}}
+<section class="cm-section cm-section--sand">
+    <div class="cm-container cm-grid-2">
+        <a href="{{ route('experiencia') }}" class="cm-card cm-card--dark cm-reveal" style="text-decoration: none">
+            <div class="cm-card__icon"><i class="bi bi-buildings"></i></div>
+            <h3>Nuestra experiencia</h3>
+            <p style="margin: 0 0 18px">Obras de vivienda, salud e infraestructura que llevan nuestro concreto.</p>
+            <span class="cm-link-arrow">Ver proyectos <i class="bi bi-arrow-right"></i></span>
+        </a>
+        <a href="{{ route('concretips') }}" class="cm-card cm-reveal" style="text-decoration: none">
+            <div class="cm-card__icon"><i class="bi bi-lightbulb"></i></div>
+            <h3>Concretips</h3>
+            <p style="margin: 0 0 18px; color: var(--cm-text)">Recomendaciones técnicas para que tu vaciado salga perfecto.</p>
+            <span class="cm-link-arrow">Ver recomendaciones <i class="bi bi-arrow-right"></i></span>
+        </a>
+    </div>
+</section>
+
+@include('web.partials.cta-final', ['conFondo' => true])
 @endsection
