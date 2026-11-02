@@ -1,380 +1,331 @@
 @extends('layouts.app')
 
-@section('title', 'Inicio - Concretera Mantaro')
+@section('title', 'Concreto premezclado en Huancayo | ' . (trim($inicio->logo_text ?? '') ?: 'Concretera Mantaro'))
+
+{{-- Diseño nuevo: secciones a todo el ancho --}}
+@section('pagina_completa', true)
 
 @section('content')
-    @php
-        $inicio = App\Models\Inicio::getActiveContent();
-        
-        $beneficios = [];
-        $proyectos = [];
-        $operaciones = [];
-        
-        if ($inicio) {
-            if ($inicio->beneficios) {
-                $beneficios = is_array($inicio->beneficios) ? $inicio->beneficios : json_decode($inicio->beneficios, true);
-            }
-            if ($inicio->proyectos_recientes) {
-                $proyectos = is_array($inicio->proyectos_recientes) ? $inicio->proyectos_recientes : json_decode($inicio->proyectos_recientes, true);
-            }
-            if ($inicio->nuestras_operaciones) {
-                $operaciones = is_array($inicio->nuestras_operaciones) ? $inicio->nuestras_operaciones : json_decode($inicio->nuestras_operaciones, true);
-            }
-        }
-    @endphp
+@php
+    $marca = trim($inicio->logo_text ?? '') ?: 'Concretera Mantaro';
+    $beneficios = $inicio?->beneficios ?? [];
+    $obras = collect($inicio?->proyectos_recientes ?? [])->filter(fn ($o) => filled($o['title'] ?? null));
+    $operaciones = collect($inicio?->nuestras_operaciones ?? [])->filter(fn ($o) => filled($o['title'] ?? null));
+    $cifras = collect($inicio?->cifras ?? [])->filter(fn ($c) => filled($c['valor'] ?? null))->take(6);
+    $zonas = collect($inicio?->zonas_cobertura ?? [])->filter();
+    $whatsapp = App\Models\Inicio::enlaceWhatsapp($inicio->whatsapp_number ?? null, 'Hola, quiero cotizar concreto premezclado para mi obra.');
+    $iconosOperacion = ['bi-buildings', 'bi-truck', 'bi-clipboard2-pulse', 'bi-bricks', 'bi-people'];
+@endphp
 
-    <style>
-        /* Nuevos colores corporativos */
-        :root {
-            --color-primary: #f5811e;
-            --color-primary-dark: #e06e0a;
-            --color-dark: #16222e;
-            --color-gold: #ddb31f;
-            --color-terracota: #da914f;
-            --color-gray-mid: #808185;
-            --color-white: #fcfcfc;
-        }
-
-        .hero-custom {
-            background: linear-gradient(135deg, var(--color-dark) 0%, #0f1a24 100%);
-            border-radius: 1rem;
-            padding: 3rem 2rem;
-            margin-bottom: 3rem;
-            text-align: center;
-            color: var(--color-white);
-            border-bottom: 3px solid var(--color-primary);
-        }
-        .hero-custom h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
-        }
-        .hero-custom h1 span {
-            color: var(--color-primary);
-        }
-        .hero-custom p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto 1.5rem auto;
-            color: #e2e2e2;
-        }
-        .btn-cotizar {
-            background-color: var(--color-primary);
-            color: var(--color-white);
-            padding: 0.75rem 2rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            display: inline-block;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .btn-cotizar:hover {
-            background-color: var(--color-primary-dark);
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(245, 129, 30, 0.4);
-        }
-        .beneficios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-        .beneficio-card-custom {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border-top: 4px solid var(--color-primary);
-        }
-        .beneficio-card-custom:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        .beneficio-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem auto;
-            background: linear-gradient(135deg, #fff5eb, #ffe8d6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .beneficio-icon i {
-            font-size: 2.5rem;
-            color: var(--color-primary);
-        }
-        .beneficio-card-custom h3 {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--color-dark);
-            margin-bottom: 0.75rem;
-        }
-        .beneficio-card-custom p {
-            color: #4b5563;
-        }
-        .section-title {
-            font-size: 2rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-        .section-title span {
-            color: var(--color-primary);
-        }
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 3px;
-            background: var(--color-primary);
-            margin: 0.5rem auto 0;
-            border-radius: 2px;
-        }
-        .operaciones-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-        .operacion-card {
-            background: white;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border-bottom: 3px solid var(--color-gold);
-        }
-        .operacion-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        .operacion-card img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-        }
-        .operacion-card .info {
-            padding: 1.25rem;
-        }
-        .operacion-card h3 {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--color-primary);
-            margin-bottom: 0.5rem;
-        }
-        .operacion-card p {
-            color: #4b5563;
-            font-size: 0.9rem;
-        }
-        .proyectos-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #eef2f5 100%);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            margin-bottom: 3rem;
-        }
-        .proyectos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-        .proyecto-card {
-            background: white;
-            border-left: 8px solid var(--color-primary);
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-        }
-        .proyecto-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .proyecto-card h3 {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--color-primary);
-            margin-bottom: 0.5rem;
-        }
-        .proyecto-card p {
-            color: #4b5563;
-        }
-
-        /* ========== CARRUSEL INFINITO DE EQUIPOS ========== */
-        .carousel-equipos {
-            width: 100%;
-            overflow-x: hidden;
-            background: transparent;
-            padding: 30px 0;
-            margin: 0 0 40px 0;
-            border-top: 2px solid rgba(245, 129, 30, 0.3);
-            border-bottom: 2px solid rgba(245, 129, 30, 0.3);
-        }
-
-        .carousel-equipos__contenedor {
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .carousel-equipos__grupo {
-            display: flex;
-            align-items: center;
-            gap: 100px;
-            width: fit-content;
-            animation: desplazarEquipos 8s infinite linear;
-        }
-
-        .carousel-equipos__img {
-            height: 90px;
-            width: auto;
-            transition: all 0.3s ease;
-            filter: brightness(0.9) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
-        }
-
-        .carousel-equipos__img:hover {
-            transform: scale(1.15);
-            filter: brightness(1) drop-shadow(0 0 15px rgba(245, 129, 30, 0.5));
-        }
-
-        @keyframes desplazarEquipos {
-            0% {
-                transform: translateX(0);
-            }
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        /* Efecto de desvanecimiento en los bordes */
-        .carousel-equipos__contenedor {
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        }
-
-        @media (max-width: 768px) {
-            .hero-custom h1 { font-size: 1.8rem; }
-            .operaciones-grid { grid-template-columns: 1fr; }
-            .beneficios-grid { grid-template-columns: 1fr; }
-            .proyectos-grid { grid-template-columns: 1fr; }
-            .section-title { font-size: 1.5rem; }
-            .carousel-equipos__grupo {
-                gap: 50px;
-            }
-            .carousel-equipos__img {
-                height: 55px;
-            }
-            .carousel-equipos {
-                padding: 20px 0;
-            }
-            .carousel-equipos__grupo {
-                animation: desplazarEquipos 5s infinite linear;
-            }
-        }
-    </style>
-
-    @if($inicio)
-        <!-- Hero principal -->
-        <div class="hero-custom">
-            <h1>{!! str($inicio->hero_title ?? 'Concreto <span>Premezclado</span> de Alta Calidad')->sanitizeHtml() !!}</h1>
-            <p>{{ $inicio->hero_description ?? 'Para obras y proyectos en Huancayo y toda la región' }}</p>
-            @if($inicio->cta_text && $inicio->cta_url)
-                <a href="{{ $inicio->cta_url }}" class="btn-cotizar">
-                    {{ $inicio->cta_text }}
-                </a>
+{{-- ============ PORTADA ============ --}}
+<section class="cm-hero" @if($inicio?->hero_image) style="background-image: url('{{ Storage::url($inicio->hero_image) }}')" @endif>
+    <div class="cm-container cm-hero__inner">
+        <div>
+            <div class="cm-hero__badge"><b>Valle del Mantaro</b> Concreto premezclado para tu obra</div>
+            <h1>{!! str($inicio->hero_title ?? 'Concreto <span>premezclado</span> de alta calidad')->sanitizeHtml() !!}</h1>
+            @if($inicio?->hero_description)
+                <p class="cm-hero__text">{{ $inicio->hero_description }}</p>
             @endif
+            <div class="cm-hero__buttons">
+                <a href="#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> {{ $inicio->cta_text ?? 'Cotiza tu obra' }}</a>
+                @if($whatsapp)
+                    <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="cm-btn cm-btn--ghost"><i class="bi bi-whatsapp"></i> Escríbenos por WhatsApp</a>
+                @endif
+            </div>
+            <ul class="cm-hero__checks">
+                <li><i class="bi bi-patch-check-fill"></i> Visita técnica sin costo</li>
+                <li><i class="bi bi-clock-fill"></i> Entrega puntual programada</li>
+                <li><i class="bi bi-shield-fill-check"></i> Control de calidad en cada vaciado</li>
+            </ul>
         </div>
 
-        <!-- Proyectos Recientes -->
-        @if(!empty($proyectos) && count($proyectos) > 0)
-        <div class="proyectos-section">
-            <h2 class="section-title">Proyectos <span>Recientes</span></h2>
-            <div class="proyectos-grid">
-                @foreach($proyectos as $proyecto)
-                    <div class="proyecto-card">
-                        @if(!empty($proyecto['image']))
-                            <img src="{{ Storage::url($proyecto['image']) }}" 
-                                 alt="{{ $proyecto['title'] }}"
-                                 class="w-full h-48 object-cover rounded-lg mb-3">
-                        @else
-                            <img src="{{ asset('img/placeholder.jpg') }}" 
-                                 alt="Sin imagen"
-                                 class="w-full h-48 object-cover rounded-lg mb-3">
-                        @endif
-                        <h3>{{ $proyecto['title'] }}</h3>
-                        <p>{{ $proyecto['description'] }}</p>
+        {{-- Cotización rápida: llega a Mensajes de contacto y avisa a los administradores --}}
+        <div class="cm-quote" id="cotizar">
+            <h2 class="cm-quote__title">Cotiza tu obra</h2>
+            <p class="cm-quote__sub">Déjanos tus datos y un asesor te llama para coordinar la visita técnica.</p>
+
+            @if(session('cotizacion_enviada'))
+                <div class="cm-alert"><i class="bi bi-check-circle-fill"></i>
+                    <span>¡Listo! Recibimos tu solicitud. Un asesor te llamará muy pronto.</span>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('cotizacion-rapida.store') }}" novalidate>
+                @csrf
+                <div class="cm-trap" aria-hidden="true">
+                    <label>No llenar <input type="text" name="sitio_web" tabindex="-1" autocomplete="off"></label>
+                </div>
+                <div class="cm-form-grid">
+                    <div class="cm-field">
+                        <label for="q-nombre">Nombre *</label>
+                        <input id="q-nombre" name="nombre" value="{{ old('nombre') }}" required maxlength="120" autocomplete="name" placeholder="Tu nombre">
+                        @error('nombre')<span class="cm-field__error">{{ $message }}</span>@enderror
                     </div>
-                @endforeach
-            </div>
+                    <div class="cm-field">
+                        <label for="q-telefono">Celular *</label>
+                        <input id="q-telefono" name="telefono" value="{{ old('telefono') }}" required inputmode="tel" autocomplete="tel" placeholder="9XX XXX XXX">
+                        @error('telefono')<span class="cm-field__error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="cm-field cm-field--full">
+                        <label for="q-lugar">Lugar de la obra *</label>
+                        <input id="q-lugar" name="lugar" value="{{ old('lugar') }}" required maxlength="160" placeholder="Distrito y referencia (ej. El Tambo, Av. Huancavelica)">
+                        @error('lugar')<span class="cm-field__error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="cm-field">
+                        <label for="q-volumen">m³ aproximados</label>
+                        <input id="q-volumen" name="volumen" type="number" step="0.5" min="0.5" value="{{ old('volumen') }}" placeholder="Ej. 12">
+                        @error('volumen')<span class="cm-field__error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="cm-field">
+                        <label for="q-fecha">Fecha tentativa</label>
+                        <input id="q-fecha" name="fecha" type="date" min="{{ today()->toDateString() }}" value="{{ old('fecha') }}">
+                        @error('fecha')<span class="cm-field__error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="cm-field cm-field--full">
+                        <label for="q-estructura">¿Qué vas a vaciar?</label>
+                        <select id="q-estructura" name="estructura">
+                            <option value="">Selecciona (opcional)</option>
+                            @foreach($estructuras as $valor => $texto)
+                                <option value="{{ $valor }}" @selected(old('estructura') === $valor)>{{ ucfirst(mb_strtolower($texto)) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="cm-field cm-field--full">
+                        <button type="submit" class="cm-btn cm-btn--primary cm-btn--block"><i class="bi bi-send"></i> Solicitar cotización</button>
+                    </div>
+                </div>
+                <p class="cm-quote__foot"><i class="bi bi-lock"></i> Solo usamos tus datos para contactarte sobre tu obra.</p>
+            </form>
         </div>
-        @endif
+    </div>
+</section>
 
-        <!-- Beneficios -->
-        @if(!empty($beneficios) && count($beneficios) > 0)
-            <section>
-                <h2 class="section-title">Nuestros <span>Beneficios</span></h2>
-                <div class="beneficios-grid">
-                    @foreach($beneficios as $beneficio)
-                        <div class="beneficio-card-custom">
-                            <div class="beneficio-icon">
-                                <i class="{{ $beneficio['icon'] ?? 'bi-star-fill' }}"></i>
-                            </div>
-                            <h3>{{ $beneficio['title'] }}</h3>
-                            <p>{{ $beneficio['description'] }}</p>
-                        </div>
+{{-- ============ CIFRAS ============ --}}
+@if($cifras->isNotEmpty())
+<section class="cm-stats">
+    <div class="cm-container">
+        <div class="cm-stats__grid cm-reveal" style="--cm-cols: {{ min($cifras->count(), 4) }}">
+            @foreach($cifras as $cifra)
+                @php($numero = is_numeric($cifra['valor']) ? (float) $cifra['valor'] : null)
+                <div class="cm-stat">
+                    <div class="cm-stat__value"><span @if($numero !== null) data-contar="{{ $numero }}" @endif>{{ $cifra['valor'] }}</span><small>{{ $cifra['sufijo'] ?? '' }}</small></div>
+                    <div class="cm-stat__label">{{ $cifra['etiqueta'] ?? '' }}</div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ============ PRODUCTOS ============ --}}
+@if($tiposConcreto->isNotEmpty())
+<section class="cm-section">
+    <div class="cm-container">
+        <div class="cm-head cm-reveal">
+            <div class="cm-eyebrow">Nuestros productos</div>
+            <h2 class="cm-h2">Concreto para cada <span>etapa de tu obra</span></h2>
+            <p class="cm-lead">Desde cimientos hasta losas y estructuras de gran exigencia: diseñamos la mezcla que tu proyecto necesita.</p>
+        </div>
+        <div class="cm-grid-3">
+            @foreach($tiposConcreto as $producto)
+                <a href="{{ route('productos.show', Str::slug($producto['name'])) }}" class="cm-product cm-reveal">
+                    @if(! empty($producto['image']))
+                        <div class="cm-product__img"><img src="{{ Storage::url($producto['image']) }}" alt="Concreto {{ $producto['name'] }}" loading="lazy"></div>
+                    @else
+                        <div class="cm-product__img cm-product__img--empty"><i class="bi bi-box-seam"></i></div>
+                    @endif
+                    <div class="cm-product__body">
+                        <h3 class="cm-product__name">{{ $producto['name'] }}</h3>
+                        <div class="cm-product__desc">{{ Str::limit(strip_tags($producto['description'] ?? ''), 160) }}</div>
+                        <span class="cm-link-arrow">Ver detalle <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+        <div class="cm-center">
+            <a href="{{ route('productos.index') }}" class="cm-btn cm-btn--dark">Ver todos los productos y servicios <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ============ CÓMO TRABAJAMOS ============ --}}
+<section class="cm-section cm-section--dark">
+    <div class="cm-container">
+        <div class="cm-head cm-reveal">
+            <div class="cm-eyebrow">Cómo trabajamos</div>
+            <h2 class="cm-h2">Tu vaciado en <span>4 pasos</span></h2>
+            <p class="cm-lead">Un proceso claro, de la primera llamada al último m³ en tu obra.</p>
+        </div>
+        <div class="cm-steps">
+            @foreach([
+                ['bi-chat-dots', 'Cotizas', 'Nos cuentas qué vas a vaciar, cuántos m³ y dónde. Te respondemos el mismo día.'],
+                ['bi-rulers', 'Visita técnica', 'Un asesor mide la obra, revisa el acceso para el mixer o la bomba y te propone la mezcla ideal.'],
+                ['bi-calendar-check', 'Programamos', 'Reservamos fecha y hora, y asignamos los mixers y la bomba para que nada se cruce.'],
+                ['bi-truck', 'Vaciamos', 'Llegamos puntuales con el concreto controlado en planta y te acompañamos hasta el final.'],
+            ] as $i => [$icono, $titulo, $texto])
+                <div class="cm-step cm-reveal" style="transition-delay: {{ $i * 90 }}ms">
+                    <div class="cm-step__num"><div class="cm-step__icon"><i class="bi {{ $icono }}"></i></div><span>0{{ $i + 1 }}</span></div>
+                    <h3>{{ $titulo }}</h3>
+                    <p>{{ $texto }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
+{{-- ============ POR QUÉ ELEGIRNOS ============ --}}
+@if(! empty($beneficios))
+<section class="cm-section cm-section--sand">
+    <div class="cm-container cm-split">
+        <div class="cm-sticky cm-reveal">
+            <div class="cm-eyebrow">Por qué elegirnos</div>
+            <h2 class="cm-h2">Calidad que se nota <span>en cada vaciado</span></h2>
+            <p class="cm-lead">Producimos, transportamos y vaciamos con equipo propio y personal técnico, para que tu obra avance sin sorpresas.</p>
+            <ul class="cm-checklist">
+                <li><i class="bi bi-check-circle-fill"></i> Mezclas diseñadas según la estructura</li>
+                <li><i class="bi bi-check-circle-fill"></i> Mixers y bombas propios</li>
+                <li><i class="bi bi-check-circle-fill"></i> Asesoría técnica antes y durante el vaciado</li>
+            </ul>
+            <a href="#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> Cotiza tu obra</a>
+        </div>
+        <div class="cm-features">
+            @foreach($beneficios as $beneficio)
+                <div class="cm-feature cm-reveal">
+                    <div class="cm-feature__icon"><i class="bi {{ $beneficio['icon'] ?? 'bi-check2-circle' }}"></i></div>
+                    <h3>{{ $beneficio['title'] ?? '' }}</h3>
+                    <p>{{ $beneficio['description'] ?? '' }}</p>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ============ OBRAS ============ --}}
+@if($obras->isNotEmpty())
+<section class="cm-section">
+    <div class="cm-container">
+        <div class="cm-head cm-reveal">
+            <div class="cm-eyebrow">Obras realizadas</div>
+            <h2 class="cm-h2">Proyectos que <span>llevan nuestro concreto</span></h2>
+        </div>
+        <div class="cm-gallery">
+            @foreach($obras as $obra)
+                <div class="cm-tile cm-reveal">
+                    @if(! empty($obra['image']))
+                        <img src="{{ Storage::url($obra['image']) }}" alt="{{ $obra['title'] }}" loading="lazy">
+                    @else
+                        <i class="bi bi-building cm-tile__icon"></i>
+                    @endif
+                    <span class="cm-tile__tag">Obra</span>
+                    <div class="cm-tile__caption">
+                        <h3>{{ $obra['title'] }}</h3>
+                        @if(! empty($obra['description']))<p>{{ $obra['description'] }}</p>@endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <div class="cm-center">
+            <a href="{{ route('experiencia') }}" class="cm-btn cm-btn--dark">Ver nuestra experiencia <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ============ OPERACIONES ============ --}}
+@if($operaciones->isNotEmpty())
+<section class="cm-section cm-section--sand">
+    <div class="cm-container">
+        <div class="cm-head cm-reveal">
+            <div class="cm-eyebrow">Nuestras operaciones</div>
+            <h2 class="cm-h2">Planta, flota y <span>laboratorio propios</span></h2>
+        </div>
+        <div class="cm-gallery">
+            @foreach($operaciones as $i => $operacion)
+                <div class="cm-tile cm-reveal">
+                    @if(! empty($operacion['image']))
+                        <img src="{{ Storage::url($operacion['image']) }}" alt="{{ $operacion['title'] }}" loading="lazy">
+                    @else
+                        <i class="bi {{ $iconosOperacion[$i % count($iconosOperacion)] }} cm-tile__icon"></i>
+                    @endif
+                    <div class="cm-tile__caption">
+                        <h3>{{ $operacion['title'] }}</h3>
+                        @if(! empty($operacion['description']))<p>{{ $operacion['description'] }}</p>@endif
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
+
+{{-- ============ COBERTURA ============ --}}
+<section class="cm-section">
+    <div class="cm-container cm-coverage">
+        <div class="cm-reveal">
+            <div class="cm-eyebrow">Cobertura</div>
+            <h2 class="cm-h2">Llegamos <span>a tu obra</span></h2>
+            <p class="cm-lead">Atendemos obras en todo el Valle del Mantaro. Si tu obra está en otra zona, consúltanos: coordinamos el despacho.</p>
+            @if($zonas->isNotEmpty())
+                <div class="cm-chips">
+                    @foreach($zonas as $zona)
+                        <span class="cm-chip"><i class="bi bi-geo-alt-fill"></i> {{ $zona }}</span>
                     @endforeach
                 </div>
-            </section>
-        @endif
-
-        <!-- Nuestras Operaciones -->
-        @if(!empty($operaciones) && count($operaciones) > 0)
-            <section>
-                <h2 class="section-title">Nuestras <span>Operaciones</span></h2>
-                <div class="operaciones-grid">
-                    @foreach($operaciones as $operacion)
-                        <div class="operacion-card">
-                            @if(!empty($operacion['image']))
-                                <img src="{{ Storage::url($operacion['image']) }}" alt="{{ $operacion['title'] }}">
-                            @else
-                                <img src="{{ asset('img/placeholder.jpg') }}" alt="Imagen no disponible">
-                            @endif
-                            <div class="info">
-                                <h3>{{ $operacion['title'] }}</h3>
-                                <p>{{ $operacion['description'] }}</p>
-                            </div>
-                        </div>
-                    @endforeach
+            @endif
+            <a href="#cotizar" class="cm-btn cm-btn--primary"><i class="bi bi-calculator"></i> Cotiza tu obra</a>
+        </div>
+        <div class="cm-places">
+            @if($inicio?->planta_ubicacion || $inicio?->planta_maps_url)
+                <div class="cm-place cm-reveal">
+                    <div class="cm-place__icon"><i class="bi bi-buildings"></i></div>
+                    <div>
+                        <h3>{{ $inicio->planta_titulo ?? 'Planta de producción' }}</h3>
+                        @if($inicio->planta_ubicacion)<p>{{ $inicio->planta_ubicacion }}</p>@endif
+                        @if($inicio->planta_maps_url)<a href="{{ $inicio->planta_maps_url }}" target="_blank" rel="noopener">Cómo llegar <i class="bi bi-arrow-up-right"></i></a>@endif
+                    </div>
                 </div>
-            </section>
-        @endif
-
-        <!-- ========== CARRUSEL INFINITO DE EQUIPOS (DEBAJO DE OPERACIONES) ========== -->
-        <div class="carousel-equipos">
-            <div class="carousel-equipos__contenedor">
-                <div class="carousel-equipos__grupo" id="carruselEquipos">
-                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
-                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
-                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
-                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
-                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
-                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
-                    <img src="{{ asset('img/mixer.png') }}" alt="Mixer Concretero" class="carousel-equipos__img">
-                    <img src="{{ asset('img/bp.png') }}" alt="Bomba de Concreto" class="carousel-equipos__img">
+            @endif
+            @if($inicio?->oficina_direccion)
+                <div class="cm-place cm-reveal">
+                    <div class="cm-place__icon"><i class="bi bi-briefcase"></i></div>
+                    <div>
+                        <h3>{{ $inicio->oficina_titulo ?? 'Oficina' }}</h3>
+                        <p>{{ $inicio->oficina_direccion }}</p>
+                        @if($inicio->oficina_maps_url)<a href="{{ $inicio->oficina_maps_url }}" target="_blank" rel="noopener">Cómo llegar <i class="bi bi-arrow-up-right"></i></a>@endif
+                    </div>
+                </div>
+            @endif
+            <div class="cm-place cm-reveal">
+                <div class="cm-place__icon"><i class="bi bi-clock-history"></i></div>
+                <div>
+                    <h3>Horario de atención</h3>
+                    <p>Lunes a sábado: {{ $inicio->atencion_horario_lunes_sabado ?? '8:00 a.m. – 6:00 p.m.' }}<br>Domingos: {{ $inicio->atencion_horario_domingo ?? 'previa coordinación' }}</p>
                 </div>
             </div>
         </div>
+    </div>
+</section>
 
-
-    @else
-        <div style="text-align: center; padding: 3rem;">
-            <i class="bi bi-gear" style="font-size: 4rem; color: #9ca3af;"></i>
-            <h2 style="font-size: 1.5rem; font-weight: bold; color: #4b5563;">Configuración pendiente</h2>
-            <p style="color: #6b7280;">Por favor, ingresa al panel de administración para configurar el contenido de inicio.</p>
-            <a href="{{ \App\Filament\Resources\InicioResource::getUrl('create') }}" class="btn-cotizar" style="background-color: var(--color-primary);">Ir al Panel</a>
+{{-- ============ LLAMADO FINAL ============ --}}
+<section class="cm-section" style="padding-top: 0">
+    <div class="cm-container">
+        <div class="cm-cta cm-reveal">
+            <div>
+                <h2>¿Listo para vaciar tu obra?</h2>
+                <p>Cuéntanos tu proyecto y te enviamos una cotización a la medida.</p>
+                <div class="cm-cta__buttons">
+                    <a href="#cotizar" class="cm-btn cm-btn--dark"><i class="bi bi-calculator"></i> Solicitar cotización</a>
+                    @if($whatsapp)
+                        <a href="{{ $whatsapp }}" target="_blank" rel="noopener" class="cm-btn cm-btn--ghost"><i class="bi bi-whatsapp"></i> WhatsApp</a>
+                    @endif
+                </div>
+            </div>
+            <div class="cm-cta__art" aria-hidden="true">
+                <img src="{{ asset('img/mixer.png') }}" alt="">
+            </div>
         </div>
-    @endif
+    </div>
+</section>
 @endsection

@@ -19,6 +19,7 @@ Route::get('/experiencia', [SostenibilidadController::class, 'experiencia'])->na
 Route::get('/concretips', [SostenibilidadController::class, 'concretips'])->name('concretips');
 Route::get('/contacto', [ContactoController::class, 'index'])->name('contacto.index');
 Route::post('/contacto', [ContactoController::class, 'store'])->middleware('throttle:formularios-publicos')->name('contacto.store');
+Route::post('/cotizar', [\App\Http\Controllers\CotizacionRapidaController::class, 'store'])->middleware('throttle:formularios-publicos')->name('cotizacion-rapida.store');
 Route::get('/libro-reclamaciones', [LibroReclamacionController::class, 'index'])->name('reclamaciones.index');
 Route::post('/libro-reclamaciones', [LibroReclamacionController::class, 'store'])->middleware('throttle:formularios-publicos')->name('reclamaciones.store');
 

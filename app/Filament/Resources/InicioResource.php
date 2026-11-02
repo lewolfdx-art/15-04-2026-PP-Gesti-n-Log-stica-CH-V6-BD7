@@ -28,6 +28,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TagsInput;
 
 class InicioResource extends Resource
 {
@@ -178,7 +179,38 @@ class InicioResource extends Resource
                                         ['title' => 'Equipo Operativo', 'description' => 'Personal capacitado en todas las fases del proyecto.'],
                                     ]),
                             ]),
-                        
+
+                        Tab::make('Cifras')
+                            ->schema([
+                                Repeater::make('cifras')
+                                    ->label('Cifras de la portada')
+                                    ->helperText('Se muestran en una franja debajo de la portada, con un conteo animado. Lo ideal son 4.')
+                                    ->schema([
+                                        TextInput::make('valor')
+                                            ->label('Número')
+                                            ->required()
+                                            ->placeholder('Ej: 15'),
+                                        TextInput::make('sufijo')
+                                            ->label('Después del número')
+                                            ->placeholder('Ej: + o m³/h'),
+                                        TextInput::make('etiqueta')
+                                            ->label('Texto')
+                                            ->required()
+                                            ->placeholder('Ej: Mixers en nuestra flota'),
+                                    ])
+                                    ->columns(3)
+                                    ->maxItems(6)
+                                    ->reorderable(),
+                            ]),
+
+                        Tab::make('Zonas de cobertura')
+                            ->schema([
+                                TagsInput::make('zonas_cobertura')
+                                    ->label('Zonas que atienden')
+                                    ->helperText('Escribe cada zona y presiona Enter. Se muestran en la sección "Llegamos a tu obra".')
+                                    ->placeholder('Ej: Huancayo'),
+                            ]),
+
                         Tab::make('WhatsApp Flotante')
                             ->schema([
                                 TextInput::make('whatsapp_number')

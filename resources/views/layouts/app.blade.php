@@ -34,7 +34,13 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <!-- Diseño nuevo de la web (resources/css/web.css) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    @vite('resources/css/web.css')
+    <style>[x-cloak] { display: none !important; }</style>
 
     <style>
         /* Variables de color corporativas */
@@ -348,197 +354,52 @@
 
     @yield('styles')
 </head>
-<body>
+<body class="cm-page">
 
-<!-- PANTALLA DE CARGA - EFECTO CHASQUIDO DE THANOS -->
-{{-- SOLO SE MUESTRA EN LA PÁGINA DE INICIO --}}
-@if($isHomePage)
-<div id="preloader">
-    <!-- Imagen de fondo - se ve completa -->
-    <img src="{{ asset('img/preloader-logo.png') }}" 
-         alt="Fondo Concretera Mantaro" 
-         class="preloader-background"
-         onerror="this.style.display='none'">
-    
-    <!-- Texto sobre la imagen -->
-    <div class="preloader-content">
-        <div class="preloader-title">
-            <span>Concretera</span>
-            <span> Mantaro</span>
-        </div>
-        <div class="preloader-subtitle">
-            <i class="fas fa-hard-hat"></i> Construyendo futuro con concreto de alta calidad
-        </div>
-    </div>
-</div>
-@endif
-
-<!-- HEADER CON EFECTO NEÓN -->
-<header style="background-color: #16222e;" class="fixed w-full top-0 z-50 py-4 shadow-2xl animate-pulse-neon border-b border-[#f5811e]/30">
-    <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        
-        <!-- Logo + marca con neón gris y naranja -->
-        <a href="{{ url('/') }}" class="flex items-center gap-3 group">
-            @if($config && $config->logo_image)
-                <img src="{{ Storage::url($config->logo_image) }}" alt="Logo" class="w-14 h-14 object-contain rounded-lg">
-            @else
-                <div class="bg-gradient-to-br from-[#f5811e] to-[#e06e0a] rounded-xl p-2 neon-box-strong">
-                    <i class="fas fa-hard-hat text-2xl text-white"></i>
-                </div>
-            @endif
-            
-            <div class="text-4xl md:text-5xl font-extrabold tracking-tighter">
-                @if($config && $config->logo_text && trim($config->logo_text) != '')
-                    @php
-                        $logoText = trim($config->logo_text);
-                        $parts = explode(' ', $logoText, 2);
-                        $firstWord = $parts[0] ?? 'Concretera';
-                        $secondWord = $parts[1] ?? 'Mantaro';
-                    @endphp
-                    <span class="neon-gray">{{ $firstWord }}</span>
-                    <span class="neon-orange">{{ $secondWord }}</span>
-                @else
-                    <span class="neon-gray">Concretera</span>
-                    <span class="neon-orange">Mantaro</span>
-                @endif
-            </div>
-        </a>
-
-        <!-- Navegación -->
-        <nav class="flex flex-wrap justify-center items-center gap-2 md:gap-4">
-            <a href="{{ url('/') }}" class="nav-link text-base hover-neon-glow">Inicio</a>
-            <a href="{{ url('/nosotros') }}" class="nav-link text-base hover-neon-glow">Nosotros</a>
-            <a href="{{ url('/productos') }}" class="nav-link text-base hover-neon-glow">Productos</a>
-
-            <div x-data="{ open: false }" class="relative" @mouseleave="open = false">
-                <button @mouseenter="open = true" class="nav-link text-base hover-neon-glow flex items-center gap-1">
-                    Sostenibilidad <i class="fas fa-chevron-down text-xs"></i>
-                </button>
-                <div x-show="open" x-transition.opacity.duration.200ms
-                     class="absolute left-0 mt-2 w-48 dropdown-neon shadow-xl z-50 py-2"
-                     @mouseenter="open = true" @mouseleave="open = false">
-                    <a href="{{ url('/sostenibilidad') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-leaf mr-2"></i>Políticas</a>
-                    <a href="{{ url('/experiencia') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-industry mr-2"></i>Experiencia</a>
-                    <a href="{{ url('/concretips') }}" class="block px-4 py-2 text-white hover:text-[#ddb31f]"><i class="fas fa-lightbulb mr-2"></i>Tips</a>
-                </div>
-            </div>
-
-            <a href="{{ url('/contacto') }}" class="nav-link text-base hover-neon-glow">Contacto</a>
-
-            @guest
-            <a href="{{ url('/admin/login') }}" class="btn-primary text-sm ml-2">
-                <i class="bi bi-box-arrow-in-right"></i> Login
-            </a>
-        @else
-            <!-- Botón Dashboard (solo para super_admin) -->
-            @if(auth()->user()->hasRole('super_admin'))
-                <a href="{{ url('/admin') }}" class="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 px-4 py-2 rounded-lg text-sm font-bold text-white shadow-md transition hover:scale-105 ml-2">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </a>
-            @endif
-            
-            <form method="POST" action="{{ route('logout') }}" class="inline">
-                @csrf
-                <button type="submit" class="btn-primary text-sm ml-2">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                </button>
-            </form>
-        @endguest
-        </nav>
-    </div>
-</header>
-
-<!-- Espacio para header fijo -->
-<div class="pt-28"></div>
+@include('web.partials.header')
 
 <!-- Contenido principal -->
-<main class="w-full px-0 py-10">
-    <div class="container mx-auto px-4">
+@hasSection('pagina_completa')
+    {{-- Páginas con el diseño nuevo: secciones a todo el ancho --}}
+    <main>
         @yield('content')
-    </div>
-</main>
-
-<!-- Footer -->
-<footer style="background-color: #16222e;" class="text-white pt-10 pb-6 px-6 mt-10 text-sm">
-    <div class="grid md:grid-cols-3 gap-6">
-        <div>
-            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->oficina_titulo ?? 'Oficina Administrativa' }}</h4>
-            <p><strong>Ubicación de oficina:</strong> 
-                <a href="{{ $config->oficina_maps_url ?? '#' }}" target="_blank" class="underline" style="color: #da914f;">Ver en Google Maps</a>
-            </p>
-            <p><strong>Dirección:</strong> {{ $config->oficina_direccion ?? 'Pasaje Miraflores, 12003 – Huancayo' }}</p>
-            <p><strong>Teléfono:</strong> {{ $config->oficina_telefono ?? '064 762805' }}</p>
-            <p><strong>Celular:</strong> {{ $config->oficina_celular ?? '925 091 695' }}</p>
-            <p><strong>Email:</strong> <a href="mailto:{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}" class="underline" style="color: #da914f;">{{ $config->oficina_email ?? 'amgeotop.sac@gmail.com' }}</a></p>
+    </main>
+@else
+    <main class="w-full px-0 py-10">
+        <div class="container mx-auto px-4">
+            @yield('content')
         </div>
+    </main>
+@endif
 
-        <div>
-            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->planta_titulo ?? 'Planta de Producción' }}</h4>
-            <p><strong>Ubicación de planta:</strong> 
-                <a href="{{ $config->planta_maps_url ?? '#' }}" target="_blank" class="underline" style="color: #da914f;">Ver en Google Maps</a>
-            </p>
-            @php($whatsappPlanta = $config->planta_whatsapp ?? '+51 982 337 770')
-            <p><strong>WhatsApp:</strong>
-                <a href="{{ App\Models\Inicio::enlaceWhatsapp($whatsappPlanta) }}" target="_blank" rel="noopener" class="underline" style="color: #da914f;">{{ $whatsappPlanta }}</a>
-            </p>
-        </div>
+@include('web.partials.footer')
 
-        <div>
-            <h4 class="text-lg font-bold mb-2" style="color: #ddb31f;">{{ $config->atencion_titulo ?? 'Atención al Cliente' }}</h4>
-            <p>Lunes a Sábado: {{ $config->atencion_horario_lunes_sabado ?? '8:00 a.m. – 6:00 p.m.' }}</p>
-            <p>Domingos: {{ $config->atencion_horario_domingo ?? 'Atención previa coordinación' }}</p>
-            <p><strong>Asesora Comercial:</strong> {{ $config->atencion_asesora_comercial ?? '982 337 770' }}</p>
-        </div>
-    </div>
-
-    @if($config && $config->social_networks)
-    <div class="flex justify-center gap-6 mt-6">
-        @foreach($config->social_networks as $social)
-            <a href="{{ $social['url'] }}" target="_blank" class="transition hover:scale-110" 
-               style="color: #808185;" 
-               onmouseover="this.style.color='#ddb31f'" 
-               onmouseout="this.style.color='#808185'">
-                <i class="{{ $social['icon'] }} text-2xl"></i>
-            </a>
-        @endforeach
-    </div>
-    @endif
-
-    <div class="text-center mt-8 border-t pt-4" style="border-color: #80818530;">
-        <p>© {{ date('Y') }} <span style="color: #f5811e; font-weight: bold;">Concretera Mantaro</span> — 
-           <span style="color: #ddb31f;">Construyendo futuro con concreto de alta calidad</span></p>
-        <p class="text-xs mt-2 flex items-center justify-center gap-2" style="color: #808185;">
-            <i class="fas fa-shield-alt" style="color: #f5811e;"></i> 
-            "TU PROYECTO, NUESTRO LEGADO"
-            <i class="fas fa-hard-hat" style="color: #f5811e;"></i>
-        </p>
-        {{-- Aviso obligatorio del Libro de Reclamaciones (Ley 29571) --}}
-        <a href="{{ route('reclamaciones.index') }}"
-           class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg border transition hover:scale-105"
-           style="border-color: #f5811e; color: #ffffff;">
-            <i class="fas fa-book-open" style="color: #f5811e;"></i>
-            <span><strong>Libro de Reclamaciones</strong></span>
-        </a>
-    </div>
-</footer>
 
 <script>
-    // EFECTO CHASQUIDO DE THANOS - SOLO EN PÁGINA DE INICIO
-    @if($isHomePage)
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            var preloader = document.getElementById('preloader');
-            if (preloader) {
-                preloader.classList.add('thanos-fade-out');
-                setTimeout(function() {
-                    if (preloader && preloader.parentNode) {
-                        preloader.style.display = 'none';
-                    }
-                }, 900);
-            }
-        }, 2000);
+    // Aparición suave de las secciones y conteo de las cifras al entrar en pantalla
+    document.addEventListener('DOMContentLoaded', function () {
+        var observer = new IntersectionObserver(function (entradas) {
+            entradas.forEach(function (entrada) {
+                if (!entrada.isIntersecting) return;
+                var el = entrada.target;
+                el.classList.add('is-visible');
+                el.querySelectorAll('[data-contar]').forEach(function (num) {
+                    var fin = parseFloat(num.dataset.contar);
+                    if (isNaN(fin)) return;
+                    var inicio = null;
+                    var paso = function (t) {
+                        if (!inicio) inicio = t;
+                        var p = Math.min((t - inicio) / 1200, 1);
+                        num.textContent = Math.round(fin * (1 - Math.pow(1 - p, 3))).toLocaleString('es-PE');
+                        if (p < 1) requestAnimationFrame(paso);
+                    };
+                    requestAnimationFrame(paso);
+                });
+                observer.unobserve(el);
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.cm-reveal').forEach(function (el) { observer.observe(el); });
     });
-    @endif
 </script>
 
 <!-- Botón flotante de WhatsApp en todas las páginas (número editable en Página de Inicio) -->

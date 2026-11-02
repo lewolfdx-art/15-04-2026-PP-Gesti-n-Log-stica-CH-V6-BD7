@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Filament\Operador\Resources\MisCotizacionesResource;
 use App\Filament\Operador\Resources\MisObrasResource;
+use App\Filament\Resources\ContactoResource;
 use App\Filament\Resources\CotizacionResource;
 use App\Filament\Resources\CuentaPorPagarResource;
 use App\Filament\Resources\ProgramacionResource;
 use App\Filament\Resources\LibroReclamacionResource;
 use App\Filament\Resources\ReporteSemanalResource;
+use App\Models\Contacto;
 use App\Models\Contrato;
 use App\Models\Cotizacion;
 use App\Models\CuentaPorPagar;
@@ -19,6 +21,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class NotificationService
 {
@@ -203,6 +206,26 @@ class NotificationService
                 Action::make('ver')
                     ->label('Ver y responder')
                     ->url(LibroReclamacionResource::getUrl('view', ['record' => $hoja], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso a los administradores: un cliente pidió cotización desde la portada de la web
+     */
+    public static function notificarSolicitudCotizacionWeb(Contacto $contacto): void
+    {
+        $notificacion = Notification::make()
+            ->title('Nueva solicitud de cotización desde la web')
+            ->body("{$contacto->name} · {$contacto->phone}\n" . Str::before($contacto->message, "\n"))
+            ->icon('heroicon-o-globe-alt')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver solicitud')
+                    ->url(ContactoResource::getUrl('edit', ['record' => $contacto], isAbsolute: false))
                     ->button(),
             ]);
 

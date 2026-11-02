@@ -21,7 +21,9 @@ class Inicio extends Model
         'planta_titulo', 'planta_ubicacion', 'planta_maps_url', 'planta_whatsapp',
         'atencion_titulo', 'atencion_horario_lunes_sabado',
         'atencion_horario_domingo', 'atencion_asesora_comercial',
-        'social_networks', 'whatsapp_number'
+        'social_networks', 'whatsapp_number',
+        // Portada rediseñada
+        'cifras', 'zonas_cobertura',
     ];
     
     protected $casts = [
@@ -30,6 +32,8 @@ class Inicio extends Model
         'proyectos_recientes' => 'array',
         'nuestras_operaciones' => 'array',
         'social_networks' => 'array',
+        'cifras' => 'array',
+        'zonas_cobertura' => 'array',
         'is_active' => 'boolean',
     ];
     

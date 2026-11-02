@@ -54,7 +54,7 @@ class ContactoResource extends Resource
                         
                         TextInput::make('email')
                             ->label('Correo electrónico')
-                            ->required()
+                            // Las solicitudes de cotización de la portada no piden correo
                             ->email()
                             ->maxLength(255)
                             ->placeholder('Ej: andres@correo.com'),
