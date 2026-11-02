@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Filament\Resources\ProgramacionResource;
+use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Models\Contracts\FilamentUser;
@@ -25,6 +27,16 @@ class RedirigirOperadoresAlPanel extends Authenticate
             && $usuario->canAccessPanel($operador)
         ) {
             throw new HttpResponseException(redirect()->to($operador->getUrl()));
+        }
+
+        // El programador de vaciados no ve el Escritorio (montos y finanzas): va directo a la Programación
+        if (
+            $usuario instanceof User
+            && $request->routeIs('filament.admin.pages.dashboard')
+            && ! $usuario->hasAnyRole(['super_admin', 'admin'])
+            && $usuario->hasRole('coordinador_de_vaciados')
+        ) {
+            throw new HttpResponseException(redirect()->to(ProgramacionResource::getUrl('index')));
         }
 
         parent::authenticate($request, $guards);

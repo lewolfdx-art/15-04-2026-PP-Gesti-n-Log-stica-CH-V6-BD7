@@ -27,6 +27,8 @@ use Filament\Tables\Table;
 
 class DatoOperacionResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = DatoOperacion::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Operaciones';
@@ -47,10 +49,10 @@ class DatoOperacionResource extends Resource
                 Select::make('tipo')
                     ->label('Tipo')
                     ->options([
-                        'modo_pago'   => '🔸 Modo de Pago',
-                        'banco'       => '🏦 Banco',
-                        'cancelacion' => '✅ Cancelación',
-                        'estado'      => '📊 Estado',
+                        'modo_pago'   => 'Modo de Pago',
+                        'banco'       => 'Banco',
+                        'cancelacion' => 'Cancelación',
+                        'estado'      => 'Estado',
                     ])
                     ->required()
                     ->native(false)

@@ -31,6 +31,8 @@ use Filament\Forms\Components\Repeater;
 
 class SostenibilidadResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Sostenibilidad::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';

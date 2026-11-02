@@ -20,12 +20,12 @@ class MakeSuperAdmin extends Command
         $password = env('SUPER_ADMIN_PASSWORD');
 
         if (empty($email) || empty($password)) {
-            $this->error('❌ Define SUPER_ADMIN_EMAIL y SUPER_ADMIN_PASSWORD en el .env');
+            $this->error('Define SUPER_ADMIN_EMAIL y SUPER_ADMIN_PASSWORD en el .env');
             return 1;
         }
 
         if (strlen($password) < 12) {
-            $this->error('❌ SUPER_ADMIN_PASSWORD debe tener al menos 12 caracteres');
+            $this->error('SUPER_ADMIN_PASSWORD debe tener al menos 12 caracteres');
             return 1;
         }
 
@@ -43,7 +43,7 @@ class MakeSuperAdmin extends Command
 
         $user->syncRoles(['super_admin']);
 
-        $this->info("✅ SUPER ADMIN CONFIGURADO CORRECTAMENTE");
+        $this->info("SUPER ADMIN CONFIGURADO CORRECTAMENTE");
         $this->info("Email: " . $email);
         $this->newLine();
         $this->warn("→ Listo para usar en esta PC");

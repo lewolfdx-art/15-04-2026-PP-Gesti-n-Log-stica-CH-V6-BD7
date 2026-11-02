@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Contrato extends Model
@@ -54,18 +57,41 @@ class Contrato extends Model
         'fotos_lugar',
         'viabilidad',
         'viabilidad_comentario',
+        'cotizacion_id',
+        'hora_inicio',
+        'hora_fin',
     ];
 
+    // Opciones compartidas por contratos y cotizaciones
+    public const ESTRUCTURAS = [
+        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
+        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
+        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
+        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
+        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
+        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
+    ];
+
+    public const TIPOS_CONCRETO = ['145' => '145', '175' => '175', '210' => '210', '245' => '245', '280' => '280'];
+
+    public const BOMBEOS = ['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA'];
+
     public const VIABILIDADES = [
-        'viable'        => '✅ Viable',
-        'observaciones' => '⚠️ Viable con observaciones',
-        'no_viable'     => '❌ No viable',
+        'viable'        => 'Viable',
+        'observaciones' => 'Viable con observaciones',
+        'no_viable'     => 'No viable',
     ];
 
     public const VIABILIDAD_COLORES = [
         'viable'        => 'success',
         'observaciones' => 'warning',
         'no_viable'     => 'danger',
+    ];
+
+    public const VIABILIDAD_ICONOS = [
+        'viable'        => 'heroicon-o-check-circle',
+        'observaciones' => 'heroicon-o-exclamation-triangle',
+        'no_viable'     => 'heroicon-o-x-circle',
     ];
 
     protected $casts = [
@@ -100,6 +126,137 @@ class Contrato extends Model
         return $this->belongsToMany(Trabajador::class, 'contrato_operador')
             ->withPivot('notificado_at')
             ->withTimestamps();
+    }
+
+    protected static function booted(): void
+    {
+        // El formulario elige al vendedor por nombre; aquí se guarda también su id,
+        // que es lo que usan las comisiones (el nombre puede corregirse después)
+        static::saving(function (Contrato $contrato) {
+            if ($contrato->isDirty('nombre_vendedor') || ! $contrato->vendedor_id) {
+                $contrato->vendedor_id = Trabajador::asesores()
+                    ->where('nombre_completo', $contrato->nombre_vendedor)
+                    ->value('id') ?? $contrato->vendedor_id;
+            }
+        });
+
+        // Al quedar PAGADO se registra en Ingresos lo que faltaba cobrar
+        static::saved(function (Contrato $contrato) {
+            if ($contrato->estado_pago === 'PAGADO' && ($contrato->wasRecentlyCreated || $contrato->wasChanged('estado_pago'))) {
+                $contrato->registrarCancelacion();
+            }
+        });
+    }
+
+    /**
+     * Ingresos de este contrato. En Ingresos el número a veces se escribió sin "C-".
+     */
+    public function ingresos(): Builder
+    {
+        $numero = (string) $this->numero_contrato;
+
+        return Ingreso::query()->whereIn('numero_contrato', array_unique([$numero, preg_replace('/^C-/i', '', $numero)]));
+    }
+
+    public function totalCobrado(): float
+    {
+        return round((float) $this->ingresos()->sum('monto'), 2);
+    }
+
+    public function saldoPorCobrar(): float
+    {
+        return round(max(0, (float) $this->monto_total - $this->totalCobrado()), 2);
+    }
+
+    /**
+     * Registra el saldo pendiente como ingreso CAN-CONTRATO (cancelación del contrato).
+     * Si ya está todo cobrado (por ejemplo, adelanto + otros pagos) no registra nada.
+     */
+    public function registrarCancelacion(?string $fecha = null): ?Ingreso
+    {
+        $saldo = $this->saldoPorCobrar();
+
+        if ($saldo < 0.01 || blank($this->numero_contrato)) {
+            return null;
+        }
+
+        return Ingreso::create([
+            'fecha'           => $fecha ?? today()->toDateString(),
+            'modo_pago'       => 'CAN-CONTRATO',
+            'numero_contrato' => $this->numero_contrato,
+            'asesor'          => $this->nombre_vendedor,
+            'detalle'         => "Cancelación del contrato {$this->numero_contrato} · {$this->nombre_cliente}",
+            'monto'           => $saldo,
+            'obs'             => $this->forma_pago ? "Registrado automáticamente · {$this->forma_pago}" : 'Registrado automáticamente',
+        ]);
+    }
+
+    public function vendedor(): BelongsTo
+    {
+        return $this->belongsTo(Trabajador::class, 'vendedor_id');
+    }
+
+    public function cotizacion(): BelongsTo
+    {
+        return $this->belongsTo(Cotizacion::class);
+    }
+
+    /**
+     * Pago al personal con el que se liquidó la comisión del asesor
+     */
+    public function pagoComision(): BelongsTo
+    {
+        return $this->belongsTo(PagoPersonal::class, 'pago_comision_id');
+    }
+
+    /**
+     * Mixers y bombas asignados al vaciado
+     */
+    public function vehiculos(): BelongsToMany
+    {
+        return $this->belongsToMany(Vehiculo::class, 'contrato_vehiculo')->withTimestamps();
+    }
+
+    public function programadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'programado_por');
+    }
+
+    public function estaProgramado(): bool
+    {
+        return $this->programado_at !== null;
+    }
+
+    public function horarioTexto(): ?string
+    {
+        if (! $this->hora_inicio) {
+            return null;
+        }
+
+        return substr($this->hora_inicio, 0, 5) . ($this->hora_fin ? ' – ' . substr($this->hora_fin, 0, 5) : '');
+    }
+
+    /**
+     * Otros vaciados del mismo día cuyo horario se cruza y que usan alguno de esos vehículos.
+     * Dos horarios se cruzan si uno empieza antes de que el otro termine.
+     *
+     * @return Collection<int, Contrato>
+     */
+    public static function conflictosDeVehiculos(?int $excluirId, string $fecha, string $inicio, string $fin, array $vehiculoIds): Collection
+    {
+        if ($vehiculoIds === []) {
+            return new Collection();
+        }
+
+        return static::query()
+            ->when($excluirId, fn (Builder $q) => $q->whereKeyNot($excluirId))
+            ->whereDate('fecha', $fecha)
+            ->whereNotNull('hora_inicio')
+            ->where('hora_inicio', '<', $fin)
+            ->where('hora_fin', '>', $inicio)
+            ->whereHas('vehiculos', fn (Builder $q) => $q->whereIn('vehiculos.id', $vehiculoIds))
+            ->with(['vehiculos' => fn ($q) => $q->whereIn('vehiculos.id', $vehiculoIds)])
+            ->get();
     }
 
     public function tieneUbicacion(): bool

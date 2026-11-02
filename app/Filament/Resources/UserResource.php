@@ -32,6 +32,8 @@ use Illuminate\Support\Str;
 
 class UserResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = User::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Usuarios';

@@ -10,12 +10,16 @@ use ZipArchive;
 
 class DatabaseBackup extends Command
 {
-    protected $signature = 'db:backup {--monthly}';
-    protected $description = 'Crea backup de la base de datos MySQL (diario o mensual) con compresión';
+    protected $signature = 'db:backup {--monthly} {--auto : Respaldo automático cada 14 días (guarda los últimos 6)}';
+    protected $description = 'Crea backup de la base de datos MySQL (manual, mensual o automático) con compresión';
+
+    /** Respaldos automáticos que se conservan; los más viejos se borran */
+    private const AUTOMATICOS_A_CONSERVAR = 6;
 
     public function handle(): int
     {
         $isMonthly = $this->option('monthly');
+        $esAutomatico = $this->option('auto');
 
         $dbHost = Config::get('database.connections.mysql.host');
         $dbPort = Config::get('database.connections.mysql.port') ?? '3306';
@@ -27,7 +31,7 @@ class DatabaseBackup extends Command
         $mysqldump = Config::get('database.connections.mysql.mysqldump_path', 'mysqldump');
 
         $date = Carbon::now()->format('Y-m-d_H-i-s');
-        $type = $isMonthly ? 'MENSUAL' : 'DIARIO';
+        $type = $isMonthly ? 'MENSUAL' : ($esAutomatico ? 'AUTOMATICO' : 'MANUAL');
 
         $backupPath = storage_path('app/backups');
         if (! file_exists($backupPath)) {
@@ -40,7 +44,7 @@ class DatabaseBackup extends Command
         $sqlPath = "{$backupPath}/{$sqlFilename}";
         $zipPath = "{$backupPath}/{$zipFilename}";
 
-        $this->info("🚀 Iniciando backup {$type} de la base de datos '{$dbName}'...");
+        $this->info("Iniciando backup {$type} de la base de datos '{$dbName}'...");
 
         // 1. Crear el dump SQL
         // Argumentos como lista (sin pasar por la consola) y contraseña por variable de entorno,
@@ -83,7 +87,7 @@ class DatabaseBackup extends Command
 
         if (! $process->isSuccessful()) {
             @unlink($sqlPath);
-            $this->error('❌ mysqldump falló: ' . trim($errores ?: 'código ' . $process->getExitCode()));
+            $this->error('mysqldump falló: ' . trim($errores ?: 'código ' . $process->getExitCode()));
             $this->error("Revisa MYSQLDUMP_PATH en el .env (actual: {$mysqldump})");
 
             return self::FAILURE;
@@ -92,18 +96,18 @@ class DatabaseBackup extends Command
         $sqlSize = filesize($sqlPath);
         if ($sqlSize === 0) {
             @unlink($sqlPath);
-            $this->error('❌ El respaldo quedó vacío.');
+            $this->error('El respaldo quedó vacío.');
 
             return self::FAILURE;
         }
 
-        $this->info('✅ Archivo SQL creado: ' . round($sqlSize / 1024, 2) . ' KB');
+        $this->info('Archivo SQL creado: ' . round($sqlSize / 1024, 2) . ' KB');
 
         // 2. Comprimir el archivo SQL en ZIP
         $this->info('Comprimiendo backup...');
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            $this->error("❌ Error al comprimir el backup. El SQL quedó en {$sqlFilename}");
+            $this->error("Error al comprimir el backup. El SQL quedó en {$sqlFilename}");
 
             return self::FAILURE;
         }
@@ -117,12 +121,20 @@ class DatabaseBackup extends Command
         $zipSize = filesize($zipPath);
         $compressionRatio = round((1 - ($zipSize / $sqlSize)) * 100, 2);
 
-        $this->info("✅ Backup {$type} completado exitosamente!");
-        $this->info("📁 Archivo: {$zipFilename}");
-        $this->info('📊 Tamaño SQL original: ' . round($sqlSize / 1024, 2) . ' KB');
-        $this->info('🗜️ Tamaño ZIP: ' . round($zipSize / 1024, 2) . ' KB');
-        $this->info("📈 Compresión: {$compressionRatio}%");
-        $this->info('💾 Ruta: ' . realpath($backupPath));
+        $this->info("Backup {$type} completado exitosamente!");
+        $this->info("Archivo: {$zipFilename}");
+        $this->info('Tamaño SQL original: ' . round($sqlSize / 1024, 2) . ' KB');
+        $this->info('Tamaño ZIP: ' . round($zipSize / 1024, 2) . ' KB');
+        $this->info("Compresión: {$compressionRatio}%");
+        $this->info('Ruta: ' . realpath($backupPath));
+
+        if ($esAutomatico) {
+            $automaticos = glob("{$backupPath}/backup_AUTOMATICO_*.zip") ?: [];
+            usort($automaticos, fn ($a, $b) => filemtime($b) <=> filemtime($a)); // el más nuevo primero
+            foreach (array_slice($automaticos, self::AUTOMATICOS_A_CONSERVAR) as $viejo) {
+                @unlink($viejo);
+            }
+        }
 
         return self::SUCCESS;
     }

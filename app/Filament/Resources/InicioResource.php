@@ -28,9 +28,12 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TagsInput;
 
 class InicioResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Inicio::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Contenido';
@@ -176,14 +179,46 @@ class InicioResource extends Resource
                                         ['title' => 'Equipo Operativo', 'description' => 'Personal capacitado en todas las fases del proyecto.'],
                                     ]),
                             ]),
-                        
+
+                        Tab::make('Cifras')
+                            ->schema([
+                                Repeater::make('cifras')
+                                    ->label('Cifras de la portada')
+                                    ->helperText('Se muestran en una franja debajo de la portada, con un conteo animado. Lo ideal son 4.')
+                                    ->schema([
+                                        TextInput::make('valor')
+                                            ->label('Número')
+                                            ->required()
+                                            ->placeholder('Ej: 15'),
+                                        TextInput::make('sufijo')
+                                            ->label('Después del número')
+                                            ->placeholder('Ej: + o m³/h'),
+                                        TextInput::make('etiqueta')
+                                            ->label('Texto')
+                                            ->required()
+                                            ->placeholder('Ej: Mixers en nuestra flota'),
+                                    ])
+                                    ->columns(3)
+                                    ->maxItems(6)
+                                    ->reorderable(),
+                            ]),
+
+                        Tab::make('Zonas de cobertura')
+                            ->schema([
+                                TagsInput::make('zonas_cobertura')
+                                    ->label('Zonas que atienden')
+                                    ->helperText('Escribe cada zona y presiona Enter. Se muestran en la sección "Llegamos a tu obra".')
+                                    ->placeholder('Ej: Huancayo'),
+                            ]),
+
                         Tab::make('WhatsApp Flotante')
                             ->schema([
                                 TextInput::make('whatsapp_number')
-                                    ->label('Número de WhatsApp (con código de país)')
-                                    ->placeholder('Ej: 51982337770')
-                                    ->helperText('Formato: código de país + número sin símbolos. Ej: 51982337770')
-                                    ->default('51982337770'),
+                                    ->label('Número de WhatsApp del botón flotante')
+                                    ->placeholder('Ej: 957 924 586')
+                                    ->helperText('Aparece en todas las páginas de la web. Puedes escribirlo con espacios; si es un celular peruano se agrega el 51 solo.')
+                                    ->dehydrateStateUsing(fn (?string $state) => \App\Models\Inicio::normalizarWhatsapp($state))
+                                    ->default('51957924586'),
                             ]),
                         
                         // ===================== LOGO Y MARCA + FAVICON =====================

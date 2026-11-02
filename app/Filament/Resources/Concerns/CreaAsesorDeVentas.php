@@ -33,7 +33,7 @@ trait CreaAsesorDeVentas
             Select::make('tipo_cargo')
                 ->label('Cargo / Tipo')
                 ->options([
-                    'asesor_ventas' => '💼 Asesor de Ventas',
+                    'asesor_ventas' => 'Asesor de Ventas',
                 ])
                 ->default('asesor_ventas')
                 ->required()

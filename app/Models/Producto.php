@@ -28,7 +28,7 @@ class Producto extends Model
         return self::where('is_active', true)->first();
     }
     
-    // 🔧 Agregar este método
+    // Agregar este método
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

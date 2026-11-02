@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class AsesorVentasResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+    use \App\Filament\Resources\Concerns\DarAccesoAlSistema;
     use CreaAsesorDeVentas;
 
     protected static ?string $model = Trabajador::class;
@@ -98,6 +100,7 @@ class AsesorVentasResource extends Resource
                 TernaryFilter::make('activo'),
             ])
             ->recordActions([
+                static::accionDarAcceso('asesor', 'Podrá registrar cotizaciones desde su celular cuando visite una obra.'),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

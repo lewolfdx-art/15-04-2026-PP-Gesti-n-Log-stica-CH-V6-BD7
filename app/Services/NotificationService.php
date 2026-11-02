@@ -2,11 +2,17 @@
 
 namespace App\Services;
 
+use App\Filament\Operador\Resources\MisCotizacionesResource;
 use App\Filament\Operador\Resources\MisObrasResource;
+use App\Filament\Resources\ContactoResource;
+use App\Filament\Resources\CotizacionResource;
 use App\Filament\Resources\CuentaPorPagarResource;
+use App\Filament\Resources\ProgramacionResource;
 use App\Filament\Resources\LibroReclamacionResource;
 use App\Filament\Resources\ReporteSemanalResource;
+use App\Models\Contacto;
 use App\Models\Contrato;
+use App\Models\Cotizacion;
 use App\Models\CuentaPorPagar;
 use App\Models\LibroReclamacion;
 use App\Models\ReporteSemanal;
@@ -15,6 +21,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class NotificationService
 {
@@ -58,7 +65,7 @@ class NotificationService
         Cache::forever(self::CACHE_ALERTA, true);
 
         $notificacion = Notification::make()
-            ->title('🚨 Alerta crítica de cuentas por pagar')
+            ->title('Alerta crítica de cuentas por pagar')
             ->body('El total general por pagar (' . self::soles($totalGeneral) . ') superó el umbral de ' . self::soles(self::UMBRAL_ALERTA) . '.')
             ->danger()
             ->icon('heroicon-o-exclamation-triangle')
@@ -84,7 +91,7 @@ class NotificationService
     public static function notifyNewPayable(CuentaPorPagar $cuenta): void
     {
         $notificacion = Notification::make()
-            ->title('📝 Nueva cuenta por pagar')
+            ->title('Nueva cuenta por pagar')
             ->body("{$cuenta->detalle} · " . self::soles($cuenta->total))
             ->icon('heroicon-o-document-text')
             ->iconColor('warning')
@@ -106,7 +113,7 @@ class NotificationService
         $totalPendiente = (float) CuentaPorPagar::where('pagado', false)->sum('total');
 
         $notificacion = Notification::make()
-            ->title('✅ Cuenta pagada')
+            ->title('Cuenta pagada')
             ->body("Se pagó: {$cuenta->detalle} (" . self::soles($cuenta->total) . ").\nPendiente restante: " . self::soles($totalPendiente))
             ->icon('heroicon-o-check-circle')
             ->iconColor('success');
@@ -124,7 +131,7 @@ class NotificationService
         }
 
         $notificacion = Notification::make()
-            ->title("📊 Reporte semanal · {$reporte->estado}")
+            ->title("Reporte semanal · {$reporte->estado}")
             ->body("Proveedor: {$reporte->proveedor}\nMonto: " . self::soles($reporte->monto))
             ->icon('heroicon-o-calendar')
             ->iconColor($reporte->estado === 'DEBE' ? 'danger' : 'warning')
@@ -159,10 +166,13 @@ class NotificationService
             }
 
             $notificacion = Notification::make()
-                ->title('🚛 Nueva obra asignada')
+                ->title('Nueva obra asignada')
                 ->body(collect([
-                    'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha') . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
-                    $contrato->ubicacion_referencia ? "📍 {$contrato->ubicacion_referencia}" : null,
+                    'Vaciado: ' . ($contrato->fecha?->format('d/m/Y') ?? 'sin fecha')
+                        . ($contrato->horarioTexto() ? " · {$contrato->horarioTexto()}" : '')
+                        . ($contrato->estructura ? " · {$contrato->estructura}" : ''),
+                    $contrato->vehiculos->isNotEmpty() ? 'Vehículos: ' . $contrato->vehiculos->pluck('codigo')->implode(', ') : null,
+                    $contrato->ubicacion_referencia ? "Lugar: {$contrato->ubicacion_referencia}" : null,
                     $contrato->viabilidad ? Contrato::VIABILIDADES[$contrato->viabilidad] ?? null : null,
                 ])->filter()->implode("\n"))
                 ->icon('heroicon-o-map-pin')
@@ -188,7 +198,7 @@ class NotificationService
     public static function notificarNuevaReclamacion(LibroReclamacion $hoja): void
     {
         $notificacion = Notification::make()
-            ->title("📕 Nuevo {$hoja->tipo} en el Libro de Reclamaciones")
+            ->title("Nuevo {$hoja->tipo} en el Libro de Reclamaciones")
             ->body("{$hoja->codigo} · {$hoja->claimant_name}\nResponder a más tardar el " . $hoja->fecha_limite->format('d/m/Y'))
             ->icon('heroicon-o-book-open')
             ->iconColor('danger')
@@ -200,6 +210,101 @@ class NotificationService
             ]);
 
         self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso a los administradores: un cliente pidió cotización desde la portada de la web
+     */
+    public static function notificarSolicitudCotizacionWeb(Contacto $contacto): void
+    {
+        $notificacion = Notification::make()
+            ->title('Nueva solicitud de cotización desde la web')
+            ->body("{$contacto->name} · {$contacto->phone}\n" . Str::before($contacto->message, "\n"))
+            ->icon('heroicon-o-globe-alt')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver solicitud')
+                    ->url(ContactoResource::getUrl('edit', ['record' => $contacto], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso a los administradores: un asesor envió una cotización desde la obra
+     */
+    public static function notificarNuevaCotizacion(Cotizacion $cotizacion): void
+    {
+        $notificacion = Notification::make()
+            ->title('Nueva cotización por revisar')
+            ->body(collect([
+                "{$cotizacion->codigo} · {$cotizacion->asesor?->nombre_completo}",
+                "Cliente: {$cotizacion->cliente_nombre}",
+                $cotizacion->volumen_estimado ? "{$cotizacion->volumen_estimado} m³ · {$cotizacion->estructura}" : null,
+            ])->filter()->implode("\n"))
+            ->icon('heroicon-o-clipboard-document-list')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('ver')
+                    ->label('Revisar')
+                    ->url(CotizacionResource::getUrl('view', ['record' => $cotizacion], isAbsolute: false))
+                    ->button(),
+            ]);
+
+        self::enviar($notificacion);
+    }
+
+    /**
+     * Aviso al asesor sobre el resultado de su cotización (adelanto, contrato o rechazo)
+     */
+    public static function notificarAsesor(Cotizacion $cotizacion, string $titulo, string $cuerpo): void
+    {
+        $usuario = $cotizacion->asesor?->user;
+
+        if (! $usuario || ! $usuario->is_active) {
+            return;
+        }
+
+        $usuario->notifyNow(Notification::make()
+            ->title($titulo)
+            ->body($cuerpo)
+            ->icon('heroicon-o-clipboard-document-check')
+            ->iconColor('info')
+            ->actions([
+                Action::make('ver')
+                    ->label('Ver cotización')
+                    ->url(MisCotizacionesResource::getUrl('view', ['record' => $cotizacion], isAbsolute: false, panel: 'operador'))
+                    ->button(),
+            ])
+            ->toDatabase());
+    }
+
+    /**
+     * Aviso a los programadores de vaciados: hay un contrato nuevo por programar
+     */
+    public static function notificarVaciadoPorProgramar(Contrato $contrato): void
+    {
+        $notificacion = Notification::make()
+            ->title('Nuevo vaciado por programar')
+            ->body(collect([
+                "{$contrato->nombre_cliente} · {$contrato->volumen_guia} m³ · {$contrato->estructura}",
+                'Fecha pedida: ' . ($contrato->fecha?->format('d/m/Y') ?? '—'),
+                $contrato->ubicacion_referencia ? "Lugar: {$contrato->ubicacion_referencia}" : null,
+            ])->filter()->implode("\n"))
+            ->icon('heroicon-o-calendar-days')
+            ->iconColor('warning')
+            ->actions([
+                Action::make('programar')
+                    ->label('Programar')
+                    ->url(ProgramacionResource::getUrl('index', isAbsolute: false))
+                    ->button(),
+            ]);
+
+        foreach (User::role('coordinador_de_vaciados')->where('is_active', true)->get() as $usuario) {
+            $usuario->notifyNow($notificacion->toDatabase());
+        }
     }
 
     /**

@@ -25,7 +25,7 @@
     <div x-ref="mapa" class="w-full overflow-hidden rounded-lg ring-1 ring-gray-950/10 dark:ring-white/10" style="height: 24rem; z-index: 0"></div>
 
     <p class="text-xs text-gray-500 dark:text-gray-400">
-        <span x-show="tieneUbicacion()">📍 <span x-text="`${lat}, ${lng}`"></span></span>
+        <span x-show="tieneUbicacion()" class="inline-flex items-center gap-1">{{ svg('heroicon-o-map-pin', 'h-4 w-4') }}<span x-text="`${lat}, ${lng}`"></span></span>
         <span x-show="! tieneUbicacion()">Ubicación: sin marcar</span>
     </p>
 </div>

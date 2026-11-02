@@ -9,6 +9,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use App\Models\Trabajador;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -31,6 +32,7 @@ use App\Filament\Resources\ContratoResource\Pages\EditContrato;
 use App\Filament\Resources\ContratoResource\Pages\ViewContrato;
 use App\Models\Contrato;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Support\HtmlString;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Maatwebsite\Excel\Facades\Excel;
@@ -39,6 +41,8 @@ use Illuminate\Support\Collection;
 
 class ContratoResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = Contrato::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Comercial';
@@ -68,14 +72,7 @@ class ContratoResource extends Resource
 
                                 Select::make('estructura')
                                     ->label('ESTRUCTURA')
-                                    ->options([
-                                        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
-                                        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
-                                        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
-                                        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
-                                        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
-                                        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
-                                    ])
+                                    ->options(Contrato::ESTRUCTURAS)
                                     ->required(),
 
                                 Textarea::make('nombre_cliente')
@@ -99,7 +96,7 @@ class ContratoResource extends Resource
                                     Select::make('tipo_cargo')
                                         ->label('Cargo / Tipo')
                                         ->options([
-                                            'asesor_ventas' => '💼 Asesor de Ventas',
+                                            'asesor_ventas' => 'Asesor de Ventas',
                                         ])
                                         ->default('asesor_ventas')
                                         ->required()
@@ -165,16 +162,29 @@ class ContratoResource extends Resource
                                 TextInput::make('numero_contrato')
                                     ->label('N° DE CONTRATO')
                                     ->prefix('C-')
-                                    ->numeric()
+                                    // Texto, no numeric(): numeric() convierte "C-901" en 0 al abrir y al guardar se perdía el número
+                                    ->inputMode('numeric')
+                                    ->regex('/^\d+$/')
+                                    ->validationMessages(['regex' => 'Escribe solo los números del contrato, sin "C-".'])
                                     ->required()
                                     ->placeholder('296')
                                     ->maxLength(10)
                                     ->default('')
+                                    // En la BD se guarda "C-901"; en el campo se muestra solo "901"
+                                    ->formatStateUsing(fn ($state) => filled($state) ? preg_replace('/^C-/i', '', (string) $state) : $state)
+                                    ->rule(fn (?Contrato $record) => function (string $attribute, $value, \Closure $fail) use ($record) {
+                                        $existe = Contrato::where('numero_contrato', 'C-' . $value)
+                                            ->when($record, fn ($query) => $query->whereKeyNot($record->getKey()))
+                                            ->exists();
+                                        if ($existe) {
+                                            $fail("Ya existe el contrato C-{$value}.");
+                                        }
+                                    })
                                     ->dehydrateStateUsing(fn ($state) => $state ? 'C-' . $state : null),
 
                                 Select::make('tipo_concreto')
                                     ->label('TIPO DE CONCRETO')
-                                    ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280'])
+                                    ->options(Contrato::TIPOS_CONCRETO)
                                     ->required(),
                             ])
                             ->columns(2),
@@ -242,7 +252,7 @@ class ContratoResource extends Resource
                                         fn ($query) => $query->personal()->where('activo', true)->orderBy('nombre_completo'),
                                     )
                                     ->getOptionLabelFromRecordUsing(fn (Trabajador $trabajador): string => $trabajador->nombre_completo
-                                        . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($trabajador->tipo_cargo)))
+                                        . ' · ' . Trabajador::cargoTexto($trabajador->tipo_cargo)
                                         . ($trabajador->user_id ? '' : ' (sin acceso)'))
                                     ->multiple()
                                     ->preload()
@@ -256,7 +266,7 @@ class ContratoResource extends Resource
                             ->schema([
                                 Select::make('bombeo')
                                     ->label('BOMBEO')
-                                    ->options(['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA']),
+                                    ->options(Contrato::BOMBEOS),
 
                                 TextInput::make('bomba')
                                     ->label('BOMBA')
@@ -287,6 +297,9 @@ class ContratoResource extends Resource
                                     ->numeric()
                                     ->step(0.01)
                                     ->default(0)
+                                    ->helperText(fn (Get $get): ?HtmlString => (float) $get('volumen_real') > (float) $get('volumen_guia')
+                                        ? new HtmlString('<span style="color:#dc2626">El volumen REAL es mayor que la GUÍA. Revisa si están invertidos: la comisión queda en 0.</span>')
+                                        : null)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
@@ -321,6 +334,11 @@ class ContratoResource extends Resource
                                 Toggle::make('aplicar_comision')
                                     ->label('Aplicar Comisión')
                                     ->default(true)
+                                    // No es columna: al editar se enciende si el contrato ya tiene comisión
+                                    ->afterStateHydrated(fn (Toggle $component, ?Contrato $record) => $record
+                                        ? $component->state((float) $record->comision != 0)
+                                        : null)
+                                    ->dehydrated(false)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::calcularTodo($get, $set)),
 
@@ -328,8 +346,12 @@ class ContratoResource extends Resource
                                     ->label('COMISION')
                                     ->numeric()
                                     ->step(0.01)
+                                    ->minValue(0)
+                                    ->validationMessages(['min' => 'La comisión no puede ser negativa. Revisa los volúmenes GUÍA y REAL (pestaña Volúmenes y Bombeo).'])
                                     ->default(0)
-                                    ->disabled(fn (Get $get) => !$get('aplicar_comision')),
+                                    ->disabled(fn (Get $get) => !$get('aplicar_comision'))
+                                    // Aunque esté bloqueado se guarda, así al apagar la comisión queda en 0
+                                    ->dehydrated(),
 
                                 TextInput::make('comision_igv')
                                     ->label('COMISION DE IGV')
@@ -394,6 +416,8 @@ class ContratoResource extends Resource
                                     ->options([
                                         'EFECTIVO' => 'EFECTIVO',
                                         'DEPOSITO' => 'DEPOSITO',
+                                        'TRANSFERENCIA' => 'TRANSFERENCIA',
+                                        'CHEQUE' => 'CHEQUE',
                                         'DEBE' => 'DEBE',
                                         'PAGADO EN VALORIZACION' => 'PAGADO EN VALORIZACION',
                                         'SE PASO PARA CEMENTO' => 'SE PASO PARA CEMENTO',
@@ -430,7 +454,8 @@ class ContratoResource extends Resource
         $montoTotal = ($volGuia * $pu) + $bombaAdicional + $bomba - $descGuias;
         $set('monto_total', round($montoTotal, 2));
 
-        $comision = $aplicarComision ? ($volGuia - $volReal) * $pu : 0;
+        // Si el REAL supera a la GUÍA no hay comisión (nunca negativa)
+        $comision = $aplicarComision ? max(0, ($volGuia - $volReal) * $pu) : 0;
         $set('comision', round($comision, 2));
 
         $ventaNeta = $montoTotal - $comision - $descuentos - $gastosAlimentos - $comisionIgv;
@@ -489,6 +514,7 @@ class ContratoResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                     ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                    ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                     ->placeholder('Sin evaluar')
                     ->toggleable(),
 
@@ -513,24 +539,44 @@ class ContratoResource extends Resource
                         default  => 'gray',
                     })
                     ->toggleable(),
+
+                TextColumn::make('estado_comision')
+                    ->label('Comisión')
+                    ->badge()
+                    ->state(fn (Contrato $record): string => match (true) {
+                        (float) $record->comision <= 0 => 'Sin comisión',
+                        $record->pagoComision !== null => 'Pagada · ' . $record->pagoComision->codigo,
+                        default                        => 'Pendiente',
+                    })
+                    ->description(fn (Contrato $record): ?string => (float) $record->comision > 0
+                        ? 'S/ ' . number_format((float) $record->comision, 2)
+                        : null)
+                    ->color(fn (Contrato $record): string => match (true) {
+                        (float) $record->comision <= 0 => 'gray',
+                        $record->pagoComision !== null => 'success',
+                        default                        => 'warning',
+                    })
+                    ->icon(fn (Contrato $record): ?string => match (true) {
+                        (float) $record->comision <= 0 => null,
+                        $record->pagoComision !== null => 'heroicon-o-check-circle',
+                        default                        => 'heroicon-o-clock',
+                    })
+                    ->url(fn (Contrato $record): ?string => $record->pagoComision
+                        ? PagoPersonalResource::getUrl('view', ['record' => $record->pagoComision])
+                        : null)
+                    ->toggleable(),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('pagoComision'))
             ->defaultSort('fecha', 'desc')
             ->searchable()
             ->filters([
                 SelectFilter::make('estructura')
                     ->label('Estructura')
-                    ->options([
-                        'CANAL' => 'CANAL', 'CIMIENTO' => 'CIMIENTO', 'COLUMNAS' => 'COLUMNAS',
-                        'FALSO PISO' => 'FALSO PISO', 'LOSA ALIGERADA' => 'LOSA ALIGERADA',
-                        'PAVIMENTO' => 'PAVIMENTO', 'PISO' => 'PISO',
-                        'PLACAS Y COLUMNAS' => 'PLACAS Y COLUMNAS', 'PLATEA' => 'PLATEA',
-                        'VEREDAS' => 'VEREDAS', 'VIGAS DE CIMENTACION' => 'VIGAS DE CIMENTACION',
-                        'ZAPATAS' => 'ZAPATAS', 'ZAPATAS C/CORTE' => 'ZAPATAS C/CORTE',
-                    ]),
+                    ->options(Contrato::ESTRUCTURAS),
 
                 SelectFilter::make('tipo_concreto')
                     ->label('Tipo de Concreto')
-                    ->options(['145'=>'145','175'=>'175','210'=>'210','245'=>'245','280'=>'280']),
+                    ->options(Contrato::TIPOS_CONCRETO),
 
                 SelectFilter::make('estado_pago')
                     ->label('Estado de Pago')
@@ -538,7 +584,16 @@ class ContratoResource extends Resource
 
                 SelectFilter::make('bombeo')
                     ->label('Bombeo')
-                    ->options(['C/BOMBA' => 'C/BOMBA', 'S/BOMBA' => 'S/BOMBA', 'ESTACIONARIA' => 'ESTACIONARIA']),
+                    ->options(Contrato::BOMBEOS),
+
+                SelectFilter::make('estado_comision')
+                    ->label('Comisión del asesor')
+                    ->options(['pendiente' => 'Pendiente', 'pagada' => 'Pagada'])
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'pendiente' => $query->where('comision', '>', 0)->whereNull('pago_comision_id'),
+                        'pagada'    => $query->whereNotNull('pago_comision_id'),
+                        default     => $query,
+                    }),
 
                 Filter::make('fecha')
                     ->schema([
@@ -626,7 +681,7 @@ class ContratoResource extends Resource
             
                             Notification::make()
                                 ->success()
-                                ->title('Exportación completada ✅')
+                                ->title('Exportación completada ')
                                 ->body('Se han exportado ' . $records->count() . ' registros. El archivo se está descargando...')
                                 ->send();
             

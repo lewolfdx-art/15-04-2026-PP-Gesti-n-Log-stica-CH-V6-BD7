@@ -68,23 +68,23 @@ class Trabajador extends Model
      * Cargos del personal operativo y administrativo (sin asesores de ventas)
      */
     public const CARGOS_PERSONAL = [
-        'operador_planta'            => '👷 Operador de Planta',
-        'operador_retroexcavadora'   => '🚜 Operador de Retroexcavadora',
-        'ayudante_planta'            => '👷 Ayudante de Planta',
-        'operador_bomba_telescopica' => '🚧 Operador de Bomba Telescópica',
-        'ayudante_manguerero_bt'     => '👷 Ayudante Manguerero B.T',
-        'ayudante_vibrador_bt'       => '👷 Ayudante Vibrador B.T',
-        'jefe_mantenimiento'         => '🛠️ Jefe de Mantenimiento',
-        'operador_mixer'             => '🚛 Operador de Mixer',
-        'operador_trayler'           => '🚛 Operador de Trayler',
-        'ayudante_bomba'             => '👷 Ayudante de Bomba',
-        'asistente_calidad'          => '📋 Asistente de Calidad',
-        'administracion'             => '🏢 Administración',
-        'asistente_administrativo'   => '📑 Asistente Administrativo',
-        'planeamiento'               => '📊 Planeamiento',
-        'seguridad_noche'            => '🌙 Seguridad de Noche',
-        'contador'                   => '💰 Contador',
-        'personal_curado'            => '👷 Personal de Curado',
+        'operador_planta'            => 'Operador de Planta',
+        'operador_retroexcavadora'   => 'Operador de Retroexcavadora',
+        'ayudante_planta'            => 'Ayudante de Planta',
+        'operador_bomba_telescopica' => 'Operador de Bomba Telescópica',
+        'ayudante_manguerero_bt'     => 'Ayudante Manguerero B.T',
+        'ayudante_vibrador_bt'       => 'Ayudante Vibrador B.T',
+        'jefe_mantenimiento'         => 'Jefe de Mantenimiento',
+        'operador_mixer'             => 'Operador de Mixer',
+        'operador_trayler'           => 'Operador de Trayler',
+        'ayudante_bomba'             => 'Ayudante de Bomba',
+        'asistente_calidad'          => 'Asistente de Calidad',
+        'administracion'             => 'Administración',
+        'asistente_administrativo'   => 'Asistente Administrativo',
+        'planeamiento'               => 'Planeamiento',
+        'seguridad_noche'            => 'Seguridad de Noche',
+        'contador'                   => 'Contador',
+        'personal_curado'            => 'Personal de Curado',
     ];
 
     public function scopeAsesores(Builder $query): Builder
@@ -100,7 +100,7 @@ class Trabajador extends Model
     public static function cargoTexto(?string $cargo): string
     {
         if ($cargo === self::CARGO_ASESOR) {
-            return '💼 Asesor de Ventas';
+            return 'Asesor de Ventas';
         }
 
         return self::CARGOS_PERSONAL[$cargo] ?? ucwords(str_replace('_', ' ', (string) $cargo));
@@ -117,6 +117,15 @@ class Trabajador extends Model
                 if (strlen($trabajador->dni) !== 8) {
                     throw new Exception('El DNI debe tener exactamente 8 dígitos.');
                 }
+            }
+        });
+
+        // Si se corrige el nombre de un asesor, sus contratos lo siguen mostrando bien
+        static::updated(function (Trabajador $trabajador) {
+            if ($trabajador->wasChanged('nombre_completo') && $trabajador->tipo_cargo === self::CARGO_ASESOR) {
+                Contrato::where('vendedor_id', $trabajador->getKey())
+                    ->orWhere(fn ($query) => $query->whereNull('vendedor_id')->where('nombre_vendedor', $trabajador->getOriginal('nombre_completo')))
+                    ->update(['nombre_vendedor' => $trabajador->nombre_completo, 'vendedor_id' => $trabajador->getKey()]);
             }
         });
     }

@@ -6,7 +6,6 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\TotalGeneralPagarWidget;
 use App\Filament\Widgets\VentasPorMesChart;
 use App\Filament\Widgets\ContratosPorVendedorChart;
-use App\Filament\Widgets\TiposEstructuraChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -42,16 +41,14 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.ico'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.mapa-assets'))
-            ->colors([
-                'primary' => Color::Orange,
-            ])
-            
+            ->colors(\App\Support\ColoresPanel::paleta())
+
             // ========== GRUPOS DE NAVEGACIÓN CON ORDEN ==========
             ->navigationGroups([
                 NavigationGroup::make()->label('Escritorio')->collapsible(false),
                 NavigationGroup::make()->label('Navegación')->collapsible(false),
                 NavigationGroup::make()->label('Gestión de Contenido'),
-                NavigationGroup::make()->label('Usuarios'), // 👈 USUARIOS AQUÍ
+                NavigationGroup::make()->label('Usuarios'), // USUARIOS AQUÍ
                 NavigationGroup::make()->label('Gestión de Operaciones'),
                 NavigationGroup::make()->label('Gestión de Personal'),
                 NavigationGroup::make()->label('Comercial'),
@@ -78,7 +75,6 @@ class AdminPanelProvider extends PanelProvider
                 TotalGeneralPagarWidget::class,
                 VentasPorMesChart::class,
                 ContratosPorVendedorChart::class,
-                TiposEstructuraChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,

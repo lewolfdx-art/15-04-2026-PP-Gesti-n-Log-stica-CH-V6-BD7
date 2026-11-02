@@ -20,7 +20,7 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/backup.log'));
         
-        // 👇 NUEVO: Verificación de notificaciones de cuentas por pagar
+        // NUEVO: Verificación de notificaciones de cuentas por pagar
         $schedule->command('payables:check-notifications')
             ->dailyAt('09:00')
             ->withoutOverlapping()

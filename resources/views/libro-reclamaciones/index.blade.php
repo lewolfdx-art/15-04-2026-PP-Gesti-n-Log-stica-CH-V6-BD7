@@ -4,6 +4,8 @@
 
 @use('App\Models\LibroReclamacion')
 
+@section('pagina_completa', true)
+
 @section('content')
     @php
         $empresa = config('empresa');
@@ -27,9 +29,10 @@
 
         .lr-card {
             background: white;
-            border-radius: 1rem;
+            border-radius: 20px;
             padding: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #efebe6;
+            box-shadow: var(--cm-shadow);
             margin-bottom: 1.5rem;
         }
         .lr-proveedor { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem 1.5rem; font-size: .95rem; }
@@ -48,11 +51,12 @@
         .lr-field .required { color: #dc2626; }
         .lr-field input, .lr-field select, .lr-field textarea {
             width: 100%;
-            border: 1px solid #d1d5db;
-            border-radius: .5rem;
-            padding: .65rem .8rem;
+            border: 1.5px solid var(--cm-line);
+            border-radius: 10px;
+            padding: .75rem .9rem;
             font-size: .95rem;
-            background: #fff;
+            font-family: var(--cm-font);
+            background: #fcfbf9;
         }
         .lr-field input:focus, .lr-field select:focus, .lr-field textarea:focus {
             outline: none;
@@ -72,8 +76,9 @@
         .lr-opcion span { font-size: .85rem; color: #6b7280; display: block; }
 
         .lr-btn {
-            background: var(--color-primary); color: white; font-weight: 700;
-            border: none; border-radius: .6rem; padding: .9rem 2rem; cursor: pointer; font-size: 1rem;
+            background: var(--cm-orange); color: white; font-weight: 700; font-family: var(--cm-font);
+            border: none; border-radius: 999px; padding: 1rem 2rem; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 10px 24px rgba(245, 129, 30, 0.35);
         }
         .lr-btn:hover { filter: brightness(.95); }
 
@@ -83,25 +88,30 @@
         .lr-nota { font-size: .85rem; color: #6b7280; }
     </style>
 
-    <div class="lr-hero">
-        <h1><i class="fas fa-book-open mr-2"></i> Libro de <span>Reclamaciones</span></h1>
-        <p>Conforme a lo establecido en el Código de Protección y Defensa del Consumidor (Ley N.° 29571), contamos con un Libro de Reclamaciones a tu disposición.</p>
-    </div>
+    @include('web.partials.page-hero', [
+        'titulo' => 'Libro de',
+        'resaltado' => 'Reclamaciones',
+        'texto' => 'Conforme a lo establecido en el Código de Protección y Defensa del Consumidor (Ley N.° 29571), contamos con un Libro de Reclamaciones a tu disposición.',
+        'miga' => 'Libro de Reclamaciones',
+    ])
+
+    <section class="cm-section cm-section--sand" style="padding-top: 56px">
+    <div class="cm-container cm-narrow">
 
     @if (session('reclamo_codigo'))
         <div class="lr-ok">
-            <p><i class="fas fa-check-circle mr-2"></i> Tu hoja de reclamación fue registrada con el número:</p>
+            <p><i class="bi bi-check-circle-fill" style="margin-right: 6px"></i> Tu hoja de reclamación fue registrada con el número:</p>
             <p class="codigo">{{ session('reclamo_codigo') }}</p>
             <p>Te enviamos una copia a tu correo. Te responderemos a más tardar el <strong>{{ session('reclamo_fecha_limite') }}</strong>.</p>
         </div>
     @endif
 
     @error('general')
-        <div class="lr-error"><i class="fas fa-exclamation-circle mr-2"></i> {{ $message }}</div>
+        <div class="lr-error"><i class="bi bi-exclamation-circle-fill" style="margin-right: 6px"></i> {{ $message }}</div>
     @enderror
 
     @if ($errors->any() && ! $errors->has('general'))
-        <div class="lr-error"><i class="fas fa-exclamation-circle mr-2"></i> Revisa los campos marcados en rojo.</div>
+        <div class="lr-error"><i class="bi bi-exclamation-circle-fill" style="margin-right: 6px"></i> Revisa los campos marcados en rojo.</div>
     @endif
 
     <div class="lr-card">
@@ -159,7 +169,7 @@
                     @error('address') <small class="error">{{ $message }}</small> @enderror
                 </div>
                 <div class="lr-field lr-full">
-                    <label class="flex items-center gap-2" style="font-weight: 500;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 500;">
                         <input type="hidden" name="menor_edad" value="0">
                         <input type="checkbox" name="menor_edad" value="1" x-model="menor" style="width: auto;">
                         Soy menor de edad
@@ -238,20 +248,22 @@
         </div>
 
         <div class="lr-card">
-            <label class="flex items-start gap-2">
+            <label style="display: flex; align-items: flex-start; gap: 8px;">
                 <input type="checkbox" name="acepta" value="1" @checked(old('acepta')) required style="margin-top: .3rem; accent-color: var(--color-primary);">
                 <span>Declaro que los datos consignados son verdaderos y acepto que la respuesta me sea enviada al correo electrónico indicado.</span>
             </label>
             @error('acepta') <small class="error" style="color:#dc2626;">{{ $message }}</small> @enderror
 
-            <div class="mt-6">
-                <button type="submit" class="lr-btn"><i class="fas fa-paper-plane mr-2"></i> Enviar hoja de reclamación</button>
+            <div style="margin-top: 24px">
+                <button type="submit" class="lr-btn"><i class="bi bi-send" style="margin-right: 6px"></i> Enviar hoja de reclamación</button>
             </div>
 
-            <div class="lr-nota mt-6 space-y-1">
+            <div class="lr-nota" style="margin-top: 24px; display: grid; gap: 4px">
                 <p>* La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.</p>
                 <p>* El proveedor deberá dar respuesta al reclamo o queja en un plazo no mayor a {{ $empresa['plazo_respuesta_dias'] }} días hábiles.</p>
             </div>
         </div>
     </form>
+    </div>
+    </section>
 @endsection

@@ -54,10 +54,11 @@ class User extends Authenticatable implements FilamentUser
 
         $roles = $this->getRoleNames();
 
-        // Panel de operadores: solo ven sus obras asignadas (los admins también pueden entrar a revisar)
+        // Panel de campo (/operador): operadores ven sus obras y asesores registran cotizaciones.
+        // Panel /admin: administradores, y el programador de vaciados solo con acceso a la Programación.
         $tieneAcceso = $panel->getId() === 'operador'
-            ? $this->hasAnyRole(['operador', 'super_admin', 'admin'])
-            : $this->hasAnyRole(['super_admin', 'admin']);
+            ? $this->hasAnyRole(['operador', 'asesor', 'super_admin', 'admin'])
+            : $this->hasAnyRole(['super_admin', 'admin', 'coordinador_de_vaciados']);
 
         Log::info("Acceso Filament - Panel: /{$panel->getPath()} | Email: {$this->email} | Activo: {$this->is_active} | Roles: {$roles->join(', ')} | Acceso: " . ($tieneAcceso ? 'SI' : 'NO'));
 

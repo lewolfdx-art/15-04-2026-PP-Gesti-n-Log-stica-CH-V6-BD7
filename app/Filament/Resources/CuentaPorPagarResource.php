@@ -28,6 +28,8 @@ use Filament\Notifications\Notification;
 
 class CuentaPorPagarResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = CuentaPorPagar::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Finanzas';
@@ -111,7 +113,7 @@ class CuentaPorPagarResource extends Resource
                         $totalPendiente = CuentaPorPagar::where('pagado', false)->sum('total');
                         $user = User::find(2);
                         Notification::make()
-                            ->title('✅ Cuenta Pagada')
+                            ->title('Cuenta Pagada')
                             ->body("Se pagó: {$record->detalle} - Total pendiente: S/ " . number_format($totalPendiente, 2))
                             ->success()
                             ->sendToDatabase($user);

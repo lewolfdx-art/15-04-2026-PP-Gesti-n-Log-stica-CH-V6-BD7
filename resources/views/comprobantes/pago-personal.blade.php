@@ -5,7 +5,7 @@
     $empresa = config('empresa');
     $t = $pago->trabajador;
     $soles = fn ($n) => 'S/ ' . number_format((float) $n, 2);
-    $cargo = trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($t->tipo_cargo)));
+    $cargo = Trabajador::cargoTexto($t->tipo_cargo);
     $contacto = \App\Models\Inicio::getActiveContent();
     $color = fn (?string $c, string $defecto) => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $c) ? $c : $defecto;
     $c1 = $color($empresa['color_principal'] ?? null, '#16222e');
@@ -82,8 +82,6 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
 
 .d-obs { margin-top: 14px; font-size: 11px; color: #4b5563; }
 
-.d-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin: 60px 30px 10px; text-align: center; font-size: 11px; }
-.d-firmas div { border-top: 1px solid #1b2430; padding-top: 6px; }
 
 .d-foot { display: flex; justify-content: space-between; align-items: stretch; margin-top: 16px; }
 .d-foot .l { padding: 0 16px 14px; align-self: flex-end; font-size: 10px; color: #6b7280; }
@@ -108,7 +106,7 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
 </head>
 <body>
 <div class="toolbar">
-    <button onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.print()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="vertical-align:-3px;margin-right:6px" aria-hidden="true"><path d="M7 3h10v4H7V3zm-2 6h14a2 2 0 0 1 2 2v6h-4v4H7v-4H3v-6a2 2 0 0 1 2-2zm4 7v3h6v-3H9zm9-4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>Imprimir / Guardar PDF</button>
     <button class="sec" onclick="window.close()">Cerrar</button>
 </div>
 
@@ -231,11 +229,6 @@ table.d-items { width: 100%; border-collapse: collapse; border: 2px solid var(--
         @if ($pago->observacion)
             <div class="d-obs"><b>Observación:</b> {{ $pago->observacion }}</div>
         @endif
-
-        <div class="d-firmas">
-            <div>Recibí conforme<br><b>{{ $t->nombre_completo }}</b><br>DNI {{ $t->dni ?: '________' }}</div>
-            <div>Entregado por<br><b>{{ $pago->registradoPor?->name ?? $empresa['razon_social'] }}</b><br>{{ $pago->pagado_at?->format('d/m/Y') ?? 'Pendiente de entrega' }}</div>
-        </div>
     </div>
 
     <div class="d-foot">

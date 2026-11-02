@@ -33,12 +33,17 @@ class MisObrasResource extends Resource
     protected static ?string $pluralModelLabel = 'Mis obras';
     protected static ?string $slug = 'obras';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['operador', 'super_admin', 'admin']) ?? false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $usuario = auth()->user();
 
         return parent::getEloquentQuery()
-            ->whereHas('operadores', fn (Builder $q) => $q->where('trabajadores.user_id', $usuario?->getKey()));
+            ->whereHas('operadores', fn (Builder $query) => $query->where('trabajadores.user_id', $usuario?->getKey()));
     }
 
     public static function canCreate(): bool
@@ -81,6 +86,7 @@ class MisObrasResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                     ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                    ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                     ->placeholder('Sin evaluar'),
             ])
             ->defaultSort('fecha', 'desc')
@@ -91,8 +97,8 @@ class MisObrasResource extends Resource
                     ->trueLabel('Hoy y próximas')
                     ->falseLabel('Pasadas')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereDate('fecha', '>=', today()),
-                        false: fn (Builder $q) => $q->whereDate('fecha', '<', today()),
+                        true: fn (Builder $query) => $query->whereDate('fecha', '>=', today()),
+                        false: fn (Builder $query) => $query->whereDate('fecha', '<', today()),
                     ),
             ])
             ->recordUrl(fn (Contrato $record): string => static::getUrl('view', ['record' => $record]))
@@ -133,6 +139,7 @@ class MisObrasResource extends Resource
                             ->badge()
                             ->formatStateUsing(fn (?string $state): string => Contrato::VIABILIDADES[$state] ?? '—')
                             ->color(fn (?string $state): string => Contrato::VIABILIDAD_COLORES[$state] ?? 'gray')
+                            ->icon(fn (?string $state): ?string => Contrato::VIABILIDAD_ICONOS[$state] ?? null)
                             ->placeholder('Sin evaluar'),
 
                         TextEntry::make('viabilidad_comentario')

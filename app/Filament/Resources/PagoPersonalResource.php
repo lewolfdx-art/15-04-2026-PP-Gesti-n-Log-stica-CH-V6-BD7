@@ -5,12 +5,14 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PagoPersonalResource\Pages\CreatePagoPersonal;
 use App\Filament\Resources\PagoPersonalResource\Pages\ListPagosPersonal;
 use App\Filament\Resources\PagoPersonalResource\Pages\ViewPagoPersonal;
+use App\Models\Contrato;
 use App\Models\PagoPersonal;
 use App\Models\Trabajador;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -37,6 +39,8 @@ use Illuminate\Support\HtmlString;
  */
 class PagoPersonalResource extends Resource
 {
+    use \App\Filament\Concerns\SoloAdministradores;
+
     protected static ?string $model = PagoPersonal::class;
 
     protected static string | \UnitEnum | null $navigationGroup = 'Gestión de Personal';
@@ -87,7 +91,23 @@ class PagoPersonalResource extends Resource
 
         if ($trabajador && $get('anio') && $get('mes') && $get('quincena')) {
             $set('monto_base', PagoPersonal::montoBase($trabajador, (int) $get('anio'), (int) $get('mes'), (int) $get('quincena')));
+
+            // Asesor: arranca con todos los contratos pendientes marcados
+            if (PagoPersonal::tipoPara($trabajador) === 'comision') {
+                [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
+                $set('contratos_ids', PagoPersonal::contratosPendientesDeComision($trabajador, $hasta)->modelKeys());
+            }
         }
+    }
+
+    /**
+     * Total de comisiones = suma de los contratos marcados
+     */
+    private static function sumarContratosMarcados(Get $get, Set $set): void
+    {
+        $ids = array_map('intval', (array) $get('contratos_ids'));
+
+        $set('monto_base', round((float) Contrato::whereKey($ids)->whereNull('pago_comision_id')->sum('comision'), 2));
     }
 
     public static function form(Schema $schema): Schema
@@ -95,6 +115,16 @@ class PagoPersonalResource extends Resource
         $recalcular = fn (Get $get, Set $set) => static::recalcularMonto($get, $set);
         $trabajador = fn (Get $get): ?Trabajador => Trabajador::find($get('trabajador_id'));
         $esComision = fn (Get $get): bool => ($t = $trabajador($get)) && PagoPersonal::tipoPara($t) === 'comision';
+        // Con contratos pendientes el total sale de ellos; sin contratos se escribe a mano
+        $comisionCalculada = function (Get $get) use ($trabajador, $esComision): bool {
+            if (! $esComision($get) || ! $get('anio') || ! $get('mes') || ! $get('quincena')) {
+                return false;
+            }
+
+            [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
+
+            return PagoPersonal::contratosPendientesDeComision($trabajador($get), $hasta)->isNotEmpty();
+        };
 
         return $schema
             ->components([
@@ -103,7 +133,7 @@ class PagoPersonalResource extends Resource
                         Select::make('trabajador_id')
                             ->label('Trabajador')
                             ->options(fn () => Trabajador::where('activo', true)->orderBy('nombre_completo')->get()
-                                ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · ' . trim(preg_replace('/^\X\s*/u', '', Trabajador::cargoTexto($t->tipo_cargo)))]))
+                                ->mapWithKeys(fn (Trabajador $t) => [$t->id => $t->nombre_completo . ' · ' . Trabajador::cargoTexto($t->tipo_cargo)]))
                             ->searchable()
                             ->required()
                             ->live()
@@ -148,52 +178,57 @@ class PagoPersonalResource extends Resource
                                     return new HtmlString('');
                                 }
 
-                                return new HtmlString(PagoPersonal::tipoPara($t) === 'comision'
-                                    ? '💼 <b>Asesor de ventas</b>: se paga la comisión de sus contratos de la quincena que aún no fueron pagados.'
-                                    : '👷 <b>Sueldo fijo</b>: ' . ($t->sueldo_mensual
+                                $esComision = PagoPersonal::tipoPara($t) === 'comision';
+                                $icono = svg($esComision ? 'heroicon-o-briefcase' : 'heroicon-o-user', 'h-5 w-5 shrink-0 text-primary-500')->toHtml();
+
+                                return new HtmlString('<span style="display:inline-flex;align-items:flex-start;gap:6px">' . $icono . '<span>' . ($esComision
+                                    ? '<b>Asesor de ventas</b>: se paga la comisión de sus contratos que aún no fueron pagados, incluidos los de quincenas anteriores.'
+                                    : '<b>Sueldo fijo</b>: ' . ($t->sueldo_mensual
                                         ? 'sueldo mensual S/ ' . number_format((float) $t->sueldo_mensual, 2) . ', la quincena es la mitad. Puedes ajustarla.'
-                                        : '<span style="color:#dc2626">no tiene sueldo registrado en su ficha</span>; ingresa el monto de la quincena.'));
+                                        : '<span style="color:#dc2626">no tiene sueldo registrado en su ficha</span>; ingresa el monto de la quincena.')) . '</span></span>');
                             })
                             ->columnSpanFull(),
 
-                        TextEntry::make('contratos_preview')
-                            ->label('Contratos de la quincena')
-                            ->visible($esComision)
-                            ->state(function (Get $get) use ($trabajador): HtmlString {
-                                $t = $trabajador($get);
-                                if (! $t || ! $get('anio') || ! $get('mes') || ! $get('quincena')) {
-                                    return new HtmlString('');
-                                }
+                        CheckboxList::make('contratos_ids')
+                            ->label('Contratos con comisión pendiente')
+                            ->helperText('Marca solo las obras que vas a liquidar ahora. Las demás siguen pendientes para el próximo pago.')
+                            ->visible($comisionCalculada)
+                            ->options(function (Get $get) use ($trabajador): array {
+                                [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
 
-                                [$desde, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
-                                $contratos = PagoPersonal::contratosPendientesDeComision($t, $desde, $hasta);
-
-                                if ($contratos->isEmpty()) {
-                                    return new HtmlString('<span style="color:#6b7280">No hay contratos con comisión pendiente entre el '
-                                        . $desde->format('d/m') . ' y el ' . $hasta->format('d/m/Y') . '.</span>');
-                                }
-
-                                $filas = $contratos->map(fn ($c) => '<tr><td style="padding:4px 8px">' . e($c->fecha?->format('d/m/Y'))
-                                    . '</td><td style="padding:4px 8px">' . e($c->numero_contrato ?: '—')
-                                    . '</td><td style="padding:4px 8px">' . e($c->nombre_cliente)
-                                    . '</td><td style="padding:4px 8px">' . e($c->estado_pago)
-                                    . '</td><td style="padding:4px 8px;text-align:right">S/ ' . number_format((float) $c->comision, 2) . '</td></tr>')
-                                    ->implode('');
-
-                                return new HtmlString('<table style="width:100%;font-size:13px"><thead><tr style="text-align:left;color:#6b7280">'
-                                    . '<th style="padding:4px 8px">Fecha</th><th style="padding:4px 8px">N.° contrato</th><th style="padding:4px 8px">Cliente</th>'
-                                    . '<th style="padding:4px 8px">Pago del cliente</th><th style="padding:4px 8px;text-align:right">Comisión</th></tr></thead>'
-                                    . "<tbody>{$filas}</tbody></table>");
+                                return PagoPersonal::contratosPendientesDeComision($trabajador($get), $hasta)
+                                    ->mapWithKeys(fn (Contrato $c) => [$c->id => ($c->numero_contrato ?: 'Sin N.°') . ' · ' . $c->nombre_cliente
+                                        . ' · S/ ' . number_format((float) $c->comision, 2)])
+                                    ->all();
                             })
+                            ->descriptions(function (Get $get) use ($trabajador): array {
+                                [, $hasta] = PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'));
+
+                                return PagoPersonal::contratosPendientesDeComision($trabajador($get), $hasta)
+                                    ->mapWithKeys(fn (Contrato $c) => [$c->id => 'Vaciado ' . $c->fecha?->format('d/m/Y') . ' · Pago del cliente: ' . ($c->estado_pago ?: '—')])
+                                    ->all();
+                            })
+                            ->bulkToggleable()
+                            ->live()
+                            ->afterStateUpdated(fn (Get $get, Set $set) => static::sumarContratosMarcados($get, $set))
+                            ->columnSpanFull(),
+
+                        TextEntry::make('sin_contratos')
+                            ->hiddenLabel()
+                            ->visible(fn (Get $get): bool => $esComision($get) && ! $comisionCalculada($get))
+                            ->state(fn (Get $get): HtmlString => new HtmlString('<span style="color:#6b7280">No tiene contratos con comisión pendiente hasta el '
+                                . PagoPersonal::periodo((int) $get('anio'), (int) $get('mes'), (int) $get('quincena'))[1]->format('d/m/Y')
+                                . '. Si se le debe algo, escribe el monto abajo.</span>'))
                             ->columnSpanFull(),
 
                         TextInput::make('monto_base')
                             ->label(fn (Get $get) => $esComision($get) ? 'Total de comisiones' : 'Sueldo de la quincena')
+                            ->helperText(fn (Get $get): ?string => $comisionCalculada($get) ? 'Suma de los contratos marcados.' : null)
                             ->prefix('S/')
                             ->numeric()
                             ->minValue(0)
                             ->required()
-                            ->readOnly($esComision)
+                            ->readOnly($comisionCalculada)
                             ->live(onBlur: true),
 
                         TextInput::make('adicionales')
@@ -337,8 +372,8 @@ class PagoPersonalResource extends Resource
                     ->trueLabel('Entregados')
                     ->falseLabel('Pendientes')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereNotNull('pagado_at'),
-                        false: fn (Builder $q) => $q->whereNull('pagado_at'),
+                        true: fn (Builder $query) => $query->whereNotNull('pagado_at'),
+                        false: fn (Builder $query) => $query->whereNull('pagado_at'),
                     ),
             ])
             ->recordActions([
