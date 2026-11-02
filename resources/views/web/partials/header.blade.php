@@ -56,11 +56,13 @@
                 <i class="bi bi-calculator"></i> Cotizar
             </a>
 
-            @auth
-                <a href="{{ url('/admin') }}" class="cm-header__login" title="Ir al sistema"><i class="bi bi-speedometer2"></i></a>
-            @else
-                <a href="{{ url('/admin/login') }}" class="cm-header__login" title="Intranet (personal de la empresa)"><i class="bi bi-person"></i></a>
-            @endauth
+            @unless($vistaPrevia ?? false)
+                @auth
+                    <a href="{{ url('/admin') }}" class="cm-header__login" title="Ir al sistema"><i class="bi bi-speedometer2"></i></a>
+                @else
+                    <a href="{{ url('/admin/login') }}" class="cm-header__login" title="Intranet (personal de la empresa)"><i class="bi bi-person"></i></a>
+                @endauth
+            @endunless
 
             <button type="button" class="cm-burger" @click="menu = !menu" :aria-expanded="menu" aria-label="Abrir menú">
                 <i class="bi" :class="menu ? 'bi-x-lg' : 'bi-list'"></i>
