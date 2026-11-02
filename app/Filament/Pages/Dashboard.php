@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Widgets\AgendaVaciadosWidget;
 use App\Filament\Widgets\BalanceMesWidget;
+use App\Filament\Widgets\BienvenidaWidget;
 use App\Filament\Widgets\ContratosPorVendedorChart;
 use App\Filament\Widgets\CotizacionesEstadoChart;
 use App\Filament\Widgets\DatabaseBackupWidget;
@@ -28,10 +29,17 @@ class Dashboard extends BaseDashboard
         RespaldoAutomatico::generarSiToca();
     }
 
+    // Clase para darle al Escritorio su fondo y estilo propios (resources/css/filament/admin/custom.css)
+    public function getPageClasses(): array
+    {
+        return ['cm-escritorio'];
+    }
+
     // Arriba, a todo el ancho: lo del día y la plata del mes
     protected function getHeaderWidgets(): array
     {
         return [
+            BienvenidaWidget::class,
             DatabaseBackupWidget::class,
             ResumenHoyWidget::class,
             BalanceMesWidget::class,

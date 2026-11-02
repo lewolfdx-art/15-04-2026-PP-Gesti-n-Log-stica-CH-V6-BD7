@@ -41,10 +41,8 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.ico'))
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.mapa-assets'))
-            ->colors([
-                'primary' => Color::Orange,
-            ])
-            
+            ->colors(\App\Support\ColoresPanel::paleta())
+
             // ========== GRUPOS DE NAVEGACIÓN CON ORDEN ==========
             ->navigationGroups([
                 NavigationGroup::make()->label('Escritorio')->collapsible(false),

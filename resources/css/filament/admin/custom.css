@@ -8,3 +8,277 @@
     &.badge-emerald { background-color: #10b981; color: white; }
     &.badge-sky     { background-color: #0ea5e9; color: white; }
 }
+
+/* =========================================================
+   Escritorio (Dashboard): fondo, bienvenida y tarjetas de colores
+   ========================================================= */
+
+/* Fondo con un tinte cálido de la marca solo en el Escritorio */
+.fi-body:has(.cm-escritorio) .fi-main-ctn {
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--primary-500) 10%, transparent), transparent 40%),
+        radial-gradient(circle at 0% 100%, color-mix(in oklab, var(--marca-500) 8%, transparent), transparent 45%);
+}
+
+:is(.dark) .fi-body:has(.cm-escritorio) .fi-main-ctn {
+    background:
+        radial-gradient(circle at 100% 0%, color-mix(in oklab, var(--primary-500) 12%, transparent), transparent 40%);
+}
+
+/* Franja de bienvenida */
+.cm-bienvenida {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.75rem 2rem;
+    border-radius: 1rem;
+    color: white;
+    background: linear-gradient(115deg, #16222e 0%, #1f3346 55%, #f5811e 140%);
+    box-shadow: 0 18px 40px -18px rgb(22 34 46 / 0.6);
+}
+
+.cm-bienvenida::after {
+    content: '';
+    position: absolute;
+    right: -60px;
+    top: -60px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgb(245 129 30 / 0.25);
+    filter: blur(10px);
+    pointer-events: none;
+}
+
+.cm-bienvenida__texto {
+    position: relative;
+    z-index: 1;
+}
+
+.cm-bienvenida__fecha {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.6);
+}
+
+.cm-bienvenida__saludo {
+    margin-top: 0.25rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.cm-bienvenida__resumen {
+    margin-top: 0.4rem;
+    font-size: 0.95rem;
+    color: rgb(255 255 255 / 0.8);
+}
+
+.cm-bienvenida__resumen strong {
+    color: #ffb066;
+}
+
+.cm-bienvenida__accesos {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.cm-bienvenida__acceso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: white;
+    background: rgb(255 255 255 / 0.1);
+    border: 1px solid rgb(255 255 255 / 0.18);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.cm-bienvenida__acceso:hover {
+    background: #f5811e;
+    border-color: #f5811e;
+    transform: translateY(-2px);
+}
+
+/* Respaldo de la base de datos: franja horizontal compacta */
+.cm-respaldo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0.875rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+:is(.dark) .cm-respaldo {
+    background: var(--gray-900);
+    border-color: rgb(255 255 255 / 0.1);
+}
+
+.cm-respaldo__icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    color: var(--marca-700);
+    background: var(--marca-100);
+}
+
+:is(.dark) .cm-respaldo__icono {
+    color: var(--marca-200);
+    background: rgb(255 255 255 / 0.08);
+}
+
+.cm-respaldo__texto {
+    flex: 1;
+    min-width: 260px;
+}
+
+.cm-respaldo__texto h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gray-950);
+}
+
+:is(.dark) .cm-respaldo__texto h3 {
+    color: white;
+}
+
+.cm-respaldo__texto p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 1rem;
+    margin-top: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+.cm-respaldo__texto strong {
+    color: var(--gray-700);
+    font-weight: 600;
+}
+
+:is(.dark) .cm-respaldo__texto strong {
+    color: var(--gray-200);
+}
+
+.cm-respaldo__botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.cm-respaldo__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--marca-800);
+    background: var(--marca-50);
+    border: 1px solid var(--marca-200);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.cm-respaldo__btn:hover {
+    background: var(--marca-100);
+    transform: translateY(-1px);
+}
+
+.cm-respaldo__btn--principal {
+    color: white;
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+}
+
+.cm-respaldo__btn--principal:hover {
+    background: var(--primary-600);
+}
+
+.cm-respaldo__btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+:is(.dark) .cm-respaldo__btn:not(.cm-respaldo__btn--principal) {
+    color: var(--gray-100);
+    background: rgb(255 255 255 / 0.06);
+    border-color: rgb(255 255 255 / 0.12);
+}
+
+/* Tarjetas de estadísticas con color de acento (App\Filament\Widgets\Concerns\ConAcento) */
+.fi-wi-stats-overview-stat.cm-kpi {
+    position: relative;
+    overflow: hidden;
+    border-top: 4px solid var(--kpi);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fi-wi-stats-overview-stat.cm-kpi:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -14px color-mix(in oklab, var(--kpi) 55%, transparent);
+}
+
+.fi-wi-stats-overview-stat.cm-kpi::after {
+    content: '';
+    position: absolute;
+    right: -28px;
+    bottom: -28px;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--kpi-suave);
+    pointer-events: none;
+}
+
+:is(.dark) .fi-wi-stats-overview-stat.cm-kpi::after {
+    background: color-mix(in oklab, var(--kpi) 14%, transparent);
+}
+
+.fi-wi-stats-overview-stat.cm-kpi .fi-wi-stats-overview-stat-content {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-wi-stats-overview-stat.cm-kpi .fi-wi-stats-overview-stat-label-ctn > .fi-icon {
+    padding: 0.35rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    color: var(--kpi-oscuro);
+    background: var(--kpi-suave);
+}
+
+:is(.dark) .fi-wi-stats-overview-stat.cm-kpi .fi-wi-stats-overview-stat-label-ctn > .fi-icon {
+    color: var(--kpi);
+    background: color-mix(in oklab, var(--kpi) 18%, transparent);
+}
+
+.fi-wi-stats-overview-stat.cm-kpi .fi-wi-stats-overview-stat-value {
+    color: var(--kpi-oscuro);
+}
+
+:is(.dark) .fi-wi-stats-overview-stat.cm-kpi .fi-wi-stats-overview-stat-value {
+    color: var(--kpi);
+}

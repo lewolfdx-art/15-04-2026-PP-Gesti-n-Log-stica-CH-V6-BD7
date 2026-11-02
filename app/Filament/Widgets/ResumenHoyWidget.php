@@ -17,6 +17,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class ResumenHoyWidget extends StatsOverviewWidget
 {
+    use \App\Filament\Widgets\Concerns\ConAcento;
+
     protected static ?int $sort = 1;
 
     protected ?string $heading = 'Resumen de hoy';
@@ -46,6 +48,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Vaciados de hoy', $vaciadosHoy)
+                ->extraAttributes(self::acento('teal'), merge: true)
                 ->description($vaciadosHoy > 0
                     ? number_format($m3Hoy, 1) . " m³ · {$programadosHoy} programado(s)"
                     : 'Sin vaciados para hoy')
@@ -55,6 +58,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
                 ->url(ProgramacionResource::getUrl('index')),
 
             Stat::make('Cotizaciones por revisar', $porRevisar)
+                ->extraAttributes(self::acento('violet'), merge: true)
                 ->description("{$enEspera} en espera con adelanto")
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->icon('heroicon-o-clipboard-document-list')
@@ -62,6 +66,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
                 ->url(CotizacionResource::getUrl('index')),
 
             Stat::make('Vaciados por programar', $porProgramar)
+                ->extraAttributes(self::acento('indigo'), merge: true)
                 ->description("{$porProgramarSemana} en los próximos 7 días")
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->icon('heroicon-o-calendar')
@@ -69,6 +74,7 @@ class ResumenHoyWidget extends StatsOverviewWidget
                 ->url(ProgramacionResource::getUrl('index')),
 
             Stat::make('Reclamos por responder', $reclamos)
+                ->extraAttributes(self::acento('pink'), merge: true)
                 ->description($reclamosUrgentes > 0 ? "{$reclamosUrgentes} vence(n) en 3 días hábiles o menos" : 'Dentro del plazo')
                 ->descriptionIcon($reclamosUrgentes > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
                 ->icon('heroicon-o-book-open')

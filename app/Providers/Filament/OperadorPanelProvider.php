@@ -33,9 +33,7 @@ class OperadorPanelProvider extends PanelProvider
             ->brandLogo(asset('images/logo.png'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('favicon.ico'))
-            ->colors([
-                'primary' => Color::Orange,
-            ])
+            ->colors(\App\Support\ColoresPanel::paleta())
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.mapa-assets'))
             ->discoverResources(in: app_path('Filament/Operador/Resources'), for: 'App\\Filament\\Operador\\Resources')

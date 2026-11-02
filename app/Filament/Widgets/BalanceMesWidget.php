@@ -15,6 +15,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class BalanceMesWidget extends StatsOverviewWidget
 {
+    use \App\Filament\Widgets\Concerns\ConAcento;
+
     protected static ?int $sort = 2;
 
     protected int | array | null $columns = 3;
@@ -81,6 +83,7 @@ class BalanceMesWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Ingresos', 'S/ ' . number_format($mes['ingresos'], 2))
+                ->extraAttributes(self::acento('success'), merge: true)
                 ->description($descIngresos)
                 ->descriptionIcon($iconoIngresos)
                 ->descriptionColor($colorIngresos)
@@ -88,6 +91,7 @@ class BalanceMesWidget extends StatsOverviewWidget
                 ->color('success'),
 
             Stat::make('Egresos', 'S/ ' . number_format($mes['egresos'], 2))
+                ->extraAttributes(self::acento('danger'), merge: true)
                 ->description($descEgresos)
                 ->descriptionIcon($iconoEgresos)
                 ->descriptionColor($colorEgresos)
@@ -95,6 +99,7 @@ class BalanceMesWidget extends StatsOverviewWidget
                 ->color('danger'),
 
             Stat::make('Lo que queda', 'S/ ' . number_format($resultado, 2))
+                ->extraAttributes(self::acento('primary'), merge: true)
                 ->description($resultadoAnterior != 0
                     ? "En {$nombreAnterior}: S/ " . number_format($resultadoAnterior, 2)
                     : 'Ingresos menos egresos del mes')
