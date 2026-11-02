@@ -312,7 +312,7 @@ class NotificationService
                     ->button(),
             ]);
 
-        foreach (User::role('coordinador_de_vaciados')->where('is_active', true)->get() as $usuario) {
+        foreach (self::usuariosActivosConRol(['coordinador_de_vaciados']) as $usuario) {
             $usuario->notifyNow($notificacion->toDatabase());
         }
     }
@@ -335,7 +335,7 @@ class NotificationService
                     ->button(),
             ]);
 
-        foreach (User::role('coordinador_de_vaciados')->where('is_active', true)->get() as $usuario) {
+        foreach (self::usuariosActivosConRol(['coordinador_de_vaciados']) as $usuario) {
             $usuario->notifyNow($notificacion->toDatabase());
         }
     }
@@ -356,7 +356,18 @@ class NotificationService
      */
     private static function destinatarios(): Collection
     {
-        return User::role(['super_admin', 'admin'])->where('is_active', true)->get();
+        return self::usuariosActivosConRol(['super_admin', 'admin']);
+    }
+
+    /**
+     * Usuarios activos con alguno de esos roles. No usa User::role() porque esa consulta lanza un error
+     * si el rol todavía no existe (instalación nueva), y eso tumbaba los formularios públicos.
+     */
+    private static function usuariosActivosConRol(array $roles): Collection
+    {
+        return User::whereHas('roles', fn ($query) => $query->whereIn('name', $roles))
+            ->where('is_active', true)
+            ->get();
     }
 
     private static function soles(float|string|null $monto): string

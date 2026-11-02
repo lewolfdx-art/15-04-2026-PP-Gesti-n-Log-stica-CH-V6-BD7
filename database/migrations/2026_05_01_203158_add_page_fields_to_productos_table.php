@@ -9,8 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('productos', function (Blueprint $table) {
-            $table->string('page_title')->nullable()->after('id');
-            $table->text('page_description')->nullable()->after('page_title');
+            // Solo las columnas que falten: migrar una base nueva fallaba con \"columna duplicada\"
+            $agregar = fn (string $columna) => ! Schema::hasColumn('productos', $columna);
+            if ($agregar('page_title')) { $table->string('page_title')->nullable()->after('id'); }
+            if ($agregar('page_description')) { $table->text('page_description')->nullable()->after('page_title'); }
         });
     }
 

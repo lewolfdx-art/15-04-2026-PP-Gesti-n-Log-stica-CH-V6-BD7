@@ -14,12 +14,12 @@ return new class extends Migration
     {
         DB::table('contratos')->where('estado_pago', 'PENDIENTE')->update(['estado_pago' => 'DEBE']);
 
-        DB::table('contratos as c')
-            ->join('trabajadores as t', function ($join) {
-                $join->on('t.nombre_completo', '=', 'c.nombre_vendedor')->where('t.tipo_cargo', 'asesor_ventas');
-            })
-            ->whereNull('c.vendedor_id')
-            ->update(['c.vendedor_id' => DB::raw('t.id')]);
+        // Subconsulta en vez de UPDATE ... JOIN: así también funciona en SQLite (pruebas, instalación nueva)
+        DB::table('contratos')
+            ->whereNull('vendedor_id')
+            ->update(['vendedor_id' => DB::raw(
+                "(SELECT t.id FROM trabajadores t WHERE t.nombre_completo = contratos.nombre_vendedor AND t.tipo_cargo = 'asesor_ventas' LIMIT 1)"
+            )]);
     }
 
     public function down(): void
