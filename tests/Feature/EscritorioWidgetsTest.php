@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Widgets\AgendaVaciadosWidget;
 use App\Filament\Widgets\FechasSeparadasWidget;
+use App\Filament\Widgets\ResumenHoyWidget;
 use App\Models\Cotizacion;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,23 +42,38 @@ class EscritorioWidgetsTest extends TestCase
         }
     }
 
-    public function test_la_agenda_muestra_solo_los_vaciados_de_los_proximos_7_dias(): void
+    public function test_la_agenda_muestra_los_proximos_vaciados_aunque_falten_semanas(): void
     {
         $this->actingAs($this->usuarioConRol('super_admin'));
         Filament::setCurrentPanel(Filament::getPanel('admin'));
 
-        $dentro = $this->contrato(['fecha' => today()->addDays(3), 'nombre_cliente' => 'Cliente esta semana']);
-        $fuera = $this->contrato(['fecha' => today()->addDays(17), 'nombre_cliente' => 'Cliente fin de mes']);
+        $semana = $this->contrato(['fecha' => today()->addDays(3), 'nombre_cliente' => 'Cliente esta semana']);
+        $finDeMes = $this->contrato(['fecha' => today()->addDays(17), 'nombre_cliente' => 'Cliente fin de mes']);
         $pasado = $this->contrato(['fecha' => today()->subDay(), 'nombre_cliente' => 'Cliente de ayer']);
 
         Livewire::test(AgendaVaciadosWidget::class)
-            ->assertCanSeeTableRecords([$dentro])
-            ->assertCanNotSeeTableRecords([$fuera, $pasado]);
+            ->assertCanSeeTableRecords([$semana, $finDeMes], inOrder: true)
+            ->assertCanNotSeeTableRecords([$pasado])
+            ->assertSee('1 vaciado en los próximos 7 días');
 
-        $dentro->delete();
+        $semana->delete();
         Livewire::test(AgendaVaciadosWidget::class)
-            ->assertSee('No hay vaciados en los próximos 7 días')
-            ->assertSee('Cliente fin de mes');
+            ->assertCanSeeTableRecords([$finDeMes])
+            ->assertSee('Esta semana no hay vaciados');
+    }
+
+    public function test_el_resumen_de_hoy_indica_el_proximo_vaciado(): void
+    {
+        $this->actingAs($this->usuarioConRol('super_admin'));
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $this->contrato(['fecha' => today()->addDays(17), 'nombre_cliente' => 'Rodolfo'])
+            ->forceFill(['programado_at' => now()])->save();
+
+        Livewire::test(ResumenHoyWidget::class)
+            ->assertSee('Próximo:')
+            ->assertSee('Rodolfo')
+            ->assertSee('El próximo ya está programado');
     }
 
     public function test_fechas_separadas_muestra_solo_las_que_aun_no_son_contrato(): void
