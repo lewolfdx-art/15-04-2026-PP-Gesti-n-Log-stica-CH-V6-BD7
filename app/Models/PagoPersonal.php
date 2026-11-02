@@ -130,25 +130,45 @@ class PagoPersonal extends Model
             $tipo = static::tipoPara($trabajador);
             [$desde, $hasta] = static::periodo($anio, $mes, $quincena);
 
+            // Un sueldo por quincena. Las comisiones pueden ser varias (se liquidan por obra);
+            // solo se repite el aviso si ya hubo una comisión a mano en la quincena.
             $existente = static::where(compact('anio', 'mes', 'quincena', 'tipo'))
-                ->where('trabajador_id', $trabajador->getKey())
-                ->value('codigo');
-
-            if ($existente) {
-                throw new InvalidArgumentException("Ya se registró el pago de esta quincena para {$trabajador->nombre_completo} ({$existente}).");
-            }
+                ->where('trabajador_id', $trabajador->getKey());
 
             $contratos = collect();
             if ($tipo === 'comision') {
-                $contratos = static::contratosPendientesDeComision($trabajador, $hasta);
-                Contrato::whereKey($contratos->modelKeys())->lockForUpdate()->get();
-                // Sin contratos pendientes se acepta un monto a mano (comisión acordada fuera del sistema)
-                $montoBase = $contratos->isNotEmpty()
-                    ? round((float) $contratos->sum('comision'), 2)
-                    : round((float) ($datos['monto_base'] ?? 0), 2);
+                $pendientes = static::contratosPendientesDeComision($trabajador, $hasta);
+
+                if ($pendientes->isNotEmpty()) {
+                    // Solo los contratos marcados en el formulario; si no llega la lista, todos los pendientes
+                    $elegidos = isset($datos['contratos_ids'])
+                        ? $pendientes->whereIn('id', array_map('intval', (array) $datos['contratos_ids']))
+                        : $pendientes;
+
+                    if ($elegidos->isEmpty()) {
+                        throw new InvalidArgumentException('Marca al menos un contrato para liquidar su comisión.');
+                    }
+
+                    // Bloquea y vuelve a comprobar que nadie los liquidó mientras tanto
+                    $contratos = Contrato::whereKey($elegidos->modelKeys())->whereNull('pago_comision_id')->lockForUpdate()->get();
+
+                    if ($contratos->count() !== $elegidos->count()) {
+                        throw new InvalidArgumentException('Alguno de los contratos ya se liquidó en otro pago. Vuelve a abrir el formulario.');
+                    }
+
+                    $montoBase = round((float) $contratos->sum('comision'), 2);
+                } else {
+                    // Sin contratos pendientes se acepta un monto a mano (comisión acordada fuera del sistema)
+                    $existente->whereDoesntHave('contratos');
+                    $montoBase = round((float) ($datos['monto_base'] ?? 0), 2);
+                }
             } else {
                 // El sueldo de la quincena se puede ajustar (días no trabajados, ingreso a mitad de mes, etc.)
                 $montoBase = round((float) ($datos['monto_base'] ?? static::montoBase($trabajador, $anio, $mes, $quincena)), 2);
+            }
+
+            if ($contratos->isEmpty() && ($codigo = $existente->value('codigo'))) {
+                throw new InvalidArgumentException("Ya se registró el pago de esta quincena para {$trabajador->nombre_completo} ({$codigo}).");
             }
 
             $adicionales = round((float) ($datos['adicionales'] ?? 0), 2);

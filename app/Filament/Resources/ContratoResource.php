@@ -9,6 +9,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
 use App\Models\Trabajador;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -509,7 +510,34 @@ class ContratoResource extends Resource
                         default  => 'gray',
                     })
                     ->toggleable(),
+
+                TextColumn::make('estado_comision')
+                    ->label('Comisión')
+                    ->badge()
+                    ->state(fn (Contrato $record): string => match (true) {
+                        (float) $record->comision <= 0 => 'Sin comisión',
+                        $record->pagoComision !== null => 'Pagada · ' . $record->pagoComision->codigo,
+                        default                        => 'Pendiente',
+                    })
+                    ->description(fn (Contrato $record): ?string => (float) $record->comision > 0
+                        ? 'S/ ' . number_format((float) $record->comision, 2)
+                        : null)
+                    ->color(fn (Contrato $record): string => match (true) {
+                        (float) $record->comision <= 0 => 'gray',
+                        $record->pagoComision !== null => 'success',
+                        default                        => 'warning',
+                    })
+                    ->icon(fn (Contrato $record): ?string => match (true) {
+                        (float) $record->comision <= 0 => null,
+                        $record->pagoComision !== null => 'heroicon-o-check-circle',
+                        default                        => 'heroicon-o-clock',
+                    })
+                    ->url(fn (Contrato $record): ?string => $record->pagoComision
+                        ? PagoPersonalResource::getUrl('view', ['record' => $record->pagoComision])
+                        : null)
+                    ->toggleable(),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('pagoComision'))
             ->defaultSort('fecha', 'desc')
             ->searchable()
             ->filters([
@@ -528,6 +556,15 @@ class ContratoResource extends Resource
                 SelectFilter::make('bombeo')
                     ->label('Bombeo')
                     ->options(Contrato::BOMBEOS),
+
+                SelectFilter::make('estado_comision')
+                    ->label('Comisión del asesor')
+                    ->options(['pendiente' => 'Pendiente', 'pagada' => 'Pagada'])
+                    ->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'pendiente' => $query->where('comision', '>', 0)->whereNull('pago_comision_id'),
+                        'pagada'    => $query->whereNotNull('pago_comision_id'),
+                        default     => $query,
+                    }),
 
                 Filter::make('fecha')
                     ->schema([

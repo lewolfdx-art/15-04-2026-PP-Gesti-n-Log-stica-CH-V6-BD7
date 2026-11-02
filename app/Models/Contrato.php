@@ -134,6 +134,14 @@ class Contrato extends Model
     }
 
     /**
+     * Pago al personal con el que se liquidó la comisión del asesor
+     */
+    public function pagoComision(): BelongsTo
+    {
+        return $this->belongsTo(PagoPersonal::class, 'pago_comision_id');
+    }
+
+    /**
      * Mixers y bombas asignados al vaciado
      */
     public function vehiculos(): BelongsToMany
